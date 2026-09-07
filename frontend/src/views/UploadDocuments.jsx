@@ -24,47 +24,50 @@ export const UploadDocuments = () => {
     assignedInspectorName !== 'PENDING' &&
     assignedInspectorName !== '';
 
-  const [files, setFiles] = useState({
-    businessRegistration: {
-      title: 'Business Registration',
-      subTitle: 'Trade License / GSTIN / Shop & Establishment Act Certificate',
-      fileName: currentDocData.docs?.businessRegistration?.fileName || `${storeInfo.name?.replace(/\s+/g, '_')}_Trade_License.pdf`,
-      fileSize: currentDocData.docs?.businessRegistration?.fileSize || '1.8 MB',
-      mandatory: true,
-      uploaded: true
-    },
-    ownerId: {
-      title: 'Owner ID Proof',
-      subTitle: 'Aadhaar Card / Voter ID / Government Photo ID',
-      fileName: currentDocData.docs?.ownerId?.fileName || `${(storeInfo.contactPerson || storeInfo.name)?.replace(/\s+/g, '_')}_Govt_ID.pdf`,
-      fileSize: currentDocData.docs?.ownerId?.fileSize || '1.2 MB',
-      mandatory: true,
-      uploaded: true
-    },
-    purchaseInvoice: {
-      title: 'Purchase Invoice',
-      subTitle: 'Original Scale Purchase Bill / Manufacturer Tax Invoice',
-      fileName: currentDocData.docs?.purchaseInvoice?.fileName || 'Scale_Manufacturer_Tax_Invoice.pdf',
-      fileSize: currentDocData.docs?.purchaseInvoice?.fileSize || '2.4 MB',
-      mandatory: true,
-      uploaded: true
-    },
-    instrumentPlate: {
-      title: 'Instrument Plate Photo',
-      subTitle: 'Clear photograph of scale model specification & serial plate',
-      fileName: currentDocData.docs?.instrumentPlate?.fileName || 'Scale_Model_Spec_Nameplate.jpg',
-      fileSize: currentDocData.docs?.instrumentPlate?.fileSize || '3.1 MB',
-      mandatory: true,
-      uploaded: true
-    },
-    instrumentPhotos: {
-      title: 'Instrument Photos',
-      subTitle: 'Installed countertop scale photograph (Front & profile view)',
-      fileName: currentDocData.docs?.instrumentPhotos?.fileName || 'Installed_Counter_Scale_Profile.jpg',
-      fileSize: currentDocData.docs?.instrumentPhotos?.fileSize || '4.5 MB',
-      mandatory: true,
-      uploaded: true
-    }
+  const [files, setFiles] = useState(() => {
+    const d = currentDocData.docs || {};
+    return {
+      businessRegistration: {
+        title: 'Business Registration',
+        subTitle: 'Trade License / GSTIN / Shop & Establishment Act Certificate',
+        fileName: d.businessRegistration?.fileName || '',
+        fileSize: d.businessRegistration?.fileSize || '',
+        mandatory: true,
+        uploaded: Boolean(d.businessRegistration?.uploaded || d.businessRegistration?.fileName)
+      },
+      ownerId: {
+        title: 'Owner ID Proof',
+        subTitle: 'Aadhaar Card / Voter ID / Government Photo ID',
+        fileName: d.ownerId?.fileName || '',
+        fileSize: d.ownerId?.fileSize || '',
+        mandatory: true,
+        uploaded: Boolean(d.ownerId?.uploaded || d.ownerId?.fileName)
+      },
+      purchaseInvoice: {
+        title: 'Purchase Invoice',
+        subTitle: 'Original Scale Purchase Bill / Manufacturer Tax Invoice',
+        fileName: d.purchaseInvoice?.fileName || '',
+        fileSize: d.purchaseInvoice?.fileSize || '',
+        mandatory: true,
+        uploaded: Boolean(d.purchaseInvoice?.uploaded || d.purchaseInvoice?.fileName)
+      },
+      instrumentPlate: {
+        title: 'Instrument Plate Photo',
+        subTitle: 'Clear photograph of scale model specification & serial plate',
+        fileName: d.instrumentPlate?.fileName || '',
+        fileSize: d.instrumentPlate?.fileSize || '',
+        mandatory: true,
+        uploaded: Boolean(d.instrumentPlate?.uploaded || d.instrumentPlate?.fileName)
+      },
+      instrumentPhotos: {
+        title: 'Instrument Photos',
+        subTitle: 'Installed countertop scale photograph (Front & profile view)',
+        fileName: d.instrumentPhotos?.fileName || '',
+        fileSize: d.instrumentPhotos?.fileSize || '',
+        mandatory: true,
+        uploaded: Boolean(d.instrumentPhotos?.uploaded || d.instrumentPhotos?.fileName)
+      }
+    };
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -80,6 +83,54 @@ export const UploadDocuments = () => {
       }
     }));
     showToast(`Attached: ${customName}`, 'info');
+  };
+
+  const handleAttachDemoFiles = () => {
+    const shopPrefix = (storeInfo.name || 'Store').replace(/\s+/g, '_');
+    const ownerPrefix = (storeInfo.contactPerson || storeInfo.name || 'Owner').replace(/\s+/g, '_');
+    setFiles({
+      businessRegistration: {
+        title: 'Business Registration',
+        subTitle: 'Trade License / GSTIN / Shop & Establishment Act Certificate',
+        fileName: `${shopPrefix}_Trade_License.pdf`,
+        fileSize: '1.8 MB',
+        mandatory: true,
+        uploaded: true
+      },
+      ownerId: {
+        title: 'Owner ID Proof',
+        subTitle: 'Aadhaar Card / Voter ID / Government Photo ID',
+        fileName: `${ownerPrefix}_Govt_ID.pdf`,
+        fileSize: '1.2 MB',
+        mandatory: true,
+        uploaded: true
+      },
+      purchaseInvoice: {
+        title: 'Purchase Invoice',
+        subTitle: 'Original Scale Purchase Bill / Manufacturer Tax Invoice',
+        fileName: `${shopPrefix}_Scale_Tax_Invoice.pdf`,
+        fileSize: '2.4 MB',
+        mandatory: true,
+        uploaded: true
+      },
+      instrumentPlate: {
+        title: 'Instrument Plate Photo',
+        subTitle: 'Clear photograph of scale model specification & serial plate',
+        fileName: 'Instrument_Spec_Nameplate.jpg',
+        fileSize: '3.1 MB',
+        mandatory: true,
+        uploaded: true
+      },
+      instrumentPhotos: {
+        title: 'Instrument Photos',
+        subTitle: 'Installed countertop scale photograph (Front & profile view)',
+        fileName: 'Installed_Counter_Scale_Front.jpg',
+        fileSize: '4.5 MB',
+        mandatory: true,
+        uploaded: true
+      }
+    });
+    showToast('Attached 5 statutory compliance files for presentation demo', 'success');
   };
 
   const onSubmit = () => {
@@ -165,7 +216,7 @@ export const UploadDocuments = () => {
                   All 5 Statutory Documents Verified &amp; Approved
                 </h3>
                 <p className="text-xs text-emerald-800 mt-0.5">
-                  Verified by <strong>{assignedInspectorName || currentDocData.reviewedBy || 'Insp. R. Deshmukh'}</strong>. You are now authorized to schedule your verification window.
+                  Verified by <strong>{assignedInspectorName || currentDocData.reviewedBy || 'Assigned Officer'}</strong>. You are now authorized to schedule your verification window.
                 </p>
               </div>
             </div>
@@ -201,14 +252,14 @@ export const UploadDocuments = () => {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
-                Assigned Inspector: {assignedInspectorName || 'Insp. R. Deshmukh'}
+                Assigned Inspector: {assignedInspectorName || 'Pending Allocation'}
               </span>
               <h3 className="text-sm sm:text-base font-bold text-amber-950">
                 {currentDocData.status === 'pending_review' ? 'Documents Submitted • Under Officer Scrutiny' : 'Action Required: Upload 5 Statutory Documents'}
               </h3>
               <p className="text-xs text-amber-900 mt-1 leading-relaxed">
                 {currentDocData.status === 'pending_review'
-                  ? `Your 5 statutory documents have been queued for ${assignedInspectorName || 'Insp. R. Deshmukh'}. Once verified, the appointment booking window will be unlocked.`
+                  ? `Your 5 statutory documents have been queued for ${assignedInspectorName || 'your assigned officer'}. Once verified, the appointment booking window will be unlocked.`
                   : `Please attach all 5 mandatory documents below and submit for ${assignedInspectorName || 'assigned officer'} verification.`}
               </p>
             </div>
@@ -233,6 +284,21 @@ export const UploadDocuments = () => {
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700">
             5 Mandatory Documents Required
           </span>
+        </div>
+
+        {/* Toolbar with Demo Quick Attach Button */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            Mandatory Statutory File Uploads
+          </span>
+          <button
+            onClick={handleAttachDemoFiles}
+            className="text-xs font-semibold text-[#E0702A] hover:text-[#c95f1e] flex items-center gap-1 cursor-pointer bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">auto_fix_high</span>
+            <span>Attach Sample Documents (Demo)</span>
+          </button>
         </div>
 
         {/* Document Upload Cards (5 Mandatory Files) */}

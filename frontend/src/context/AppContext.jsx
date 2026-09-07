@@ -27,219 +27,19 @@ export const AppProvider = ({ children }) => {
   // Current Logged In Inspector State
   const [currentInspector, setCurrentInspector] = useState(null);
 
-  // Multi-Shop Establishments Owned by the Merchant
-  const [ownerShops, setOwnerShops] = useState([
-    {
-      id: 'shop-ganesh-1',
-      name: 'Shree Ganesh General Store',
-      ownerName: 'Shree S. N. Ganesh',
-      branchType: 'Main Commercial Branch',
-      merchantUid: '#EST-44091',
-      tradeLicense: 'BBMP/TL/2023/9081',
-      gstin: '29AABCU9603R1ZM',
-      shopActReg: 'KA/BLR/44091/2023',
-      zone: 'Ward 4 (Commercial Circle)',
-      address: '14 Market Road, Commercial Circle, Bengaluru - 560001',
-      phone: '+91 98450 21980',
-      assignedInspector: 'Insp. R. Deshmukh',
-      inspectorBadge: 'LM-BLR-402',
-      status: 'Active Commercial Establishment',
-      complianceStatus: 'Documents Verified',
-      documentStatus: 'verified',
-      registeredScalesCount: 2,
-      instruments: [
-        {
-          id: 'inst-1',
-          name: 'Electronic Countertop Scale',
-          model: 'Contech CA-30',
-          capacity: '30kg / 1g precision',
-          serialNumber: '#KA-BLR-88412',
-          counter: 'Billing Counter 1',
-          status: 'Stamping Active',
-          verificationStatusText: 'Holo Seal Valid',
-          daysRemaining: 28,
-          totalDaysCycle: 365,
-          expiresOn: '13 Feb 2025',
-          sealNumber: 'SEAL-LM-BLR-0428',
-          complianceRate: '100%',
-          type: 'counter_scale',
-          class: 'Class III Commercial'
-        },
-        {
-          id: 'inst-2',
-          name: 'Platform Heavy Scale',
-          model: 'Contech CP-100',
-          capacity: '100kg / 10g precision',
-          serialNumber: '#KA-BLR-99304',
-          counter: 'Goods Receipt Area',
-          status: 'Stamping Active',
-          verificationStatusText: 'Holo Seal Valid',
-          daysRemaining: 94,
-          totalDaysCycle: 365,
-          expiresOn: '18 Apr 2025',
-          sealNumber: 'SEAL-LM-BLR-0489',
-          complianceRate: '100%',
-          type: 'platform_scale',
-          class: 'Class III Commercial'
-        }
-      ],
-      certificationHistory: [
-        {
-          certId: 'CERT-KA-2024-9921',
-          ruleForm: 'Form XVII (Rule 14)',
-          actYear: 'Act of 2009',
-          instrumentModel: 'Contech CA-30 (Max 30kg, e=1g)',
-          serialNumber: '#KA-BLR-88412',
-          verifiedDate: '13 Jan 2024',
-          validUntil: '12 Jan 2025',
-          inspectorSeal: 'SEAL-LM-BLR-0428',
-          inspectorName: 'Insp. R. Deshmukh',
-          inspectorBadge: 'LM-BLR-402',
-          statusBadge: 'CERTIFIED & COMPLIANT',
-          workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
-          remarks: '4-Point MPE tested with Class M1 reference weights. Holographic wire seal applied.'
-        },
-        {
-          certId: 'CERT-KA-2023-4819',
-          ruleForm: 'Form XVII (Rule 14)',
-          actYear: 'Act of 2009',
-          instrumentModel: 'Contech CA-30 (Max 30kg, e=1g)',
-          serialNumber: '#KA-BLR-88412',
-          verifiedDate: '15 Jan 2023',
-          validUntil: '14 Jan 2024',
-          inspectorSeal: 'SEAL-LM-BLR-0211',
-          inspectorName: 'Insp. R. Deshmukh',
-          inspectorBadge: 'LM-BLR-402',
-          statusBadge: 'ARCHIVED / RENEWED',
-          workingStandardRef: 'STD/KA/2023/0014 (Calibrated at NPL)',
-          remarks: 'Annual statutory verification passed.'
-        }
-      ]
-    },
-    {
-      id: 'shop-ganesh-2',
-      name: 'Ganesh Supermarket & Provisions',
-      ownerName: 'Shree S. N. Ganesh',
-      branchType: 'Retail Supermarket Branch',
-      merchantUid: '#EST-44092',
-      tradeLicense: 'BBMP/TL/2022/5512',
-      gstin: '29AABCU9603R2ZN',
-      shopActReg: 'KA/BLR/44092/2022',
-      zone: 'Ward 4 (APMC Complex)',
-      address: 'Shop #18, APMC Complex Main Gate, Ward 4, Bengaluru - 560022',
-      phone: '+91 98450 21981',
-      assignedInspector: 'Insp. R. Deshmukh',
-      inspectorBadge: 'LM-BLR-402',
-      status: 'Active Commercial Establishment',
-      complianceStatus: 'Certified & Compliant',
-      documentStatus: 'verified',
-      registeredScalesCount: 2,
-      instruments: [
-        {
-          id: 'inst-3',
-          name: 'Heavy Duty Platform Scale',
-          model: 'Avery Weigh-Tronix 150kg',
-          capacity: '150kg / 20g precision',
-          serialNumber: '#KA-BLR-77102',
-          counter: 'Grain Weighing Section',
-          status: 'Stamping Active',
-          verificationStatusText: 'Holo Seal Valid',
-          daysRemaining: 180,
-          totalDaysCycle: 365,
-          expiresOn: '04 Aug 2025',
-          sealNumber: 'SEAL-LM-BLR-0499',
-          complianceRate: '100%',
-          type: 'platform_scale',
-          class: 'Class III Commercial'
-        },
-        {
-          id: 'inst-4',
-          name: 'POS Electronic Scale',
-          model: 'Essae POS-30',
-          capacity: '30kg / 1g precision',
-          serialNumber: '#KA-BLR-66291',
-          counter: 'Express Checkout Counter',
-          status: 'Stamping Active',
-          verificationStatusText: 'Holo Seal Valid',
-          daysRemaining: 215,
-          totalDaysCycle: 365,
-          expiresOn: '09 Sep 2025',
-          sealNumber: 'SEAL-LM-BLR-0512',
-          complianceRate: '100%',
-          type: 'counter_scale',
-          class: 'Class III Commercial'
-        }
-      ],
-      certificationHistory: [
-        {
-          certId: 'CERT-KA-2024-8192',
-          ruleForm: 'Form XVII (Rule 14)',
-          actYear: 'Act of 2009',
-          instrumentModel: 'Avery Weigh-Tronix 150kg',
-          serialNumber: '#KA-BLR-77102',
-          verifiedDate: '04 Feb 2024',
-          validUntil: '03 Feb 2025',
-          inspectorSeal: 'SEAL-LM-BLR-0499',
-          inspectorName: 'Insp. R. Deshmukh',
-          inspectorBadge: 'LM-BLR-402',
-          statusBadge: 'CERTIFIED & COMPLIANT',
-          workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
-          remarks: 'Passed calibration tests at 20kg, 50kg, and 100kg standards.'
-        }
-      ]
-    },
-    {
-      id: 'shop-ganesh-3',
-      name: 'Ganesh Sweetmeat & Dry Fruits',
-      ownerName: 'Shree S. N. Ganesh',
-      branchType: 'Confectionery Branch',
-      merchantUid: '#EST-44093',
-      tradeLicense: 'BBMP/TL/2024/1108',
-      gstin: '29AABCU9603R3ZO',
-      shopActReg: 'KA/BLR/44093/2024',
-      zone: 'Ward 2 (Commercial Ganj)',
-      address: 'Plot 22, Commercial Ganj Sweet Bazaar, Bengaluru - 560002',
-      phone: '+91 98450 21982',
-      assignedInspector: 'Insp. K. S. Rao',
-      inspectorBadge: 'LM-BLR-319',
-      status: 'Active Commercial Establishment',
-      complianceStatus: 'Documents Submitted',
-      documentStatus: 'pending_review',
-      registeredScalesCount: 1,
-      instruments: [
-        {
-          id: 'inst-5',
-          name: 'High Precision Sweet Scale',
-          model: 'Contech Precision 15kg',
-          capacity: '15kg / 0.5g precision',
-          serialNumber: '#KA-BLR-55912',
-          counter: 'Main Display Counter',
-          status: 'Initial Verification Due',
-          verificationStatusText: 'Awaiting Inspector Visit',
-          daysRemaining: 14,
-          totalDaysCycle: 365,
-          expiresOn: '25 Jan 2025',
-          sealNumber: 'SEAL-PENDING',
-          complianceRate: '100%',
-          type: 'counter_scale',
-          class: 'Class II High Precision'
-        }
-      ],
-      certificationHistory: []
-    }
-  ]);
-
+  // Multi-Shop Establishments Owned by the Merchant (Dynamic from PostgreSQL)
+  const [ownerShops, setOwnerShops] = useState([]);
   const [activeShopIndex, setActiveShopIndexState] = useState(0);
 
   // Domain Data State
   const [storeInfo, setStoreInfo] = useState(initialStoreInfo);
-  const [instruments, setInstruments] = useState(initialInstruments);
+  const [instruments, setInstruments] = useState([]);
   const [activeInstrumentIndex, setActiveInstrumentIndex] = useState(0);
-  const [visits, setVisits] = useState(inspectorVisits);
+  const [visits, setVisits] = useState([]);
   const [checklist, setChecklist] = useState(defaultInspectionChecklist);
-  const [registry, setRegistry] = useState(stateComplianceRegistry);
+  const [registry, setRegistry] = useState([]);
 
-  // Inspector Accounts (Admin-Provisioned ONLY)
+  // Inspector Accounts (Admin-Provisioned Official Officers)
   const [inspectors, setInspectors] = useState([
     {
       id: 'insp-1',
@@ -248,7 +48,7 @@ export const AppProvider = ({ children }) => {
       email: 'insp123@metrx.com',
       password: '12345678',
       zone: 'Ward 4 (Commercial Circle)',
-      phone: '+91 98451 20491',
+      phone: '+91 94480 33120',
       status: 'Active',
       authorizedBy: 'Dr. K. V. Sharma (Admin)',
       issuedAt: '01 Jan 2024'
@@ -280,274 +80,34 @@ export const AppProvider = ({ children }) => {
   ]);
 
   // Shop Owner / Merchant Accounts (Self-Created by Shop Owners)
-  const [merchants, setMerchants] = useState([
-    {
-      id: 'merch-1',
-      name: 'Shree Ganesh General Store',
-      ownerName: 'Shree S. N. Ganesh',
-      email: 'ganesh@store.com',
-      password: '12345678',
-      merchantUid: '#EST-44091',
-      tradeLicense: 'BBMP/TL/2023/9081',
-      zone: 'Ward 4 (Commercial Circle)',
-      address: '14 Market Road, Commercial Circle, Bengaluru',
-      phone: '+91 98450 21980',
-      registeredScales: 2,
-      complianceStatus: 'Inspection Slotted',
-      assignedInspector: 'Insp. R. Deshmukh',
-      createdAt: '12 Jan 2024'
-    },
-    {
-      id: 'merch-2',
-      name: 'Kaveri Provisions & Spices',
-      ownerName: 'Kaveri Sundaram',
-      email: 'kaveri@spices.com',
-      password: '12345678',
-      merchantUid: '#EST-39102',
-      tradeLicense: 'BBMP/TL/2021/4412',
-      zone: 'Ward 4 (APMC Yard)',
-      address: 'Shop #42, APMC Yard Main Road, Ward 4',
-      phone: '+91 98453 11092',
-      registeredScales: 1,
-      complianceStatus: 'Scheduled',
-      assignedInspector: 'Insp. R. Deshmukh',
-      createdAt: '18 Feb 2024'
-    },
-    {
-      id: 'merch-3',
-      name: 'Annapurna Flour Mills',
-      ownerName: 'R. K. Gupta',
-      email: 'gupta@flour.com',
-      password: '12345678',
-      merchantUid: '#EST-28491',
-      tradeLicense: 'BBMP/TL/2019/1020',
-      zone: 'Ward 2 (Commercial Ganj)',
-      address: 'Plot 18, Commercial Ganj',
-      phone: '+91 98456 99182',
-      registeredScales: 3,
-      complianceStatus: 'Scheduled',
-      assignedInspector: 'Insp. K. S. Rao',
-      createdAt: '05 Mar 2024'
-    },
-    {
-      id: 'merch-4',
-      name: 'Royal Gold & Silver Ornaments',
-      ownerName: 'Mahendra Varma',
-      email: 'royal@gold.com',
-      password: '12345678',
-      merchantUid: '#EST-50119',
-      tradeLicense: 'BBMP/TL/2024/0019',
-      zone: 'Ward 4 (Jewellers Lane)',
-      address: '96 Jewellers Lane, Commercial Circle',
-      phone: '+91 98459 33281',
-      registeredScales: 2,
-      complianceStatus: 'Scheduled',
-      assignedInspector: 'Insp. R. Deshmukh',
-      createdAt: '10 Apr 2024'
-    }
-  ]);
+  const [merchants, setMerchants] = useState([]);
 
   // Live Inspector Operations on Shop Owners (Real-Time Tracking for Admin)
-  const [operations, setOperations] = useState([
-    {
-      id: 'OP-101',
-      inspectorName: 'Insp. R. Deshmukh',
-      badgeNumber: 'LM-BLR-402',
-      shopName: 'Shree Ganesh General Store',
-      merchantUid: '#EST-44091',
-      zone: 'Ward 4',
-      operationType: 'Annual Calibration & Hologram Stamping',
-      scaleModel: 'Contech CA-30 (Max 30kg, e=1g)',
-      slot: '10:00 AM – 11:30 AM',
-      liveStatus: 'Active / In Field Audit',
-      statusType: 'in_progress',
-      remarks: '4-Point MPE check underway on counter scale'
-    },
-    {
-      id: 'OP-102',
-      inspectorName: 'Insp. R. Deshmukh',
-      badgeNumber: 'LM-BLR-402',
-      shopName: 'Kaveri Provisions & Spices',
-      merchantUid: '#EST-39102',
-      zone: 'Ward 4',
-      operationType: 'Platform Scale Calibration',
-      scaleModel: 'Avery 150kg Heavy Duty',
-      slot: '12:00 PM – 1:00 PM',
-      liveStatus: 'Route Queue Slot 2',
-      statusType: 'scheduled',
-      remarks: 'Standard 50kg test weights'
-    },
-    {
-      id: 'OP-103',
-      inspectorName: 'Insp. K. S. Rao',
-      badgeNumber: 'LM-BLR-319',
-      shopName: 'Annapurna Flour Mills',
-      merchantUid: '#EST-28491',
-      zone: 'Ward 2',
-      operationType: 'Beam Scale & Conical Weight Audit',
-      scaleModel: 'Class M1 50kg Iron Set',
-      slot: '02:30 PM – 03:30 PM',
-      liveStatus: 'Scheduled Slot 3',
-      statusType: 'scheduled',
-      remarks: 'Assigned by Controller'
-    },
-    {
-      id: 'OP-104',
-      inspectorName: 'Insp. R. Deshmukh',
-      badgeNumber: 'LM-BLR-402',
-      shopName: 'Royal Gold & Silver Ornaments',
-      merchantUid: '#EST-50119',
-      zone: 'Ward 4',
-      operationType: 'Class II Bullion Precision Calibration',
-      scaleModel: 'Mettler Toledo Precision (0.01g / 600g)',
-      slot: '04:00 PM – 05:00 PM',
-      liveStatus: 'Scheduled Slot 4',
-      statusType: 'scheduled',
-      remarks: 'High Precision Gold standard verification'
-    }
-  ]);
+  const [operations, setOperations] = useState([]);
 
   // Verification Request flow state (5-Step Model)
-  // Step 1: Requested | Step 2: Documents Uploaded | Step 3: Scheduled | Step 4: Inspected | Step 5: Certified
   const [selectedSlot, setSelectedSlot] = useState('slot_1');
   const [verificationStatus, setVerificationStatus] = useState({
-    status: 'documents_submitted',
-    documentStatus: 'pending_review', // 'not_uploaded' | 'pending_review' | 'verified' | 'fraud'
-    step: 2,
-    applicationRef: 'METRA-BLR-2025-084-V',
-    slotLabel: 'Thu, 16 Jan 2025',
-    timeLabel: '10 AM – 1 PM',
-    inspectorName: 'Insp. R. Deshmukh',
-    inspectorBadge: 'LM-BLR-402',
-    zone: 'Zone 4 (Central)',
-    requestedAt: '10 Jan, 09:30 AM',
-    documentsSubmittedAt: '12 Jan, 09:30 AM',
+    status: 'not_uploaded',
+    documentStatus: 'not_uploaded',
+    step: 1,
+    applicationRef: 'METRA-LMIS-PENDING',
+    slotLabel: 'Select Visit Slot',
+    timeLabel: 'Morning / Afternoon',
+    inspectorName: 'Pending Admin Allocation',
+    inspectorBadge: 'LM-PENDING',
+    zone: 'Ward 4 (Commercial Circle)',
+    requestedAt: 'Pending',
+    documentsSubmittedAt: null,
     fee: 150,
     feeStatus: 'Payable on-site / UPI'
   });
 
   // Statutory Documents Submissions (5 Required Documents per shop)
-  const [documentSubmissions, setDocumentSubmissions] = useState({
-    'merch-1': {
-      merchantId: 'merch-1',
-      shopName: 'Shree Ganesh General Store',
-      status: 'pending_review',
-      submittedAt: '12 Jan 2025, 09:30 AM',
-      reviewedBy: 'Insp. R. Deshmukh',
-      reviewedAt: null,
-      remarks: 'All 5 statutory documents submitted by merchant. Awaiting physical inspection clearance by Inspector.',
-      docs: {
-        businessRegistration: {
-          title: 'Business Registration',
-          subTitle: 'Trade License / GST / Shop & Est. Act Certificate',
-          fileName: 'BBMP_Trade_License_2023_9081.pdf',
-          fileSize: '1.8 MB',
-          uploadedAt: '12 Jan 2025, 09:30 AM',
-          status: 'Uploaded'
-        },
-        ownerId: {
-          title: 'Owner ID Proof',
-          subTitle: 'Aadhaar Card / Government Photo ID',
-          fileName: 'Shree_Ganesh_Aadhaar_Card.pdf',
-          fileSize: '1.2 MB',
-          uploadedAt: '12 Jan 2025, 09:32 AM',
-          status: 'Uploaded'
-        },
-        purchaseInvoice: {
-          title: 'Purchase Invoice',
-          subTitle: 'Original Scale Purchase Bill / Tax Invoice',
-          fileName: 'Contech_CA30_Tax_Invoice_Bill.pdf',
-          fileSize: '2.4 MB',
-          uploadedAt: '12 Jan 2025, 09:35 AM',
-          status: 'Uploaded'
-        },
-        instrumentPlate: {
-          title: 'Instrument Plate Photo',
-          subTitle: 'Scale Specification & Serial Number Nameplate',
-          fileName: 'Contech_Spec_Nameplate_Photo.jpg',
-          fileSize: '3.1 MB',
-          uploadedAt: '12 Jan 2025, 09:40 AM',
-          status: 'Uploaded'
-        },
-        instrumentPhotos: {
-          title: 'Instrument Photos',
-          subTitle: 'Installed Counter Scale Front & Profile View',
-          fileName: 'Counter_Scale_Front_Installation.jpg',
-          fileSize: '4.5 MB',
-          uploadedAt: '12 Jan 2025, 09:42 AM',
-          status: 'Uploaded'
-        }
-      }
-    },
-    'merch-2': {
-      merchantId: 'merch-2',
-      shopName: 'Kaveri Provisions & Spices',
-      status: 'verified',
-      submittedAt: '14 Jan 2025, 11:00 AM',
-      reviewedBy: 'Insp. R. Deshmukh',
-      reviewedAt: '14 Jan 2025, 02:15 PM',
-      remarks: 'Documents and serial plate verified with national manufacturer database.',
-      docs: {
-        businessRegistration: {
-          title: 'Business Registration',
-          subTitle: 'Trade License / GST / Shop & Est. Act Certificate',
-          fileName: 'Kaveri_Trade_License_2021.pdf',
-          fileSize: '2.1 MB',
-          uploadedAt: '14 Jan 2025, 11:00 AM',
-          status: 'Uploaded'
-        },
-        ownerId: {
-          title: 'Owner ID Proof',
-          subTitle: 'Aadhaar Card / Government Photo ID',
-          fileName: 'Kaveri_Sundaram_PAN_Card.pdf',
-          fileSize: '1.4 MB',
-          uploadedAt: '14 Jan 2025, 11:05 AM',
-          status: 'Uploaded'
-        },
-        purchaseInvoice: {
-          title: 'Purchase Invoice',
-          subTitle: 'Original Scale Purchase Bill / Tax Invoice',
-          fileName: 'Avery_Platform_Invoice.pdf',
-          fileSize: '2.8 MB',
-          uploadedAt: '14 Jan 2025, 11:10 AM',
-          status: 'Uploaded'
-        },
-        instrumentPlate: {
-          title: 'Instrument Plate Photo',
-          subTitle: 'Scale Specification & Serial Number Nameplate',
-          fileName: 'Avery_Nameplate_Serial_Scan.jpg',
-          fileSize: '3.5 MB',
-          uploadedAt: '14 Jan 2025, 11:15 AM',
-          status: 'Uploaded'
-        },
-        instrumentPhotos: {
-          title: 'Instrument Photos',
-          subTitle: 'Installed Counter Scale Front & Profile View',
-          fileName: 'Avery_Platform_Shop_View.jpg',
-          fileSize: '4.0 MB',
-          uploadedAt: '14 Jan 2025, 11:20 AM',
-          status: 'Uploaded'
-        }
-      }
-    }
-  });
+  const [documentSubmissions, setDocumentSubmissions] = useState({});
 
   // Certificate State
-  const [certificateData, setCertificateData] = useState({
-    certId: 'CERT-KA-2024-9921',
-    ruleForm: 'Form XVII (Rule 14)',
-    actYear: 'Act of 2009',
-    statusBadge: 'VERIFIED & COMPLIANT',
-    daysLeft: 337,
-    validUntil: '12 Jan 2026',
-    verifiedDate: '13 Jan 2025',
-    inspectorSeal: 'SEAL-LM-BLR-0428',
-    instrumentModel: 'Contech CA-30 (Max 30kg, e=1g)',
-    shopLocation: 'Shree Ganesh General Store, Ward 4',
-    workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
-    digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-    calibrationTests: testCalibrationData
-  });
+  const [certificateData, setCertificateData] = useState(null);
 
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -558,127 +118,154 @@ export const AppProvider = ({ children }) => {
     }, 4500);
   };
 
-  // Sync state from backend MongoDB API on mount
+  // Sync state from backend PostgreSQL API on mount
   useEffect(() => {
     const fetchBackendData = async () => {
       try {
         const res = await api.getShops();
-        if (res.success && res.data && res.data.length > 0) {
+        if (res.success && res.data) {
           const backendShops = res.data;
 
-          // Merge into ownerShops
-          setOwnerShops((prev) => {
-            const merged = [...prev];
-            backendShops.forEach((bShop) => {
-              const idx = merged.findIndex((s) => s.id === bShop.id || s.name.toLowerCase() === bShop.name.toLowerCase());
-              const formattedShop = {
-                id: bShop.id,
-                name: bShop.name,
-                ownerName: bShop.ownerName,
-                branchType: bShop.branchType || 'Commercial Retail Store',
-                merchantUid: bShop.merchantUid,
-                tradeLicense: bShop.tradeLicense,
-                gstin: bShop.gstin || '',
-                shopActReg: bShop.shopActReg || '',
-                zone: bShop.zone,
-                address: bShop.address,
-                phone: bShop.phone,
-                assignedInspector: bShop.assignedInspector || 'Pending Admin Allocation',
-                inspectorBadge: bShop.inspectorBadge || 'LM-PENDING',
-                status: bShop.status || 'Active Commercial Establishment',
-                complianceStatus: bShop.complianceStatus || 'Pending Inspector Assignment',
-                documentStatus: bShop.documentStatus || 'not_uploaded',
-                registeredScalesCount: bShop.registeredScalesCount || 1,
-                instruments: bShop.instruments || [],
-                certificationHistory: []
-              };
-              if (idx >= 0) {
-                merged[idx] = { ...merged[idx], ...formattedShop };
-              } else {
-                merged.unshift(formattedShop);
-              }
-            });
-            return merged;
-          });
+          const formattedShops = backendShops.map((bShop) => ({
+            id: bShop.id,
+            name: bShop.name,
+            ownerName: bShop.ownerName,
+            branchType: bShop.branchType || 'Commercial Retail Store',
+            merchantUid: bShop.merchantUid,
+            tradeLicense: bShop.tradeLicense,
+            gstin: bShop.gstin || '',
+            shopActReg: bShop.shopActReg || '',
+            zone: bShop.zone,
+            address: bShop.address,
+            phone: bShop.phone,
+            email: bShop.email || '',
+            assignedInspector: bShop.assignedInspector || 'Pending Admin Allocation',
+            inspectorBadge: bShop.inspectorBadge || 'LM-PENDING',
+            status: bShop.status || 'Active Commercial Establishment',
+            complianceStatus: bShop.complianceStatus || 'Pending Inspector Assignment',
+            documentStatus: bShop.documentStatus || 'not_uploaded',
+            documentsRemarks: bShop.documentsRemarks || '',
+            reviewedBy: bShop.reviewedBy || '',
+            documentSubmissionData: bShop.documentSubmissionData || null,
+            registeredScalesCount: bShop.registeredScalesCount || (bShop.instruments?.length || 1),
+            instruments: bShop.instruments || [],
+            certificationHistory: []
+          }));
 
-          // Merge into merchants list
-          setMerchants((prev) => {
-            const merged = [...prev];
-            backendShops.forEach((bShop) => {
-              const idx = merged.findIndex((m) => m.id === bShop.id || m.name.toLowerCase() === bShop.name.toLowerCase());
-              const isAssigned = bShop.assignedInspector && bShop.assignedInspector !== 'Pending Admin Allocation';
-              const formattedMerch = {
-                id: bShop.id,
-                name: bShop.name,
-                ownerName: bShop.ownerName,
-                email: bShop.email || `store${Math.floor(100 + Math.random() * 900)}@metrx.com`,
-                merchantUid: bShop.merchantUid,
-                tradeLicense: bShop.tradeLicense,
-                zone: bShop.zone,
-                address: bShop.address,
-                phone: bShop.phone,
-                registeredScales: bShop.registeredScalesCount || 1,
-                complianceStatus: bShop.complianceStatus || (isAssigned ? 'Inspector Assigned' : 'Pending Inspector Assignment'),
-                assignedInspector: isAssigned ? bShop.assignedInspector : null,
-                assignedInspectorBadge: isAssigned ? bShop.inspectorBadge : null,
-                createdAt: bShop.createdAt ? new Date(bShop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'
-              };
-              if (idx >= 0) {
-                merged[idx] = { ...merged[idx], ...formattedMerch };
-              } else {
-                merged.unshift(formattedMerch);
-              }
-            });
-            return merged;
-          });
+          setOwnerShops(formattedShops);
 
-          // Sync into operations queue
-          setOperations((prev) => {
-            const merged = [...prev];
-            backendShops.forEach((bShop) => {
-              const existingIdx = merged.findIndex((op) => op.shopName === bShop.name || op.merchantUid === bShop.merchantUid);
-              const isAssigned = bShop.assignedInspector && bShop.assignedInspector !== 'Pending Admin Allocation';
-              const opEntry = {
-                id: `OP-${bShop.id}`,
-                inspectorName: isAssigned ? bShop.assignedInspector : 'Unassigned (Action Required)',
-                badgeNumber: isAssigned ? (bShop.inspectorBadge || 'LM-BLR-402') : 'LM-PENDING',
-                shopName: bShop.name,
-                merchantUid: bShop.merchantUid,
-                zone: bShop.zone?.split(' ')[0] || 'Ward 4',
-                operationType: 'On-Site Stamping & Verification',
-                scaleModel: 'Commercial Electronic Scale',
-                slot: isAssigned ? '11:30 AM – 01:00 PM (Assigned Slot)' : 'Awaiting Inspector Assignment',
-                liveStatus: isAssigned ? (bShop.complianceStatus === 'Documents Verified' ? 'Docs Verified • Ready for Visit' : 'Inspector Assigned • Pending Docs') : 'New Registration • Pending Allocation',
-                statusType: isAssigned ? 'scheduled' : 'scheduled',
-                remarks: isAssigned ? `Assigned to ${bShop.assignedInspector}` : 'Requires Inspector Assignment by Controller'
-              };
-              if (existingIdx >= 0) {
-                merged[existingIdx] = { ...merged[existingIdx], ...opEntry };
-              } else {
-                merged.unshift(opEntry);
-              }
-            });
-            return merged;
+          // Populate merchants ledger
+          const formattedMerchants = formattedShops.map((bShop) => {
+            const isAssigned = bShop.assignedInspector &&
+              bShop.assignedInspector !== 'Pending Admin Allocation' &&
+              bShop.assignedInspector !== 'Unassigned (Action Required)';
+            return {
+              id: bShop.id,
+              name: bShop.name,
+              ownerName: bShop.ownerName,
+              email: bShop.email || `merchant@store.com`,
+              merchantUid: bShop.merchantUid,
+              tradeLicense: bShop.tradeLicense,
+              zone: bShop.zone,
+              address: bShop.address,
+              phone: bShop.phone,
+              registeredScales: bShop.registeredScalesCount || (bShop.instruments?.length || 1),
+              complianceStatus: bShop.complianceStatus || (isAssigned ? 'Inspector Assigned' : 'Pending Inspector Assignment'),
+              assignedInspector: isAssigned ? bShop.assignedInspector : null,
+              assignedInspectorBadge: isAssigned ? bShop.inspectorBadge : null,
+              createdAt: bShop.createdAt ? new Date(bShop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'
+            };
           });
+          setMerchants(formattedMerchants);
 
-          // Sync document submissions if stored
+          // Active shop profile setup
+          if (formattedShops.length > 0) {
+            const active = formattedShops[0];
+            setStoreInfo({
+              id: active.id,
+              name: active.name,
+              regNumber: active.tradeLicense,
+              merchantUid: active.merchantUid,
+              location: active.address,
+              division: 'Bengaluru Central Division',
+              contactPerson: active.ownerName,
+              phone: active.phone,
+              zone: active.zone,
+              assignedInspector: active.assignedInspector,
+              inspectorBadge: active.inspectorBadge,
+              certificateId: 'PENDING'
+            });
+            setInstruments(active.instruments || []);
+
+            const isAssigned = active.assignedInspector &&
+              active.assignedInspector !== 'Pending Admin Allocation' &&
+              active.assignedInspector !== 'Unassigned (Action Required)';
+            setVerificationStatus((prev) => ({
+              ...prev,
+              documentStatus: active.documentStatus || 'not_uploaded',
+              step: active.complianceStatus?.includes('Scheduled') ? 3 : active.documentStatus === 'verified' ? 2 : 1,
+              inspectorName: active.assignedInspector || 'Pending Admin Allocation',
+              inspectorBadge: active.inspectorBadge || 'LM-PENDING',
+              applicationRef: `METRA-LMIS-${active.merchantUid.replace('#', '')}`
+            }));
+          }
+
+          // Build Admin Live Field Operations strictly from real registered establishments
+          const ops = [];
+          formattedShops.forEach((bShop) => {
+            const isAssigned = bShop.assignedInspector &&
+              bShop.assignedInspector !== 'Pending Admin Allocation' &&
+              bShop.assignedInspector !== 'Unassigned (Action Required)';
+            ops.push({
+              id: `OP-${bShop.id}`,
+              inspectorName: isAssigned ? bShop.assignedInspector : 'Unassigned (Action Required)',
+              badgeNumber: isAssigned ? (bShop.inspectorBadge || 'LM-BLR-402') : 'LM-PENDING',
+              shopName: bShop.name,
+              merchantUid: bShop.merchantUid,
+              zone: bShop.zone?.split(' ')[0] || 'Ward 4',
+              operationType: 'On-Site Stamping & Verification',
+              scaleModel: bShop.instruments?.[0]?.model || 'Commercial Electronic Scale',
+              slot: isAssigned ? '11:30 AM – 01:00 PM (Assigned Slot)' : 'Awaiting Inspector Assignment',
+              liveStatus: isAssigned ? (bShop.complianceStatus === 'Documents Verified' ? 'Docs Verified • Ready for Visit' : 'Inspector Assigned • Pending Docs') : 'New Registration • Pending Allocation',
+              statusType: isAssigned ? 'scheduled' : 'scheduled',
+              remarks: isAssigned ? `Assigned to ${bShop.assignedInspector}` : 'Requires Inspector Assignment by Controller'
+            });
+          });
+          setOperations(ops);
+
+          // Build Document Submissions strictly from real shop submissions
+          const docsMap = {};
           backendShops.forEach((bShop) => {
             if (bShop.documentSubmissionData || bShop.documentStatus) {
-              setDocumentSubmissions((prev) => ({
-                ...prev,
-                [bShop.id]: {
-                  merchantId: bShop.id,
-                  shopName: bShop.name,
-                  status: bShop.documentStatus || 'pending_review',
-                  submittedAt: bShop.updatedAt ? new Date(bShop.updatedAt).toLocaleDateString('en-GB') : 'Recently',
-                  reviewedBy: bShop.reviewedBy || bShop.assignedInspector || 'Insp. R. Deshmukh',
-                  reviewedAt: bShop.documentStatus === 'verified' ? 'Verified' : null,
-                  remarks: bShop.documentsRemarks || (bShop.documentStatus === 'verified' ? 'All 5 statutory documents verified.' : 'Awaiting physical inspection clearance.'),
-                  docs: bShop.documentSubmissionData || (prev[bShop.id]?.docs)
-                }
-              }));
+              docsMap[bShop.id] = {
+                merchantId: bShop.id,
+                shopName: bShop.name,
+                status: bShop.documentStatus || 'not_uploaded',
+                submittedAt: bShop.updatedAt ? new Date(bShop.updatedAt).toLocaleDateString('en-GB') : 'Recently',
+                reviewedBy: bShop.reviewedBy || bShop.assignedInspector || 'Pending Allocation',
+                reviewedAt: bShop.documentStatus === 'verified' ? 'Verified' : null,
+                remarks: bShop.documentsRemarks || '',
+                docs: bShop.documentSubmissionData || null
+              };
             }
           });
+          setDocumentSubmissions(docsMap);
+
+          // Build State Compliance Registry from real shops
+          const regList = formattedShops.map((s, idx) => ({
+            id: `REG-${String(idx + 1).padStart(2, '0')}`,
+            shopName: s.name,
+            merchantUid: s.merchantUid,
+            certId: s.documentStatus === 'verified' ? `CERT-KA-2025-${s.merchantUid.replace('#EST-', '')}` : 'PENDING-AUDIT',
+            instrument: s.instruments?.[0]?.name || 'Electronic Counter Scale',
+            serial: s.instruments?.[0]?.serialNumber || '#KA-BLR-PENDING',
+            zone: s.zone,
+            status: s.complianceStatus || 'Pending Verification',
+            expiryDate: 'Within 30 Days',
+            inspector: s.assignedInspector || 'Unassigned',
+            stampSeal: s.instruments?.[0]?.sealNumber || 'SEAL-PENDING'
+          }));
+          setRegistry(regList);
         }
       } catch (err) {
         console.warn('[Backend Sync Warning]', err.message);
@@ -692,10 +279,10 @@ export const AppProvider = ({ children }) => {
     setActiveRole(role);
     if (role === 'shop-owner') {
       setCurrentView('shop-dashboard');
-      showToast('Logged in as Shop Owner (Shree Ganesh General Store)', 'success');
+      showToast(`Logged in as Shop Owner${storeInfo?.name ? ` (${storeInfo.name})` : ''}`, 'success');
     } else if (role === 'inspector') {
       setCurrentView('inspector-schedule');
-      showToast('Logged in as Field Inspector (Insp. R. Deshmukh)', 'success');
+      showToast(`Logged in as Field Inspector${currentInspector?.name ? ` (${currentInspector.name})` : ''}`, 'success');
     } else if (role === 'admin') {
       setCurrentView('admin-dashboard');
       showToast('Logged in as Department Admin (Controller of Legal Metrology)', 'success');
@@ -854,7 +441,7 @@ export const AppProvider = ({ children }) => {
 
         setActiveRole('shop-owner');
         setCurrentView('shop-dashboard');
-        showToast(`Logged in successfully with MongoDB backend! Welcome, ${res.data.name}.`, 'success');
+        showToast(`Logged in successfully! Welcome, ${res.data.name}.`, 'success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return true;
       }
@@ -1701,28 +1288,28 @@ export const AppProvider = ({ children }) => {
   const handleAddOwnerShop = (newShopData) => {
     const uid = `#EST-${Math.floor(10000 + Math.random() * 90000)}`;
     const newShop = {
-      id: `shop-ganesh-${Date.now()}`,
-      name: newShopData.name || 'Ganesh Retail Branch',
-      ownerName: storeInfo.contactPerson || 'Shree S. N. Ganesh',
+      id: `shop-${Date.now()}`,
+      name: newShopData.name || 'Commercial Branch',
+      ownerName: storeInfo.contactPerson || storeInfo.name || 'Store Owner',
       branchType: newShopData.branchType || 'Commercial Retail Branch',
       merchantUid: uid,
       tradeLicense: newShopData.tradeLicense || `BBMP/TL/2025/${Math.floor(1000 + Math.random() * 9000)}`,
-      gstin: newShopData.gstin || `29AABCU9603R${Math.floor(4 + Math.random() * 5)}ZP`,
+      gstin: newShopData.gstin || `29AABCU${Math.floor(1000 + Math.random() * 9000)}R1ZP`,
       shopActReg: `KA/BLR/${Math.floor(10000 + Math.random() * 90000)}/2025`,
-      zone: newShopData.zone || 'Ward 4 (Commercial Circle)',
-      address: newShopData.address || 'Commercial Road, Bengaluru',
-      phone: newShopData.phone || storeInfo.phone || '+91 98450 21980',
-      assignedInspector: 'Insp. R. Deshmukh',
-      inspectorBadge: 'LM-BLR-402',
+      zone: newShopData.zone || storeInfo.zone || 'Ward 4 (Commercial Circle)',
+      address: newShopData.address || storeInfo.location || 'Commercial Road, Bengaluru',
+      phone: newShopData.phone || storeInfo.phone || '',
+      assignedInspector: null,
+      inspectorBadge: null,
       status: 'Active Commercial Establishment',
-      complianceStatus: 'Pending Inspector Verification',
-      documentStatus: 'pending_review',
+      complianceStatus: 'Pending Inspector Assignment',
+      documentStatus: 'pending_upload',
       registeredScalesCount: 1,
       instruments: [
         {
           id: `inst-${Date.now()}`,
           name: `${newShopData.scaleType || 'Electronic Counter'} Scale`,
-          model: newShopData.scaleModel || 'Contech Digital Standard',
+          model: newShopData.scaleModel || 'Digital Standard Scale',
           capacity: '30kg / 1g precision',
           serialNumber: `#KA-BLR-${Math.floor(10000 + Math.random() * 90000)}`,
           counter: 'Counter 1',
@@ -1746,8 +1333,8 @@ export const AppProvider = ({ children }) => {
         id: newShop.id,
         name: newShop.name,
         ownerName: newShop.ownerName,
-        email: storeInfo.email || 'ganesh@store.com',
-        password: '12345678',
+        email: storeInfo.email || '',
+        password: 'password123',
         merchantUid: newShop.merchantUid,
         tradeLicense: newShop.tradeLicense,
         zone: newShop.zone,
@@ -1755,7 +1342,7 @@ export const AppProvider = ({ children }) => {
         phone: newShop.phone,
         registeredScales: 1,
         complianceStatus: 'Pending Inspector Assignment',
-        assignedInspector: 'Insp. R. Deshmukh',
+        assignedInspector: null,
         createdAt: 'Today'
       },
       ...prev
@@ -1856,7 +1443,7 @@ export const AppProvider = ({ children }) => {
       serialNumber: item.serial || '#KA-BLR-88412',
       shopLocation: `${item.shopName}, ${item.zone}`,
       shopName: item.shopName,
-      merchantUid: item.merchantUid || '#EST-44091',
+      merchantUid: item.merchantUid || '',
       workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
       digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
       calibrationTests: testCalibrationData,
@@ -1882,7 +1469,7 @@ export const AppProvider = ({ children }) => {
       serialNumber: visit.serialNumber || '#KA-BLR-88412',
       shopLocation: `${visit.shopName}, ${visit.address}`,
       shopName: visit.shopName,
-      merchantUid: visit.merchantUid || '#EST-44091',
+      merchantUid: visit.merchantUid || '',
       workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
       digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
       calibrationTests: testCalibrationData,
@@ -1954,7 +1541,7 @@ export const AppProvider = ({ children }) => {
         serialNumber: match.serial || '#KA-BLR-88412',
         shopLocation: `${match.shopName}, ${match.zone}`,
         shopName: match.shopName,
-        merchantUid: match.merchantUid || '#EST-44091',
+        merchantUid: match.merchantUid || '',
         workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
         digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
         calibrationTests: testCalibrationData,

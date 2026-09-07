@@ -204,8 +204,19 @@ export const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7F0E8]">
-                {operations.map((op) => (
-                  <tr key={op.id} className="hover:bg-[#FAF8F4] transition-colors">
+                {operations.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-4xl text-gray-300">radar</span>
+                        <span className="font-semibold text-sm text-gray-700">No Active Field Operations</span>
+                        <span className="text-xs text-gray-400">Scheduled shop visits and active audits will stream here in real time.</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  operations.map((op) => (
+                    <tr key={op.id} className="hover:bg-[#FAF8F4] transition-colors">
                     <td className="py-4 px-4">
                       <div className="font-bold text-gray-900 flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-sm text-[#023625]">badge</span>
@@ -291,7 +302,7 @@ export const AdminDashboard = () => {
                       )}
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>
@@ -416,17 +427,28 @@ export const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7F0E8]">
-                {merchants.map((m) => {
-                  const isUnassigned = !m.assignedInspector;
-                  return (
-                    <tr
-                      key={m.id}
-                      className={`transition-colors ${
-                        isUnassigned
-                          ? 'bg-amber-50/50 hover:bg-amber-50/80'
-                          : 'hover:bg-[#FAF8F4]'
-                      }`}
-                    >
+                {merchants.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-4xl text-gray-300">storefront</span>
+                        <span className="font-semibold text-sm text-gray-700">No Registered Establishments Yet</span>
+                        <span className="text-xs text-gray-400">Stores registered by merchants will appear here for inspector allocation.</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  merchants.map((m) => {
+                    const isUnassigned = !m.assignedInspector;
+                    return (
+                      <tr
+                        key={m.id}
+                        className={`transition-colors ${
+                          isUnassigned
+                            ? 'bg-amber-50/50 hover:bg-amber-50/80'
+                            : 'hover:bg-[#FAF8F4]'
+                        }`}
+                      >
                       <td className="py-3.5 px-4 font-mono font-bold text-[#E0702A]">
                         {m.merchantUid}
                       </td>
@@ -494,7 +516,7 @@ export const AdminDashboard = () => {
                       </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>

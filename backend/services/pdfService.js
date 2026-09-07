@@ -79,7 +79,7 @@ export const generateCertificatePDF = (cert, qrDataUrl, res) => {
   const col2 = 220;
 
   const rows = [
-    ['Commercial Establishment:', cert.shop?.name || cert.shopName || 'Shree Ganesh General Store'],
+    ['Commercial Establishment:', cert.shop?.name || cert.shopName || 'Registered Commercial Establishment'],
     ['Establishment ID (UID):', cert.shop?.merchantUid || '#EST-44091'],
     ['Trade License No:', cert.shop?.tradeLicense || 'BBMP/TL/2023/9081'],
     ['Instrument Model:', cert.instrumentModel || 'Contech CA-30 (Max 30kg, e=1g)'],

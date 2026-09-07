@@ -123,13 +123,22 @@ export const issueCertificate = async (req, res) => {
 
     const generatedId = certId || `CERT-KA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    let targetShopId = shopId;
+    if (!targetShopId) {
+      const anyShop = await prisma.shop.findFirst();
+      targetShopId = anyShop?.id;
+    }
+    if (!targetShopId) {
+      return res.status(400).json({ success: false, message: 'No registered shop found to associate certificate' });
+    }
+
     const cert = await prisma.certificate.create({
       data: {
         id: `cert-${Date.now()}`,
         certId: generatedId,
         ruleForm: ruleForm || 'Form XVII (Rule 14)',
         actYear: actYear || 'Legal Metrology Act, 2009',
-        shopId: shopId || 'shop-ganesh-1',
+        shopId: targetShopId,
         instrumentModel: instrumentModel || 'Electronic Countertop Scale',
         serialNumber: serialNumber || '#KA-BLR-88412',
         verifiedDate: verifiedDate || new Date().toLocaleDateString('en-GB'),

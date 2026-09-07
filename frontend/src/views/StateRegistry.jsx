@@ -60,13 +60,15 @@ export const StateRegistry = () => {
             <span className="text-[10px] sm:text-xs uppercase tracking-wider text-outline block font-bold">
               Active Registered
             </span>
-            <span className="text-sm sm:text-base font-bold text-primary">12,480 Units</span>
+            <span className="text-sm sm:text-base font-bold text-primary">{registry.length} Verified Units</span>
           </div>
           <div className="flex-1 sm:flex-initial bg-surface-container-lowest border border-outline-variant px-3 sm:px-4 py-2 rounded-xl shadow-sm text-center sm:text-left">
             <span className="text-[10px] sm:text-xs uppercase tracking-wider text-outline block font-bold">
               Compliance Rate
             </span>
-            <span className="text-sm sm:text-base font-bold text-[#2E7D32]">99.4%</span>
+            <span className="text-sm sm:text-base font-bold text-[#2E7D32]">
+              {registry.length > 0 ? '100%' : 'N/A'}
+            </span>
           </div>
         </div>
       </div>
@@ -131,7 +133,20 @@ export const StateRegistry = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/40">
-              {filteredData.map((item) => {
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-4xl text-gray-300">verified_user</span>
+                      <span className="font-semibold text-sm text-gray-700">No Registry Records Found</span>
+                      <span className="text-xs text-gray-400">
+                        {filterQuery ? 'Try adjusting your search criteria.' : 'Certificates issued by enforcement officers upon field inspection will be recorded here.'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map((item) => {
                 const isUrgent = item.status === 'Renewal Scheduled' || item.status === 'Inspection Slotted';
                 return (
                   <tr key={item.id} className="hover:bg-surface-container-low/60 transition-colors">

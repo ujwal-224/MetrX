@@ -378,104 +378,164 @@ export const InspectorSchedule = () => {
               </span>
 
               {/* 1. Business Registration */}
-              <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
-                    <span className="material-symbols-outlined text-lg">description</span>
+              {(() => {
+                const doc = selectedShopDocs.docs?.businessRegistration;
+                const isUploaded = Boolean(doc?.fileName || doc?.uploaded);
+                return (
+                  <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                        <span className="material-symbols-outlined text-lg">description</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-900">
+                          1. Business Registration
+                        </h3>
+                        <p className="text-[11px] text-gray-500">
+                          Trade License / GSTIN: {isUploaded ? (
+                            <strong className="text-gray-800">{doc.fileName}</strong>
+                          ) : (
+                            <em className="text-gray-400 font-normal">Pending submission by merchant</em>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {isUploaded ? 'Uploaded' : 'Pending'}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-900">
-                      1. Business Registration
-                    </h3>
-                    <p className="text-[11px] text-gray-500">
-                      Trade License / GSTIN Certificate: <strong className="text-gray-800">{selectedShopDocs.docs?.businessRegistration?.fileName || 'BBMP_Trade_License_2023_9081.pdf'}</strong>
-                    </p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
-                  Uploaded (PDF)
-                </span>
-              </div>
+                );
+              })()}
 
               {/* 2. Owner ID */}
-              <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
-                    <span className="material-symbols-outlined text-lg">badge</span>
+              {(() => {
+                const doc = selectedShopDocs.docs?.ownerId;
+                const isUploaded = Boolean(doc?.fileName || doc?.uploaded);
+                return (
+                  <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                        <span className="material-symbols-outlined text-lg">badge</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-900">
+                          2. Owner ID Proof
+                        </h3>
+                        <p className="text-[11px] text-gray-500">
+                          Government ID / Aadhaar: {isUploaded ? (
+                            <strong className="text-gray-800">{doc.fileName}</strong>
+                          ) : (
+                            <em className="text-gray-400 font-normal">Pending submission by merchant</em>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {isUploaded ? 'Uploaded' : 'Pending'}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-900">
-                      2. Owner ID Proof
-                    </h3>
-                    <p className="text-[11px] text-gray-500">
-                      Government Aadhaar / ID Card: <strong className="text-gray-800">{selectedShopDocs.docs?.ownerId?.fileName || 'Shree_Ganesh_Aadhaar_Card.pdf'}</strong>
-                    </p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
-                  Uploaded (PDF)
-                </span>
-              </div>
+                );
+              })()}
 
               {/* 3. Purchase Invoice */}
-              <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
-                    <span className="material-symbols-outlined text-lg">receipt_long</span>
+              {(() => {
+                const doc = selectedShopDocs.docs?.purchaseInvoice;
+                const isUploaded = Boolean(doc?.fileName || doc?.uploaded);
+                return (
+                  <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                        <span className="material-symbols-outlined text-lg">receipt_long</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-900">
+                          3. Purchase Invoice
+                        </h3>
+                        <p className="text-[11px] text-gray-500">
+                          Scale Tax Invoice: {isUploaded ? (
+                            <strong className="text-gray-800">{doc.fileName}</strong>
+                          ) : (
+                            <em className="text-gray-400 font-normal">Pending submission by merchant</em>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {isUploaded ? 'Uploaded' : 'Pending'}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-900">
-                      3. Purchase Invoice
-                    </h3>
-                    <p className="text-[11px] text-gray-500">
-                      Scale Tax Invoice: <strong className="text-gray-800">{selectedShopDocs.docs?.purchaseInvoice?.fileName || 'Contech_CA30_Tax_Invoice_Bill.pdf'}</strong>
-                    </p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
-                  Uploaded (PDF)
-                </span>
-              </div>
+                );
+              })()}
 
               {/* 4. Instrument Plate Photo */}
-              <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
-                    <span className="material-symbols-outlined text-lg">photo_camera</span>
+              {(() => {
+                const doc = selectedShopDocs.docs?.instrumentPlate;
+                const isUploaded = Boolean(doc?.fileName || doc?.uploaded);
+                return (
+                  <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                        <span className="material-symbols-outlined text-lg">photo_camera</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-900">
+                          4. Instrument Plate Photo
+                        </h3>
+                        <p className="text-[11px] text-gray-500">
+                          Serial &amp; Model Spec Plate: {isUploaded ? (
+                            <strong className="text-gray-800">{doc.fileName}</strong>
+                          ) : (
+                            <em className="text-gray-400 font-normal">Pending submission by merchant</em>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {isUploaded ? 'Uploaded' : 'Pending'}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-900">
-                      4. Instrument Plate Photo
-                    </h3>
-                    <p className="text-[11px] text-gray-500">
-                      Serial &amp; Model Spec Plate: <strong className="text-gray-800">{selectedShopDocs.docs?.instrumentPlate?.fileName || 'Contech_Spec_Nameplate_Photo.jpg'}</strong>
-                    </p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
-                  Uploaded (JPG)
-                </span>
-              </div>
+                );
+              })()}
 
               {/* 5. Instrument Photos */}
-              <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
-                    <span className="material-symbols-outlined text-lg">camera_alt</span>
+              {(() => {
+                const doc = selectedShopDocs.docs?.instrumentPhotos;
+                const isUploaded = Boolean(doc?.fileName || doc?.uploaded);
+                return (
+                  <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                        <span className="material-symbols-outlined text-lg">camera_alt</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-900">
+                          5. Instrument Photos
+                        </h3>
+                        <p className="text-[11px] text-gray-500">
+                          Installed Scale View: {isUploaded ? (
+                            <strong className="text-gray-800">{doc.fileName}</strong>
+                          ) : (
+                            <em className="text-gray-400 font-normal">Pending submission by merchant</em>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {isUploaded ? 'Uploaded' : 'Pending'}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-900">
-                      5. Instrument Photos
-                    </h3>
-                    <p className="text-[11px] text-gray-500">
-                      Installed Countertop Scale View: <strong className="text-gray-800">{selectedShopDocs.docs?.instrumentPhotos?.fileName || 'Counter_Scale_Front_Installation.jpg'}</strong>
-                    </p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">
-                  Uploaded (JPG)
-                </span>
-              </div>
+                );
+              })()}
             </div>
 
             {/* Officer Observation Input */}

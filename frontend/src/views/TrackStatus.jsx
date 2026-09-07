@@ -127,7 +127,7 @@ export const TrackStatus = () => {
               <span className={`text-[10px] font-semibold hidden sm:block ${
                 docStatus === 'verified' ? 'text-emerald-700' : docStatus === 'fraud' ? 'text-red-600' : 'text-amber-600'
               }`}>
-                {docStatus === 'verified' ? 'Verified' : docStatus === 'fraud' ? 'Fraud / Blocked' : '5 Uploaded'}
+                {docStatus === 'verified' ? 'Verified' : docStatus === 'fraud' ? 'Fraud / Blocked' : (docData.docs ? 'Under Scrutiny' : 'Pending Upload')}
               </span>
             </div>
 

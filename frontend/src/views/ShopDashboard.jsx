@@ -34,20 +34,20 @@ export const ShopDashboard = () => {
   });
 
   const activeShop = ownerShops?.[activeShopIndex] || ownerShops?.[0] || {
-    name: storeInfo.name,
+    name: storeInfo.name || 'Commercial Establishment',
     branchType: 'Main Commercial Branch',
-    tradeLicense: storeInfo.regNumber,
-    gstin: '29AABCU9603R1ZM',
-    shopActReg: 'KA/BLR/44091/2023',
-    zone: storeInfo.zone,
-    address: storeInfo.location,
-    phone: storeInfo.phone,
-    assignedInspector: storeInfo.assignedInspector || 'Insp. R. Deshmukh',
-    inspectorBadge: 'LM-BLR-402',
+    tradeLicense: storeInfo.regNumber || 'Pending Statutory Filing',
+    gstin: storeInfo.gstin || 'Pending Registration',
+    shopActReg: storeInfo.shopActReg || 'Pending Registration',
+    zone: storeInfo.zone || 'Ward 4 (Commercial Circle)',
+    address: storeInfo.location || 'Bengaluru, Karnataka',
+    phone: storeInfo.phone || '',
+    assignedInspector: storeInfo.assignedInspector || null,
+    inspectorBadge: storeInfo.inspectorBadge || null,
     status: 'Active Commercial Establishment',
-    complianceStatus: 'Documents Verified',
-    documentStatus: 'verified',
-    registeredScalesCount: instruments.length,
+    complianceStatus: 'Pending Inspector Assignment',
+    documentStatus: 'pending_upload',
+    registeredScalesCount: instruments.length || 0,
     certificationHistory: []
   };
 
@@ -114,7 +114,7 @@ export const ShopDashboard = () => {
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-                Verified Merchant Account • {storeInfo.contactPerson || 'Shree S. N. Ganesh'}
+                Verified Merchant Account • {storeInfo.contactPerson || storeInfo.name || 'Merchant Owner'}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
@@ -226,12 +226,12 @@ export const ShopDashboard = () => {
 
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
             <span className="text-[10px] uppercase font-bold text-gray-400">GSTIN / Tax ID</span>
-            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.gstin || '29AABCU9603R1ZM'}</span>
+            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.gstin || 'Pending Registration'}</span>
           </div>
 
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
             <span className="text-[10px] uppercase font-bold text-gray-400">Shop &amp; Establishment Act Reg</span>
-            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.shopActReg || 'KA/BLR/44091/2023'}</span>
+            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.shopActReg || 'Pending Registration'}</span>
           </div>
 
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
@@ -244,14 +244,18 @@ export const ShopDashboard = () => {
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
             <span className="text-[10px] uppercase font-bold text-gray-400">Assigned Field Inspector</span>
             <span className="text-xs font-bold text-[#023625] mt-0.5 truncate">
-              {activeShop.assignedInspector || 'Insp. R. Deshmukh'} ({activeShop.inspectorBadge || 'Badge #LM-BLR-402'})
+              {activeShop.assignedInspector ? (
+                `${activeShop.assignedInspector} ${activeShop.inspectorBadge ? `(${activeShop.inspectorBadge})` : ''}`
+              ) : (
+                <span className="text-amber-800 font-bold">Pending Inspector Allocation</span>
+              )}
             </span>
           </div>
 
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
             <span className="text-[10px] uppercase font-bold text-gray-400">Registered Scales at Branch</span>
             <span className="text-xs font-bold text-gray-900 mt-0.5">
-              {activeShop.instruments?.length || activeShop.registeredScalesCount || 1} Commercial Instruments
+              {activeShop.instruments?.length || activeShop.registeredScalesCount || 0} Commercial Instruments
             </span>
           </div>
         </div>
@@ -288,47 +292,88 @@ export const ShopDashboard = () => {
         </div>
 
         {/* 5 Documents Summary Chips */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-gray-400">1. Business Reg</span>
-            <span className="text-xs font-bold text-gray-900 truncate">Trade License</span>
-            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-xs">check</span> Uploaded
-            </span>
-          </div>
+        {(() => {
+          const docsObj = currentDocData.docs || {};
+          const isRegUploaded = Boolean(docsObj.businessRegistration?.uploaded || docsObj.businessRegistration?.fileName);
+          const isIdUploaded = Boolean(docsObj.ownerId?.uploaded || docsObj.ownerId?.fileName);
+          const isInvoiceUploaded = Boolean(docsObj.purchaseInvoice?.uploaded || docsObj.purchaseInvoice?.fileName);
+          const isPlateUploaded = Boolean(docsObj.instrumentPlate?.uploaded || docsObj.instrumentPlate?.fileName);
+          const isPhotoUploaded = Boolean(docsObj.instrumentPhotos?.uploaded || docsObj.instrumentPhotos?.fileName);
 
-          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-gray-400">2. Owner ID</span>
-            <span className="text-xs font-bold text-gray-900 truncate">Aadhaar Card</span>
-            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-xs">check</span> Uploaded
-            </span>
-          </div>
+          return (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+              <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400">1. Business Reg</span>
+                <span className="text-xs font-bold text-gray-900 truncate">Trade License</span>
+                {isRegUploaded ? (
+                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">check</span> Uploaded
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">pending</span> Pending
+                  </span>
+                )}
+              </div>
 
-          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-gray-400">3. Scale Invoice</span>
-            <span className="text-xs font-bold text-gray-900 truncate">Purchase Bill</span>
-            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-xs">check</span> Uploaded
-            </span>
-          </div>
+              <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400">2. Owner ID</span>
+                <span className="text-xs font-bold text-gray-900 truncate">Govt Photo ID</span>
+                {isIdUploaded ? (
+                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">check</span> Uploaded
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">pending</span> Pending
+                  </span>
+                )}
+              </div>
 
-          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-gray-400">4. Plate Photo</span>
-            <span className="text-xs font-bold text-gray-900 truncate">Serial Nameplate</span>
-            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-xs">check</span> Uploaded
-            </span>
-          </div>
+              <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400">3. Scale Invoice</span>
+                <span className="text-xs font-bold text-gray-900 truncate">Purchase Bill</span>
+                {isInvoiceUploaded ? (
+                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">check</span> Uploaded
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">pending</span> Pending
+                  </span>
+                )}
+              </div>
 
-          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-gray-400">5. Scale Photo</span>
-            <span className="text-xs font-bold text-gray-900 truncate">Counter Setup</span>
-            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-xs">check</span> Uploaded
-            </span>
-          </div>
-        </div>
+              <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400">4. Plate Photo</span>
+                <span className="text-xs font-bold text-gray-900 truncate">Serial Nameplate</span>
+                {isPlateUploaded ? (
+                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">check</span> Uploaded
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">pending</span> Pending
+                  </span>
+                )}
+              </div>
+
+              <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400">5. Scale Photo</span>
+                <span className="text-xs font-bold text-gray-900 truncate">Counter Setup</span>
+                {isPhotoUploaded ? (
+                  <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">check</span> Uploaded
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-700 font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">pending</span> Pending
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <p className="text-xs text-gray-500">
@@ -591,7 +636,7 @@ export const ShopDashboard = () => {
                   Register New Shop / Branch Establishment
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Add another commercial branch under <strong>{storeInfo.contactPerson || 'Shree S. N. Ganesh'}</strong>.
+                  Add another commercial branch under <strong>{storeInfo.contactPerson || storeInfo.name || 'your merchant profile'}</strong>.
                 </p>
               </div>
               <button
@@ -608,7 +653,7 @@ export const ShopDashboard = () => {
                 <input
                   value={newShopForm.name}
                   onChange={(e) => setNewShopForm({ ...newShopForm, name: e.target.value })}
-                  placeholder="e.g. Ganesh Dry Fruits &amp; Spices (Branch 4)"
+                  placeholder="e.g. Commercial Branch 2 (West Wing)"
                   className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
                   required
                 />
