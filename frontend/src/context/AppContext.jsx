@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { api } from '../services/api';
 import {
   initialStoreInfo,
   initialInstruments,
@@ -590,7 +591,35 @@ export const AppProvider = ({ children }) => {
   };
 
   // Authenticated Inspector Login (Only Admin-Provisioned Credentials Work)
-  const handleInspectorLogin = (email, password) => {
+  const handleInspectorLogin = async (email, password) => {
+    try {
+      const res = await api.login(email.trim(), password);
+      if (res.success && res.data && res.data.role === 'inspector') {
+        localStorage.setItem('metrx_token', res.data.token);
+        localStorage.setItem('metrx_user', JSON.stringify(res.data));
+
+        const match = inspectors.find(
+          (insp) => insp.email.toLowerCase() === email.trim().toLowerCase()
+        ) || {
+          id: res.data._id,
+          name: res.data.name,
+          badgeNumber: res.data.inspectorBadgeId || 'LM-BLR-402',
+          email: res.data.email,
+          zone: res.data.assignedZone || 'Ward 4 (Commercial Circle)',
+          status: 'Active'
+        };
+
+        setCurrentInspector(match);
+        setActiveRole('inspector');
+        setCurrentView('inspector-schedule');
+        showToast(`Welcome ${res.data.name}! (Badge: ${match.badgeNumber})`, 'success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return true;
+      }
+    } catch (err) {
+      console.warn('[Backend Inspector Auth Fallback]', err.message);
+    }
+
     const match = inspectors.find(
       (insp) => insp.email.toLowerCase() === email.trim().toLowerCase() && insp.password === password
     );
@@ -667,7 +696,40 @@ export const AppProvider = ({ children }) => {
   };
 
   // Authenticated Shop Owner Login
-  const handleMerchantLogin = (email, password) => {
+  const handleMerchantLogin = async (email, password) => {
+    try {
+      // 1. Attempt backend authentication
+      const res = await api.login(email.trim(), password);
+      if (res.success && res.data) {
+        localStorage.setItem('metrx_token', res.data.token);
+        localStorage.setItem('metrx_user', JSON.stringify(res.data));
+
+        // Sync local store details if present
+        const match = merchants.find((m) => m.email.toLowerCase() === email.trim().toLowerCase());
+        if (match) {
+          setStoreInfo((prev) => ({
+            ...prev,
+            name: match.name,
+            merchantUid: match.merchantUid,
+            regNumber: match.tradeLicense,
+            location: match.address,
+            contactPerson: match.ownerName,
+            phone: match.phone,
+            zone: match.zone
+          }));
+        }
+
+        setActiveRole('shop-owner');
+        setCurrentView('shop-dashboard');
+        showToast(`Logged in successfully with MongoDB backend! Welcome, ${res.data.name}.`, 'success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return true;
+      }
+    } catch (err) {
+      // 2. Fallback to local memory matching if backend error occurs
+      console.warn('[Backend Auth Fallback]', err.message);
+    }
+
     const match = merchants.find(
       (m) => m.email.toLowerCase() === email.trim().toLowerCase() && m.password === password
     );
@@ -1507,19 +1569,49 @@ export const AppProvider = ({ children }) => {
     navigateTo('certificate-view');
   };
 
-  const handleSearchCertificate = (query) => {
-    const q = (query || '').trim().toLowerCase();
+  const handleSearchCertificate = async (query) => {
+    const q = (query || '').trim();
     if (!q) {
       showToast('Please enter a certificate ID or shop name to search', 'error');
       return;
     }
 
+    try {
+      // 1. Try querying backend /api/certificates/lookup/:certId
+      const res = await api.lookupCertificate(q);
+      if (res.success && res.data) {
+        const cert = res.data;
+        showToast(`Official Certificate Verified on Legal Metrology Ledger: ${cert.certId}`, 'success');
+        setCertificateData({
+          certId: cert.certId,
+          ruleForm: cert.ruleForm || 'Form XVII (Rule 14)',
+          actYear: cert.actYear || 'Act of 2009',
+          statusBadge: cert.statusBadge || 'VERIFIED & COMPLIANT',
+          daysLeft: 365,
+          validUntil: cert.validUntil || '12 Jan 2026',
+          verifiedDate: cert.verifiedDate || '13 Jan 2025',
+          inspectorSeal: cert.inspectorSeal || 'SEAL-LM-BLR-0428',
+          instrumentModel: cert.instrumentModel || 'Contech CA-30 (Max 30kg, e=1g)',
+          shopLocation: `${cert.shopName || 'Commercial Establishment'}`,
+          workingStandardRef: cert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+          digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+          calibrationTests: cert.testObservations?.length ? cert.testObservations : testCalibrationData
+        });
+        navigateTo('certificate-view');
+        return;
+      }
+    } catch (err) {
+      // Fallback to local registry matching
+      console.warn('[Backend Cert Lookup Fallback]', err.message);
+    }
+
+    const qLower = q.toLowerCase();
     const match = registry.find(
       (r) =>
-        r.certId.toLowerCase().includes(q) ||
-        r.serial.toLowerCase().includes(q) ||
-        r.merchantUid.toLowerCase().includes(q) ||
-        r.shopName.toLowerCase().includes(q)
+        r.certId.toLowerCase().includes(qLower) ||
+        r.serial.toLowerCase().includes(qLower) ||
+        r.merchantUid.toLowerCase().includes(qLower) ||
+        r.shopName.toLowerCase().includes(qLower)
     );
 
     if (match) {
