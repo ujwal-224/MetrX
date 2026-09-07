@@ -362,55 +362,217 @@ export const AppProvider = ({ children }) => {
     const activeInsp = currentInspector || inspectors[0];
     if (!activeInsp) return [];
 
-    // Filter merchants assigned specifically to this inspector
-    const assignedMerchants = merchants.filter(
-      (m) => m.assignedInspector && m.assignedInspector.toLowerCase() === activeInsp.name.toLowerCase()
+    const matchesOfficer = (name, badge) => {
+      if (!name && !badge) return false;
+      const activeBadgeClean = (activeInsp.badgeNumber || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const badgeClean = (badge || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (activeBadgeClean && badgeClean && (activeBadgeClean.includes(badgeClean) || badgeClean.includes(activeBadgeClean))) {
+        return true;
+      }
+      if (name) {
+        const cleanName = String(name).toLowerCase().replace(/^(insp\.?|officer)\s*/i, '').trim();
+        const cleanActive = (activeInsp.name || '').toLowerCase().replace(/^(insp\.?|officer)\s*/i, '').trim();
+        if (cleanName && cleanActive && (cleanName === cleanActive || cleanName.includes(cleanActive) || cleanActive.includes(cleanName))) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // 1. Gather all visits explicitly scheduled or recorded in visits state for this inspector
+    const matchedVisits = visits.filter(
+      (v) => matchesOfficer(v.assignedOfficer, v.officerBadge) ||
+             merchants.some((m) => m.name === v.shopName && matchesOfficer(m.assignedInspector, m.assignedInspectorBadge))
     );
 
-    return assignedMerchants.map((m, idx) => {
-      const existing = visits.find((v) => v.shopName === m.name);
-      if (existing) {
-        return {
-          ...existing,
+    // 2. Gather all merchants assigned to this inspector
+    const assignedMerchants = merchants.filter(
+      (m) => matchesOfficer(m.assignedInspector, m.assignedInspectorBadge)
+    );
+
+    // 3. Gather all ownerShops assigned to this inspector
+    const assignedOwnerShops = ownerShops.filter(
+      (s) => matchesOfficer(s.assignedInspector, s.inspectorBadge)
+    );
+
+    const mergedList = [];
+    const seenShopNames = new Set();
+
+    // Priority 1: Visits already scheduled or logged
+    matchedVisits.forEach((v) => {
+      const shopKey = (v.shopName || '').toLowerCase();
+      seenShopNames.add(shopKey);
+      const isCertified = v.status?.toLowerCase().includes('certified') || v.statusType === 'completed';
+      mergedList.push({
+        ...v,
+        assignedOfficer: activeInsp.name,
+        officerBadge: `Badge #${activeInsp.badgeNumber}`,
+        isNextUp: !isCertified,
+        status: isCertified ? 'Audit Completed & Certified' : (v.status || 'Scheduled for Verification'),
+        statusType: isCertified ? 'completed' : 'scheduled'
+      });
+    });
+
+    // Priority 2: Assigned merchants not yet in visits array
+    assignedMerchants.forEach((m, idx) => {
+      const shopKey = (m.name || '').toLowerCase();
+      if (!seenShopNames.has(shopKey)) {
+        seenShopNames.add(shopKey);
+        const isCertified = m.complianceStatus === 'Audit Certified' || m.complianceStatus === 'Certified & Compliant';
+        const isScheduled = m.complianceStatus === 'Scheduled for Verification' || m.scheduledSlot;
+        mergedList.push({
+          id: `visit-dyn-${m.id}`,
           merchantId: m.id,
           shopId: m.id,
+          timeSlot: m.scheduledSlot || (idx === 0 ? '10:00 AM – 11:30 AM' : idx === 1 ? '12:00 PM – 1:00 PM' : '02:30 PM – 03:30 PM'),
+          timeRelative: isScheduled ? 'NEXT UP • Scheduled by Merchant' : (idx === 0 ? 'NEXT UP • Assigned by Admin' : `Slot ${idx + 1}`),
+          isNextUp: !isCertified,
+          shopName: m.name,
+          regNumber: `Reg #${m.tradeLicense}`,
+          address: `${m.zone}, ${m.address}`,
+          status: isCertified ? 'Audit Completed & Certified' : (isScheduled ? 'Scheduled for Verification' : 'Pending Field Inspection'),
+          statusType: isCertified ? 'completed' : (idx === 0 || isScheduled ? 'pending' : 'scheduled'),
+          instrumentName: 'Commercial Electronic Weighing Instrument',
+          model: 'Standard Calibration Model',
+          specification: 'Max 30kg (e=1g)',
+          classBadge: 'Class III Commercial',
+          applicationRef: `METRA-${activeInsp.badgeNumber}-${(m.merchantUid || 'EST').replace('#', '')}`,
           assignedOfficer: activeInsp.name,
           officerBadge: `Badge #${activeInsp.badgeNumber}`
-        };
+        });
       }
-      return {
-        id: `visit-dyn-${m.id}`,
-        merchantId: m.id,
-        shopId: m.id,
-        timeSlot: idx === 0 ? '10:00 AM – 11:30 AM' : idx === 1 ? '12:00 PM – 1:00 PM' : '02:30 PM – 03:30 PM',
-        timeRelative: idx === 0 ? 'NEXT UP • Assigned by Admin' : `Slot ${idx + 1}`,
-        isNextUp: idx === 0,
-        shopName: m.name,
-        regNumber: `Reg #${m.tradeLicense}`,
-        address: `${m.zone}, ${m.address}`,
-        status: m.complianceStatus === 'Audit Certified' ? 'Audit Completed & Certified' : 'Scheduled for Verification',
-        statusType: m.complianceStatus === 'Audit Certified' ? 'completed' : idx === 0 ? 'pending' : 'scheduled',
-        instrumentName: 'Commercial Electronic Weighing Instrument',
-        model: 'Standard Calibration Model',
-        specification: 'Max 30kg (e=1g)',
-        classBadge: 'Class III Commercial',
-        applicationRef: `METRA-${activeInsp.badgeNumber}-${m.merchantUid.replace('#', '')}`,
-        assignedOfficer: activeInsp.name,
-        officerBadge: `Badge #${activeInsp.badgeNumber}`
-      };
     });
+
+    // Priority 3: Assigned owner shops not yet covered
+    assignedOwnerShops.forEach((s, idx) => {
+      const shopKey = (s.name || '').toLowerCase();
+      if (!seenShopNames.has(shopKey)) {
+        seenShopNames.add(shopKey);
+        const isCertified = s.complianceStatus === 'Certified & Compliant' || (s.certificationHistory && s.certificationHistory.length > 0);
+        const isScheduled = s.complianceStatus === 'Scheduled for Verification' || s.scheduledSlot;
+        const scale = s.instruments?.[0] || {};
+        mergedList.push({
+          id: `visit-shop-${s.id}`,
+          merchantId: s.id,
+          shopId: s.id,
+          timeSlot: s.scheduledSlot?.date ? `${s.scheduledSlot.date} • ${s.scheduledSlot.time}` : '10:00 AM – 11:30 AM',
+          timeRelative: isScheduled ? 'NEXT UP • Scheduled by Merchant' : 'NEXT UP • Assigned by Admin',
+          isNextUp: !isCertified,
+          shopName: s.name,
+          regNumber: `Reg #${s.tradeLicense}`,
+          address: `${s.zone}, ${s.address}`,
+          status: isCertified ? 'Audit Completed & Certified' : (isScheduled ? 'Scheduled for Verification' : 'Pending Field Inspection'),
+          statusType: isCertified ? 'completed' : 'scheduled',
+          instrumentName: scale.name || 'Commercial Electronic Weighing Instrument',
+          model: scale.model || 'Standard Calibration Model',
+          specification: scale.capacity || 'Max 30kg (e=1g)',
+          serialNumber: scale.serialNumber || '#KA-BLR-88412',
+          classBadge: scale.class || 'Class III Commercial',
+          applicationRef: `METRA-${activeInsp.badgeNumber}-${(s.merchantUid || 'EST').replace('#', '')}`,
+          assignedOfficer: activeInsp.name,
+          officerBadge: `Badge #${activeInsp.badgeNumber}`
+        });
+      }
+    });
+
+    return mergedList;
   };
 
   // Start Inspection for a specific shop on inspector route
   const handleStartInspection = (visit) => {
-    setStoreInfo((prev) => ({
+    // Find matching shop in ownerShops to activate proper shop context
+    const sIndex = ownerShops.findIndex(
+      (s) => (visit.shopId && s.id === visit.shopId) ||
+             (visit.merchantId && s.id === visit.merchantId) ||
+             (s.name && visit.shopName && s.name.toLowerCase() === visit.shopName.toLowerCase())
+    );
+
+    if (sIndex >= 0) {
+      setActiveShopIndexState(sIndex);
+      const targetShop = ownerShops[sIndex];
+      setStoreInfo((prev) => ({
+        ...prev,
+        id: targetShop.id,
+        name: targetShop.name,
+        regNumber: targetShop.tradeLicense || visit.regNumber,
+        merchantUid: targetShop.merchantUid || visit.merchantUid,
+        location: targetShop.address || visit.address,
+        zone: targetShop.zone || visit.zone || currentInspector?.zone || prev.zone,
+        contactPerson: targetShop.ownerName || visit.ownerName || prev.contactPerson,
+        phone: targetShop.phone || visit.phone || prev.phone,
+        assignedInspector: currentInspector?.name || targetShop.assignedInspector || prev.assignedInspector,
+        inspectorBadge: currentInspector?.badgeNumber || targetShop.inspectorBadge || prev.inspectorBadge
+      }));
+
+      if (targetShop.instruments && targetShop.instruments.length > 0) {
+        setInstruments(targetShop.instruments);
+        setActiveInstrumentIndex(0);
+      } else if (visit.instrumentName || visit.serialNumber) {
+        setInstruments([
+          {
+            id: `inst-${targetShop.id}`,
+            name: visit.instrumentName || 'Electronic Countertop Scale',
+            model: visit.model || 'Commercial Scale 2025',
+            serialNumber: visit.serialNumber || '#KA-BLR-88412',
+            capacity: visit.specification || '30kg / 1g precision',
+            counter: 'Billing Counter 1',
+            status: 'Inspection In Progress',
+            verificationStatusText: 'Field Audit Active',
+            daysRemaining: 1,
+            totalDaysCycle: 365,
+            expiresOn: 'Audit Today',
+            sealNumber: 'SEAL-PENDING',
+            complianceRate: '98%',
+            type: 'counter_scale',
+            class: visit.classBadge || 'Class III Commercial'
+          }
+        ]);
+        setActiveInstrumentIndex(0);
+      }
+    } else {
+      setStoreInfo((prev) => ({
+        ...prev,
+        id: visit.shopId || visit.merchantId || prev.id,
+        name: visit.shopName,
+        regNumber: visit.regNumber,
+        merchantUid: visit.merchantUid || prev.merchantUid,
+        location: visit.address,
+        zone: visit.zone || currentInspector?.zone || prev.zone,
+        contactPerson: visit.ownerName || prev.contactPerson,
+        phone: visit.phone || prev.phone,
+        assignedInspector: currentInspector?.name || prev.assignedInspector,
+        inspectorBadge: currentInspector?.badgeNumber || prev.inspectorBadge
+      }));
+      if (visit.instrumentName || visit.serialNumber) {
+        setInstruments([
+          {
+            id: `inst-visit-${visit.id || Date.now()}`,
+            name: visit.instrumentName || 'Electronic Countertop Scale',
+            model: visit.model || 'Commercial Scale 2025',
+            serialNumber: visit.serialNumber || '#KA-BLR-88412',
+            capacity: visit.specification || '30kg / 1g precision',
+            counter: 'Billing Counter 1',
+            status: 'Inspection In Progress',
+            verificationStatusText: 'Field Audit Active',
+            daysRemaining: 1,
+            totalDaysCycle: 365,
+            expiresOn: 'Audit Today',
+            sealNumber: 'SEAL-PENDING',
+            complianceRate: '98%',
+            type: 'counter_scale',
+            class: visit.classBadge || 'Class III Commercial'
+          }
+        ]);
+        setActiveInstrumentIndex(0);
+      }
+    }
+
+    setVerificationStatus((prev) => ({
       ...prev,
-      name: visit.shopName,
-      regNumber: visit.regNumber,
-      location: visit.address,
-      zone: currentInspector?.zone || prev.zone,
-      assignedInspector: currentInspector?.name || prev.assignedInspector
+      status: 'in_progress',
+      step: 4
     }));
+
     setCurrentView('field-inspection');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1038,7 +1200,102 @@ export const AppProvider = ({ children }) => {
 
     const bookingReference = `SLOT-LM-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Call backend API to persist verification appointment in MongoDB
+    const activeInst = instruments[activeInstrumentIndex] || instruments[0] || {
+      id: 'inst-1',
+      name: 'Electronic Counter Scale',
+      model: 'Digital Metrology Model 2025',
+      serialNumber: '#KA-BLR-53808',
+      capacity: '30kg / 1g precision',
+      class: 'Class III Commercial'
+    };
+
+    const scheduledVisitObj = {
+      id: `visit-${targetId}`,
+      merchantId: targetId,
+      shopId: targetId,
+      timeSlot: `${dateStr} • ${timeStr}`,
+      timeRelative: 'NEXT UP • Scheduled by Merchant',
+      isNextUp: true,
+      shopName: storeInfo.name || currentShop.name,
+      ownerName: storeInfo.contactPerson || currentShop.ownerName,
+      regNumber: storeInfo.regNumber || currentShop.tradeLicense || `Reg #${currentShop.merchantUid}`,
+      merchantUid: storeInfo.merchantUid || currentShop.merchantUid,
+      address: storeInfo.location || currentShop.address,
+      zone: storeInfo.zone || currentShop.zone || 'Ward 4 (Commercial Circle)',
+      status: 'Scheduled for Verification',
+      statusType: 'scheduled',
+      instrumentName: activeInst.name,
+      model: activeInst.model,
+      serialNumber: activeInst.serialNumber,
+      specification: activeInst.capacity || 'Max 30kg (e=1g)',
+      classBadge: activeInst.class || 'Class III Commercial',
+      applicationRef: bookingReference,
+      assignedOfficer: currentShop.assignedInspector || storeInfo.assignedInspector || 'Insp. R. Deshmukh',
+      officerBadge: currentShop.inspectorBadge || 'LM-BLR-402'
+    };
+
+    // Update visits state so it immediately appears in Inspector Schedule
+    setVisits((prev) => {
+      const filtered = prev.filter((v) => v.shopId !== targetId && v.shopName !== scheduledVisitObj.shopName);
+      return [scheduledVisitObj, ...filtered];
+    });
+
+    // Update ownerShops state
+    setOwnerShops((prev) =>
+      prev.map((s) => {
+        if (s.id === targetId || s.name === currentShop.name) {
+          return {
+            ...s,
+            complianceStatus: 'Scheduled for Verification',
+            documentStatus: 'verified',
+            scheduledSlot: { date: dateStr, time: timeStr, bookingRef: bookingReference }
+          };
+        }
+        return s;
+      })
+    );
+
+    // Update merchants state
+    setMerchants((prev) =>
+      prev.map((m) => {
+        if (m.id === targetId || m.name === currentShop.name) {
+          return {
+            ...m,
+            complianceStatus: 'Scheduled for Verification',
+            scheduledSlot: `${dateStr} (${timeStr})`
+          };
+        }
+        return m;
+      })
+    );
+
+    // Update storeInfo
+    setStoreInfo((prev) => ({
+      ...prev,
+      complianceStatus: 'Scheduled for Verification'
+    }));
+
+    // Update operations state (for Admin dashboard)
+    setOperations((prev) => [
+      {
+        id: `OP-${Date.now().toString().slice(-4)}`,
+        shopId: targetId,
+        shopName: storeInfo.name || currentShop.name,
+        merchantUid: storeInfo.merchantUid || currentShop.merchantUid,
+        inspectorName: currentShop.assignedInspector || 'Insp. R. Deshmukh',
+        badgeNumber: currentShop.inspectorBadge || 'LM-BLR-402',
+        zone: storeInfo.zone || currentShop.zone || 'Ward 4',
+        scaleModel: activeInst.model,
+        operationType: 'Field Calibration Stamping',
+        slot: `${dateStr} • ${timeStr}`,
+        liveStatus: 'Verification Visit Scheduled',
+        statusType: 'scheduled',
+        remarks: `Merchant booked slot ${bookingReference}. Inspector inspection pending.`
+      },
+      ...prev.filter((op) => op.shopId !== targetId)
+    ]);
+
+    // Call backend API to persist verification appointment in PostgreSQL
     try {
       await api.createVerification({
         shopId: targetId,
@@ -1076,67 +1333,104 @@ export const AppProvider = ({ children }) => {
   };
 
   const handleCompleteInspection = (notes = '') => {
-    // 1. Advance verification request status (Step 5: Certified)
-    setVerificationStatus((prev) => ({
-      ...prev,
-      status: 'certified',
-      step: 5
-    }));
+    const currentShop = ownerShops[activeShopIndex] || ownerShops[0] || {};
+    const targetShopId = currentShop.id || storeInfo.id;
+    const targetShopName = storeInfo.name || currentShop.name;
+    const targetInst = instruments[activeInstrumentIndex] || instruments[0] || {};
 
-    // 2. Mark instrument as re-certified
-    setInstruments((prev) => {
-      const copy = [...prev];
-      if (copy[0]) {
-        copy[0] = {
-          ...copy[0],
-          status: 'Verified & Compliant',
-          daysRemaining: 365,
-          expiresOn: '16 Jan 2026',
-          sealNumber: 'SEAL-LM-BLR-2025-0428'
-        };
-      }
-      return copy;
+    const newCertId = `CERT-KA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const sealNum = `SEAL-LM-BLR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const validUntilDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    const verifiedDateStr = new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
     });
 
-    // 3. Update certificate details
-    const newCertId = `CERT-KA-2025-${Math.floor(1000 + Math.random() * 9000)}`;
     const newCertObj = {
       certId: newCertId,
       ruleForm: 'Form XVII (Rule 14)',
-      actYear: 'Act of 2009',
-      instrumentModel: storeInfo.instrumentModel || 'Electronic Countertop Scale (Contech CA-30)',
-      serialNumber: '#KA-BLR-88412',
-      verifiedDate: '16 Jan 2025',
-      validUntil: '16 Jan 2026',
-      inspectorSeal: 'SEAL-LM-BLR-2025-0428',
+      actYear: 'Legal Metrology Act, 2009',
+      instrumentModel: `${targetInst.name || 'Electronic Counter Scale'} (${targetInst.model || 'Digital Series'})`,
+      serialNumber: targetInst.serialNumber || '#KA-BLR-53808',
+      verifiedDate: verifiedDateStr,
+      validUntil: validUntilDate,
+      inspectorSeal: sealNum,
       inspectorName: currentInspector?.name || 'Insp. R. Deshmukh',
-      inspectorBadge: currentInspector?.badge || 'LM-BLR-402',
+      inspectorBadge: currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'LM-BLR-402',
       statusBadge: 'CERTIFIED & COMPLIANT',
       workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
-      remarks: 'Physical audit passed. Tamper-proof wire seal and QR code issued.'
-    };
-
-    setCertificateData({
-      ...newCertObj,
+      remarks: notes || 'Physical 4-Point MPE assessment passed. Tamper-evident holographic stamp affixed.',
       daysLeft: 365,
-      shopLocation: `${storeInfo.name}, ${storeInfo.zone}`,
-      shopName: storeInfo.name,
-      shopAddress: storeInfo.location,
-      merchantUid: storeInfo.merchantUid,
-      tradeLicense: storeInfo.regNumber,
+      shopLocation: `${targetShopName}, ${storeInfo.zone || currentShop.zone || 'Ward 4'}`,
+      shopName: targetShopName,
+      shopAddress: storeInfo.location || currentShop.address,
+      merchantUid: storeInfo.merchantUid || currentShop.merchantUid,
+      tradeLicense: storeInfo.regNumber || currentShop.tradeLicense,
       digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
       calibrationTests: testCalibrationData,
       isHistorical: false,
       inProgress: false
-    });
+    };
 
+    // 1. Advance verification request status (Step 5: Certified)
+    setVerificationStatus((prev) => ({
+      ...prev,
+      status: 'certified',
+      step: 5,
+      certificateId: newCertId
+    }));
+
+    // 2. Mark instrument as verified & compliant with 365 days
+    setInstruments((prev) =>
+      prev.map((inst, i) => {
+        if (i === activeInstrumentIndex || i === 0) {
+          return {
+            ...inst,
+            status: 'Verified & Compliant',
+            verificationStatusText: 'Holo Seal Valid',
+            daysRemaining: 365,
+            expiresOn: validUntilDate,
+            sealNumber: sealNum,
+            complianceRate: '100%'
+          };
+        }
+        return inst;
+      })
+    );
+
+    // 3. Set global certificate data
+    setCertificateData(newCertObj);
+
+    // 4. Update ownerShops so shop owner dashboard shows verified status & certificate history
     setOwnerShops((prevShops) =>
-      prevShops.map((s, idx) => {
-        if (idx === activeShopIndex || s.name === storeInfo.name) {
+      prevShops.map((s) => {
+        if (s.id === targetShopId || s.name === targetShopName) {
+          const updatedInsts = (s.instruments && s.instruments.length > 0 ? s.instruments : [targetInst]).map((inst, i) => {
+            if (i === 0 || inst.serialNumber === targetInst.serialNumber) {
+              return {
+                ...inst,
+                status: 'Verified & Compliant',
+                verificationStatusText: 'Holo Seal Valid',
+                daysRemaining: 365,
+                expiresOn: validUntilDate,
+                sealNumber: sealNum,
+                complianceRate: '100%'
+              };
+            }
+            return inst;
+          });
           return {
             ...s,
+            status: 'Verified & Compliant',
             complianceStatus: 'Certified & Compliant',
             documentStatus: 'verified',
+            certificateId: newCertId,
+            instruments: updatedInsts,
             certificationHistory: [newCertObj, ...(s.certificationHistory || [])]
           };
         }
@@ -1144,59 +1438,125 @@ export const AppProvider = ({ children }) => {
       })
     );
 
-    // 4. Update the inspector visits queue
-    setVisits((prev) =>
-      prev.map((v) => {
-        if (v.id === 'visit-1' || v.isNextUp) {
+    // 5. Update merchants for admin and inspector views
+    setMerchants((prev) =>
+      prev.map((m) => {
+        if (m.id === targetShopId || m.name === targetShopName) {
           return {
-            ...v,
-            isNextUp: false,
-            status: 'Inspection Completed & Certified',
-            statusType: 'completed',
-            timeRelative: 'Completed'
+            ...m,
+            complianceStatus: 'Certified & Compliant',
+            certificateId: newCertId
           };
         }
-        if (v.id === 'visit-2') {
-          return {
-            ...v,
-            isNextUp: true,
-            timeRelative: 'NEXT UP • In 15 mins'
-          };
-        }
-        return v;
+        return m;
       })
     );
 
-    // 5. Update operations for admin view
-    setOperations((prev) =>
-      prev.map((op) =>
-        op.id === 'OP-101'
-          ? {
-              ...op,
-              liveStatus: 'Completed & Hologram Stamped',
-              statusType: 'completed',
-              remarks: `Verification Passed. Certificate ${newCertId} issued.`
-            }
-          : op
-      )
-    );
+    // 6. Update storeInfo
+    setStoreInfo((prev) => ({
+      ...prev,
+      complianceStatus: 'Certified & Compliant',
+      certificateId: newCertId
+    }));
 
-    // 6. Update state registry
+    // 7. Update visits queue so inspector schedule card shows Completed & Certified
+    setVisits((prev) => {
+      const exists = prev.some((v) => v.shopId === targetShopId || v.shopName === targetShopName);
+      if (exists) {
+        return prev.map((v) => {
+          if (v.shopId === targetShopId || v.shopName === targetShopName) {
+            return {
+              ...v,
+              isNextUp: false,
+              status: 'Audit Completed & Certified',
+              statusType: 'completed',
+              timeRelative: 'Certified Today',
+              certificateId: newCertId
+            };
+          }
+          return v;
+        });
+      }
+      return [
+        {
+          id: `visit-${targetShopId}`,
+          merchantId: targetShopId,
+          shopId: targetShopId,
+          shopName: targetShopName,
+          timeSlot: 'Audit Completed Today',
+          timeRelative: 'Certified Today',
+          isNextUp: false,
+          status: 'Audit Completed & Certified',
+          statusType: 'completed',
+          certificateId: newCertId,
+          instrumentName: targetInst.name || 'Electronic Counter Scale',
+          model: targetInst.model || 'Digital Series',
+          serialNumber: targetInst.serialNumber || '#KA-BLR-53808',
+          assignedOfficer: currentInspector?.name || 'Insp. R. Deshmukh',
+          officerBadge: currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'Badge #LM-BLR-402'
+        },
+        ...prev
+      ];
+    });
+
+    // 8. Update operations for admin view
+    setOperations((prev) => [
+      {
+        id: `OP-${Date.now().toString().slice(-4)}`,
+        shopId: targetShopId,
+        shopName: targetShopName,
+        merchantUid: storeInfo.merchantUid || currentShop.merchantUid,
+        inspectorName: currentInspector?.name || 'Insp. R. Deshmukh',
+        badgeNumber: currentInspector?.badgeNumber || 'LM-BLR-402',
+        zone: storeInfo.zone || currentShop.zone || 'Ward 4',
+        scaleModel: targetInst.model || 'Commercial Counter Scale',
+        operationType: 'Holographic Stamping & Certification',
+        slot: 'Audit Completed Today',
+        liveStatus: 'Completed & Hologram Stamped',
+        statusType: 'completed',
+        remarks: `Verification Passed. Certificate ${newCertId} issued.`
+      },
+      ...prev.filter((op) => op.shopId !== targetShopId)
+    ]);
+
+    // 9. Update state registry
     setRegistry((prev) => [
       {
         id: `reg-${Date.now()}`,
         certId: newCertId,
-        shopName: storeInfo.name,
-        merchantUid: storeInfo.merchantUid,
-        zone: storeInfo.zone,
-        instrument: 'Electronic Countertop Scale',
-        serial: '#KA-BLR-88412',
-        expiryDate: '16 Jan 2026',
-        inspector: 'Insp. R. Deshmukh',
+        shopName: targetShopName,
+        merchantUid: storeInfo.merchantUid || currentShop.merchantUid || '#EST-61866',
+        zone: storeInfo.zone || currentShop.zone || 'Ward 4',
+        instrument: targetInst.name || 'Electronic Countertop Scale',
+        serial: targetInst.serialNumber || '#KA-BLR-53808',
+        expiryDate: validUntilDate,
+        inspector: currentInspector?.name || 'Insp. R. Deshmukh',
         status: 'Compliant'
       },
-      ...prev.filter((r) => r.shopName !== storeInfo.name)
+      ...prev.filter((r) => r.shopName !== targetShopName)
     ]);
+
+    // 10. Persist to PostgreSQL backend via API
+    try {
+      api.issueCertificate({
+        shopId: targetShopId,
+        certId: newCertId,
+        ruleForm: 'Form XVII (Rule 14)',
+        actYear: 'Legal Metrology Act, 2009',
+        instrumentModel: `${targetInst.name || 'Electronic Counter Scale'} (${targetInst.model || 'Digital Metrology'})`,
+        serialNumber: targetInst.serialNumber || '#KA-BLR-53808',
+        verifiedDate: verifiedDateStr,
+        validUntil: validUntilDate,
+        inspectorSeal: sealNum,
+        inspectorName: currentInspector?.name || 'Insp. R. Deshmukh',
+        inspectorBadge: currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'LM-BLR-402',
+        statusBadge: 'CERTIFIED & COMPLIANT',
+        workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
+        remarks: notes || 'Physical audit passed. Tamper-proof wire seal and QR code issued.'
+      });
+    } catch (err) {
+      console.warn('[Backend Issue Cert Warning]', err.message);
+    }
 
     showToast(`Verification completed! Certificate ${newCertId} issued. Returning to Inspector Route.`, 'success');
 

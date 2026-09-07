@@ -193,18 +193,18 @@ export const FieldInspection = () => {
             <button
               onClick={onSubmitForm}
               disabled={isSubmitting}
-              className="w-full bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-sm py-3 px-6 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-75"
+              className="w-full bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-sm sm:text-base py-3.5 px-6 rounded-xl shadow-md flex items-center justify-center gap-2.5 transition-all active:scale-95 disabled:opacity-75 cursor-pointer"
               type="button"
             >
               {isSubmitting ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
-                  <span>Digitally Stamping &amp; Generating Certificate...</span>
+                  <span className="material-symbols-outlined animate-spin text-lg sm:text-xl">progress_activity</span>
+                  <span>Applying Hologram Stamp & Generating Form XVII Certificate...</span>
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-lg">verified</span>
-                  <span>Pass Audit &amp; Issue Official Certificate (Step 5)</span>
+                  <span className="material-symbols-outlined text-lg sm:text-xl text-emerald-300">verified</span>
+                  <span>Inspection Successful • Issue Form XVII Certificate</span>
                 </>
               )}
             </button>

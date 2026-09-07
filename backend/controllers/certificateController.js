@@ -153,6 +153,16 @@ export const issueCertificate = async (req, res) => {
       }
     });
 
+    // Update shop compliance status in PostgreSQL
+    await prisma.shop.update({
+      where: { id: targetShopId },
+      data: {
+        status: 'Active Commercial Establishment',
+        complianceStatus: 'Certified & Compliant',
+        documentStatus: 'verified'
+      }
+    }).catch((err) => console.warn('[Update Shop on Issue Cert Warning]', err.message));
+
     return res.status(201).json({ success: true, data: cert });
   } catch (error) {
     console.error('[Issue Certificate Error]', error);

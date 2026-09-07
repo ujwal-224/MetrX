@@ -51,7 +51,24 @@ export const ShopDashboard = () => {
     certificationHistory: []
   };
 
-  const daysLeft = activeInstrument?.daysRemaining ?? 28;
+  const currentDocData = documentSubmissions[activeShop.id] || activeShop.documentSubmissionData || {};
+  const currentDocStatus = currentDocData.status || activeShop.documentStatus || verificationStatus.documentStatus || 'not_uploaded';
+  const isDocVerified = currentDocStatus === 'verified';
+  const isDocFraud = currentDocStatus === 'fraud';
+
+  const isCertified =
+    activeShop.complianceStatus === 'Certified & Compliant' ||
+    activeShop.status === 'Verified & Compliant' ||
+    (activeShop.certificationHistory && activeShop.certificationHistory.length > 0) ||
+    verificationStatus.status === 'certified';
+
+  const isVisitScheduled =
+    !isCertified &&
+    (activeShop.complianceStatus === 'Scheduled for Verification' ||
+     verificationStatus.status === 'scheduled' ||
+     Boolean(activeShop.scheduledSlot));
+
+  const daysLeft = isCertified ? (activeInstrument?.daysRemaining || 365) : (activeInstrument?.daysRemaining ?? 28);
   const circumference = 590.6;
   const strokeOffset = Math.max(0, circumference - (circumference * (daysLeft / 365)));
 
@@ -62,12 +79,15 @@ export const ShopDashboard = () => {
     assignedInspectorName !== 'PENDING' &&
     assignedInspectorName !== '';
 
-  const currentDocData = documentSubmissions[activeShop.id] || activeShop.documentSubmissionData || {};
-  const currentDocStatus = currentDocData.status || activeShop.documentStatus || verificationStatus.documentStatus || 'not_uploaded';
-  const isDocVerified = currentDocStatus === 'verified';
-  const isDocFraud = currentDocStatus === 'fraud';
-
   const handleBookVisitClick = () => {
+    if (isCertified) {
+      handleViewActiveCertificate();
+      return;
+    }
+    if (isVisitScheduled) {
+      navigateTo('track-status');
+      return;
+    }
     if (!isInspectorAssigned) {
       showToast('Inspector Allocation Pending: Department Admin is assigning an Inspector to your store.', 'info');
       navigateTo('upload-documents');
@@ -182,6 +202,73 @@ export const ShopDashboard = () => {
         </div>
       </div>
 
+      {/* CONDITIONAL BANNER 1: Official Verification Completed & Form XVII Certificate Issued */}
+      {isCertified && (
+        <div className="bg-gradient-to-r from-[#023625] to-[#0A4D35] rounded-2xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-emerald-500/40">
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-xs border border-white/20 flex items-center justify-center shrink-0 text-emerald-300">
+              <span className="material-symbols-outlined text-3xl">verified</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 text-[10px] font-extrabold uppercase tracking-wider">
+                  Legal Metrology Act 2009 • Completed & Certified
+                </span>
+                <span className="text-xs text-emerald-200 font-mono">
+                  {activeShop.certificationHistory?.[0]?.certId || activeShop.certificateId || 'Form XVII Certified'}
+                </span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
+                Official Verification Complete • Form XVII Certificate Issued
+              </h2>
+              <p className="text-xs text-emerald-100/90 mt-1 max-w-2xl leading-relaxed">
+                Your commercial establishment and counter scales have successfully passed physical inspection and metrological verification by <strong>{assignedInspectorName || 'Assigned Officer'}</strong>. Form XVII verification certificate has been cryptographically registered with 365 days statutory compliance.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 justify-end">
+            <button
+              onClick={() => handleViewActiveCertificate()}
+              className="w-full md:w-auto px-5 py-3 rounded-xl bg-white hover:bg-emerald-50 text-[#023625] font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-lg text-emerald-700">workspace_premium</span>
+              <span>View Form XVII Certificate</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CONDITIONAL BANNER 2: Field Inspection Visit Scheduled */}
+      {isVisitScheduled && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 sm:p-5 border-2 border-amber-300 text-amber-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#E0702A] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="material-symbols-outlined text-2xl">event_available</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-extrabold tracking-wider text-[#E0702A] block">
+                Field Inspection Scheduled • On-Site Step
+              </span>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900">
+                Inspector Verification Visit Booked
+              </h2>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Slot: <strong className="text-gray-900">{typeof activeShop.scheduledSlot === 'object' ? `${activeShop.scheduledSlot.date} • ${activeShop.scheduledSlot.time}` : (activeShop.scheduledSlot || 'Upcoming Slot')}</strong> • Assigned Officer: <strong className="text-[#023625]">{assignedInspectorName || 'Insp. R. Deshmukh'} ({activeShop.inspectorBadge || 'LM-BLR-402'})</strong>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigateTo('track-status')}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shrink-0"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-base">route</span>
+            <span>Track Inspection Visit</span>
+          </button>
+        </div>
+      )}
+
       {/* SECTION 1: Active Shop Profile & Statutory Credentials Card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
@@ -190,8 +277,14 @@ export const ShopDashboard = () => {
               <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                 {activeShop.name}
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                {activeShop.status || 'Active Commercial Establishment'}
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                isCertified
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  : isVisitScheduled
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+              }`}>
+                {isCertified ? 'Verified & Compliant (365 Days Valid)' : isVisitScheduled ? 'Verification Visit Scheduled' : (activeShop.status || 'Active Commercial Establishment')}
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -439,13 +532,33 @@ export const ShopDashboard = () => {
           <div className="w-full flex flex-col gap-2 mt-4">
             <button
               onClick={handleBookVisitClick}
-              className="w-full h-11 bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+              className={`w-full h-11 text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
+                isCertified
+                  ? 'bg-[#023625] hover:bg-[#1a4b38]'
+                  : isVisitScheduled
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-[#E0702A] hover:bg-[#c95f1e]'
+              }`}
             >
-              <span className="material-symbols-outlined text-lg">calendar_month</span>
-              <span>{!isInspectorAssigned ? 'View Assignment Status' : isDocVerified ? 'Schedule Inspector Visit' : 'Upload Docs & Book Visit'}</span>
+              <span className="material-symbols-outlined text-lg">
+                {isCertified ? 'workspace_premium' : isVisitScheduled ? 'route' : 'calendar_month'}
+              </span>
+              <span>
+                {isCertified
+                  ? 'View Active Certificate (Form XVII)'
+                  : isVisitScheduled
+                  ? 'Track Scheduled Inspection Visit'
+                  : !isInspectorAssigned
+                  ? 'View Assignment Status'
+                  : isDocVerified
+                  ? 'Schedule Inspector Visit'
+                  : 'Upload Docs & Book Visit'}
+              </span>
             </button>
             <span className="text-xs text-gray-400 py-0.5 font-medium">
-              Statutory Fee ₹150 • Rule 14 Legal Metrology
+              {isCertified
+                ? 'Statutory Certificate Form XVII • Rule 14 Legal Metrology'
+                : 'Statutory Fee ₹150 • Rule 14 Legal Metrology'}
             </span>
           </div>
         </div>

@@ -32,16 +32,14 @@ export const CertificateView = () => {
     shopCompliance.includes('tamper') ||
     shopCompliance.includes('non-compliant');
 
-  const isInProgress =
-    !isFraud &&
-    (Boolean(certificateData?.inProgress) ||
-      shopCompliance.includes('review') ||
-      shopCompliance.includes('pending') ||
-      shopCompliance.includes('submit') ||
-      !activeShop?.certificationHistory ||
-      activeShop.certificationHistory.length === 0);
+  const hasValidCert = Boolean(
+    (certificateData?.certId && !certificateData?.inProgress && certificateData?.certId !== 'PENDING') ||
+    (activeShop?.certificationHistory && activeShop.certificationHistory.length > 0) ||
+    shopCompliance.includes('certified')
+  );
 
-  const isVerified = !isFraud && !isInProgress;
+  const isInProgress = !isFraud && !hasValidCert;
+  const isVerified = !isFraud && hasValidCert;
 
   const isHistorical =
     Boolean(certificateData?.isHistorical) ||
