@@ -104,9 +104,12 @@ export const AdminDashboard = () => {
           </span>
         </div>
 
-        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#E0702A] rounded-2xl p-4 sm:p-5 shadow-xs transition-all sm:col-span-2 lg:col-span-1">
+        <div
+          onClick={() => setActiveTab('merchants')}
+          className="bg-white border-2 border-[#DADDD3] hover:border-[#E0702A] rounded-2xl p-4 sm:p-5 shadow-xs transition-all sm:col-span-2 lg:col-span-1 cursor-pointer group"
+        >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-gray-500">Registered Shop Owners</span>
+            <span className="text-xs font-bold uppercase text-gray-500 group-hover:text-[#E0702A]">Registered Shop Owners (Click to view)</span>
             <span className="w-8 h-8 rounded-lg bg-[#FAF8F4] border border-amber-200 text-[#E0702A] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">storefront</span>
             </span>
@@ -253,12 +256,39 @@ export const AdminDashboard = () => {
                     </td>
 
                     <td className="py-4 px-4 text-right">
-                      <button
-                        onClick={() => showToast(`Auditing live field telemetry for ${op.inspectorName} at ${op.shopName}`, 'info')}
-                        className="px-2.5 py-1 text-xs bg-white hover:bg-gray-100 border border-[#DADDD3] text-[#023625] font-semibold rounded-lg transition-all"
-                      >
-                        Inspect Dossier
-                      </button>
+                      {op.badgeNumber === 'LM-PENDING' ? (
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const targetMerch = merchants.find((m) => m.name === op.shopName || m.merchantUid === op.merchantUid);
+                              if (targetMerch) {
+                                handleAssignInspectorToMerchant(targetMerch.id, e.target.value);
+                              }
+                              e.target.value = '';
+                            }
+                          }}
+                          className="bg-[#023625] text-white border border-[#023625] hover:bg-[#1b4a36] px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer outline-none transition-all shadow-xs"
+                        >
+                          <option value="" disabled className="text-gray-700 bg-white">
+                            Assign Inspector Now...
+                          </option>
+                          {inspectors
+                            .filter((insp) => insp.status === 'Active')
+                            .map((insp) => (
+                              <option key={insp.id} value={insp.id} className="text-gray-900 bg-white">
+                                {insp.name} ({insp.badgeNumber})
+                              </option>
+                            ))}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => showToast(`Auditing live field telemetry for ${op.inspectorName} at ${op.shopName}`, 'info')}
+                          className="px-2.5 py-1 text-xs bg-white hover:bg-gray-100 border border-[#DADDD3] text-[#023625] font-semibold rounded-lg transition-all"
+                        >
+                          Inspect Dossier
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
