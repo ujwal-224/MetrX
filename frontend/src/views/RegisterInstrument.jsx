@@ -41,13 +41,13 @@ export const RegisterInstrument = () => {
   };
 
   return (
-    <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8 min-h-screen">
+    <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       <div className="w-full max-w-2xl mx-auto flex flex-col">
         {/* Back / Breadcrumb Navigation */}
-        <div className="mb-unit-4">
+        <div className="mb-3 sm:mb-4">
           <button
             onClick={() => navigateTo('shop-dashboard')}
-            className="inline-flex items-center gap-unit-1 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors"
+            className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 text-xs sm:text-sm font-medium transition-colors"
           >
             <span className="material-symbols-outlined text-base">arrow_back</span>
             <span>Back to {storeInfo.name}</span>
@@ -55,17 +55,17 @@ export const RegisterInstrument = () => {
         </div>
 
         {/* Page Header */}
-        <div className="border-b border-outline-variant/50 pb-unit-6 mb-unit-8">
-          <div className="flex items-center gap-unit-2 mb-unit-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider flex items-center gap-1">
+        <div className="border-b border-gray-200 pb-4 sm:pb-6 mb-5 sm:mb-8">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-200">
               <span className="material-symbols-outlined text-xs">edit_document</span>
               Standard Verification Scheme
             </span>
           </div>
-          <h1 className="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Register New Instrument
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant mt-unit-1">
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
             Add your shop weighing or measuring device for government calibration certification.
           </p>
         </div>

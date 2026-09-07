@@ -224,23 +224,7 @@ export const AppProvider = ({ children }) => {
           class: 'Class II High Precision'
         }
       ],
-      certificationHistory: [
-        {
-          certId: 'CERT-KA-2024-3301',
-          ruleForm: 'Form XVII (Rule 14)',
-          actYear: 'Act of 2009',
-          instrumentModel: 'Contech Precision 15kg',
-          serialNumber: '#KA-BLR-55912',
-          verifiedDate: '20 Apr 2024',
-          validUntil: '19 Apr 2025',
-          inspectorSeal: 'SEAL-LM-BLR-0388',
-          inspectorName: 'Insp. K. S. Rao',
-          inspectorBadge: 'LM-BLR-319',
-          statusBadge: 'CERTIFIED & COMPLIANT',
-          workingStandardRef: 'STD/KA/2024/0019 (Calibrated at NPL)',
-          remarks: 'Class II High Precision certification verified.'
-        }
-      ]
+      certificationHistory: []
     }
   ]);
 
@@ -892,6 +876,54 @@ export const AppProvider = ({ children }) => {
       setActiveRole('shop-owner');
     } else if (view === 'admin-dashboard') {
       setActiveRole('admin');
+    } else if (view === 'certificate-view') {
+      if (activeRole === 'shop-owner') {
+        const currentShop = ownerShops[activeShopIndex] || ownerShops[0];
+        if (currentShop?.certificationHistory && currentShop.certificationHistory.length > 0) {
+          if (certificateData?.shopName !== currentShop.name || certificateData?.inProgress) {
+            const activeCert = currentShop.certificationHistory[0];
+            setCertificateData({
+              certId: activeCert.certId,
+              ruleForm: activeCert.ruleForm || 'Form XVII (Rule 14)',
+              actYear: activeCert.actYear || 'Act of 2009',
+              statusBadge: activeCert.statusBadge || 'VERIFIED & COMPLIANT',
+              daysLeft: activeCert.daysLeft !== undefined ? activeCert.daysLeft : 365,
+              validUntil: activeCert.validUntil || '12 Jan 2026',
+              verifiedDate: activeCert.verifiedDate || '13 Jan 2025',
+              inspectorSeal: activeCert.inspectorSeal || 'SEAL-LM-BLR-0428',
+              inspectorName: activeCert.inspectorName || currentShop.assignedInspector || 'Insp. R. Deshmukh',
+              inspectorBadge: activeCert.inspectorBadge || currentShop.inspectorBadge || 'LM-BLR-402',
+              instrumentModel: activeCert.instrumentModel || `${currentShop.instruments?.[0]?.name} (${currentShop.instruments?.[0]?.model})`,
+              serialNumber: activeCert.serialNumber || currentShop.instruments?.[0]?.serialNumber || '',
+              shopLocation: `${currentShop.name}, ${currentShop.zone}`,
+              shopName: currentShop.name,
+              shopAddress: currentShop.address,
+              merchantUid: currentShop.merchantUid,
+              tradeLicense: currentShop.tradeLicense,
+              workingStandardRef: activeCert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+              digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+              calibrationTests: activeCert.calibrationTests || testCalibrationData,
+              isHistorical: false,
+              inProgress: false
+            });
+          }
+        } else {
+          setCertificateData({
+            inProgress: true,
+            shopName: currentShop?.name || storeInfo.name,
+            shopAddress: currentShop?.address || storeInfo.location,
+            merchantUid: currentShop?.merchantUid || storeInfo.merchantUid,
+            tradeLicense: currentShop?.tradeLicense || storeInfo.regNumber,
+            zone: currentShop?.zone || storeInfo.zone,
+            branchType: currentShop?.branchType || 'Commercial Branch',
+            assignedInspector: currentShop?.assignedInspector || 'Insp. R. Deshmukh',
+            inspectorBadge: currentShop?.inspectorBadge || 'LM-BLR-402',
+            complianceStatus: currentShop?.complianceStatus || 'Pending Inspector Verification',
+            documentStatus: currentShop?.documentStatus || 'pending_review',
+            instrument: currentShop?.instruments?.[0] || null
+          });
+        }
+      }
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1096,14 +1128,49 @@ export const AppProvider = ({ children }) => {
 
     // 3. Update certificate details
     const newCertId = `CERT-KA-2025-${Math.floor(1000 + Math.random() * 9000)}`;
-    setCertificateData((prev) => ({
-      ...prev,
+    const newCertObj = {
       certId: newCertId,
-      daysLeft: 365,
-      validUntil: '16 Jan 2026',
+      ruleForm: 'Form XVII (Rule 14)',
+      actYear: 'Act of 2009',
+      instrumentModel: storeInfo.instrumentModel || 'Electronic Countertop Scale (Contech CA-30)',
+      serialNumber: '#KA-BLR-88412',
       verifiedDate: '16 Jan 2025',
-      inspectorSeal: 'SEAL-LM-BLR-2025-0428'
-    }));
+      validUntil: '16 Jan 2026',
+      inspectorSeal: 'SEAL-LM-BLR-2025-0428',
+      inspectorName: currentInspector?.name || 'Insp. R. Deshmukh',
+      inspectorBadge: currentInspector?.badge || 'LM-BLR-402',
+      statusBadge: 'CERTIFIED & COMPLIANT',
+      workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
+      remarks: 'Physical audit passed. Tamper-proof wire seal and QR code issued.'
+    };
+
+    setCertificateData({
+      ...newCertObj,
+      daysLeft: 365,
+      shopLocation: `${storeInfo.name}, ${storeInfo.zone}`,
+      shopName: storeInfo.name,
+      shopAddress: storeInfo.location,
+      merchantUid: storeInfo.merchantUid,
+      tradeLicense: storeInfo.regNumber,
+      digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+      calibrationTests: testCalibrationData,
+      isHistorical: false,
+      inProgress: false
+    });
+
+    setOwnerShops((prevShops) =>
+      prevShops.map((s, idx) => {
+        if (idx === activeShopIndex || s.name === storeInfo.name) {
+          return {
+            ...s,
+            complianceStatus: 'Certified & Compliant',
+            documentStatus: 'verified',
+            certificationHistory: [newCertObj, ...(s.certificationHistory || [])]
+          };
+        }
+        return s;
+      })
+    );
 
     // 4. Update the inspector visits queue
     setVisits((prev) =>
@@ -1182,7 +1249,7 @@ export const AppProvider = ({ children }) => {
       phone: targetShop.phone,
       zone: targetShop.zone,
       assignedInspector: targetShop.assignedInspector || 'Insp. R. Deshmukh',
-      certificateId: targetShop.certificationHistory?.[0]?.certId || 'CERT-KA-2024-9921',
+      certificateId: targetShop.certificationHistory?.[0]?.certId || 'PENDING',
       gstin: targetShop.gstin,
       shopActReg: targetShop.shopActReg,
       branchType: targetShop.branchType
@@ -1193,10 +1260,53 @@ export const AppProvider = ({ children }) => {
       setActiveInstrumentIndex(0);
     }
 
+    if (targetShop.certificationHistory && targetShop.certificationHistory.length > 0) {
+      const activeCert = targetShop.certificationHistory[0];
+      setCertificateData({
+        certId: activeCert.certId,
+        ruleForm: activeCert.ruleForm || 'Form XVII (Rule 14)',
+        actYear: activeCert.actYear || 'Act of 2009',
+        statusBadge: activeCert.statusBadge || 'VERIFIED & COMPLIANT',
+        daysLeft: activeCert.daysLeft !== undefined ? activeCert.daysLeft : 365,
+        validUntil: activeCert.validUntil || '12 Jan 2026',
+        verifiedDate: activeCert.verifiedDate || '13 Jan 2025',
+        inspectorSeal: activeCert.inspectorSeal || 'SEAL-LM-BLR-0428',
+        inspectorName: activeCert.inspectorName || targetShop.assignedInspector || 'Insp. R. Deshmukh',
+        inspectorBadge: activeCert.inspectorBadge || targetShop.inspectorBadge || 'LM-BLR-402',
+        instrumentModel: activeCert.instrumentModel || `${targetShop.instruments?.[0]?.name} (${targetShop.instruments?.[0]?.model})`,
+        serialNumber: activeCert.serialNumber || targetShop.instruments?.[0]?.serialNumber || '',
+        shopLocation: `${targetShop.name}, ${targetShop.zone}`,
+        shopName: targetShop.name,
+        shopAddress: targetShop.address,
+        merchantUid: targetShop.merchantUid,
+        tradeLicense: targetShop.tradeLicense,
+        workingStandardRef: activeCert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+        digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+        calibrationTests: activeCert.calibrationTests || testCalibrationData,
+        isHistorical: false,
+        inProgress: false
+      });
+    } else {
+      setCertificateData({
+        inProgress: true,
+        shopName: targetShop.name,
+        shopAddress: targetShop.address,
+        merchantUid: targetShop.merchantUid,
+        zone: targetShop.zone,
+        tradeLicense: targetShop.tradeLicense,
+        branchType: targetShop.branchType,
+        assignedInspector: targetShop.assignedInspector || 'Insp. R. Deshmukh',
+        inspectorBadge: targetShop.inspectorBadge || 'LM-BLR-402',
+        complianceStatus: targetShop.complianceStatus || 'Pending Inspector Verification',
+        documentStatus: targetShop.documentStatus || 'pending_review',
+        instrument: targetShop.instruments?.[0] || null
+      });
+    }
+
     setVerificationStatus((prev) => ({
       ...prev,
       documentStatus: targetShop.documentStatus || 'verified',
-      step: targetShop.documentStatus === 'verified' ? 2 : 2,
+      step: targetShop.certificationHistory && targetShop.certificationHistory.length > 0 ? 5 : (targetShop.documentStatus === 'verified' ? 3 : 2),
       inspectorName: targetShop.assignedInspector || 'Insp. R. Deshmukh'
     }));
 
@@ -1270,20 +1380,129 @@ export const AppProvider = ({ children }) => {
   };
 
   const handleViewHistoricalCertificate = (cert) => {
+    const currentShop = ownerShops[activeShopIndex] || ownerShops[0];
     setCertificateData({
       certId: cert.certId,
       ruleForm: cert.ruleForm || 'Form XVII (Rule 14)',
       actYear: cert.actYear || 'Act of 2009',
       statusBadge: cert.statusBadge || 'VERIFIED & COMPLIANT',
-      daysLeft: 365,
+      daysLeft: cert.daysLeft !== undefined ? cert.daysLeft : 365,
       validUntil: cert.validUntil || '12 Jan 2026',
       verifiedDate: cert.verifiedDate || '13 Jan 2025',
       inspectorSeal: cert.inspectorSeal || 'SEAL-LM-BLR-0428',
-      instrumentModel: cert.instrumentModel || 'Contech CA-30 (Max 30kg, e=1g)',
-      shopLocation: `${storeInfo.name}, ${storeInfo.zone}`,
+      inspectorName: cert.inspectorName || currentShop?.assignedInspector || 'Insp. R. Deshmukh',
+      inspectorBadge: cert.inspectorBadge || currentShop?.inspectorBadge || 'LM-BLR-402',
+      instrumentModel: cert.instrumentModel || (currentShop?.instruments?.[0]?.name ? `${currentShop.instruments[0].name} (${currentShop.instruments[0].model})` : 'Contech CA-30 (Max 30kg, e=1g)'),
+      serialNumber: cert.serialNumber || currentShop?.instruments?.[0]?.serialNumber || '#KA-BLR-88412',
+      shopLocation: `${currentShop?.name || storeInfo.name}, ${currentShop?.zone || storeInfo.zone}`,
+      shopName: currentShop?.name || storeInfo.name,
+      shopAddress: currentShop?.address || storeInfo.location,
+      merchantUid: currentShop?.merchantUid || storeInfo.merchantUid,
+      tradeLicense: currentShop?.tradeLicense || storeInfo.regNumber,
       workingStandardRef: cert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+      digitalSignature: cert.digitalSignature || 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+      calibrationTests: cert.calibrationTests || testCalibrationData,
+      isHistorical: cert.statusBadge?.toLowerCase().includes('archived') || cert.statusBadge?.toLowerCase().includes('renewed') || false,
+      inProgress: false
+    });
+    navigateTo('certificate-view');
+  };
+
+  const handleViewActiveCertificate = (shopOverride) => {
+    const currentShop = shopOverride || ownerShops[activeShopIndex] || ownerShops[0];
+    if (currentShop?.certificationHistory && currentShop.certificationHistory.length > 0) {
+      const activeCert = currentShop.certificationHistory[0];
+      setCertificateData({
+        certId: activeCert.certId,
+        ruleForm: activeCert.ruleForm || 'Form XVII (Rule 14)',
+        actYear: activeCert.actYear || 'Act of 2009',
+        statusBadge: activeCert.statusBadge || 'VERIFIED & COMPLIANT',
+        daysLeft: activeCert.daysLeft !== undefined ? activeCert.daysLeft : 365,
+        validUntil: activeCert.validUntil || '12 Jan 2026',
+        verifiedDate: activeCert.verifiedDate || '13 Jan 2025',
+        inspectorSeal: activeCert.inspectorSeal || 'SEAL-LM-BLR-0428',
+        inspectorName: activeCert.inspectorName || currentShop?.assignedInspector || 'Insp. R. Deshmukh',
+        inspectorBadge: activeCert.inspectorBadge || currentShop?.inspectorBadge || 'LM-BLR-402',
+        instrumentModel: activeCert.instrumentModel || (currentShop?.instruments?.[0]?.name ? `${currentShop.instruments[0].name} (${currentShop.instruments[0].model})` : 'Contech CA-30 (Max 30kg, e=1g)'),
+        serialNumber: activeCert.serialNumber || currentShop?.instruments?.[0]?.serialNumber || '#KA-BLR-88412',
+        shopLocation: `${currentShop.name}, ${currentShop.zone}`,
+        shopName: currentShop.name,
+        shopAddress: currentShop.address,
+        merchantUid: currentShop.merchantUid,
+        tradeLicense: currentShop.tradeLicense,
+        workingStandardRef: activeCert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+        digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+        calibrationTests: activeCert.calibrationTests || testCalibrationData,
+        isHistorical: false,
+        inProgress: false
+      });
+    } else {
+      setCertificateData({
+        inProgress: true,
+        shopName: currentShop?.name || storeInfo.name,
+        shopAddress: currentShop?.address || storeInfo.location,
+        merchantUid: currentShop?.merchantUid || storeInfo.merchantUid,
+        tradeLicense: currentShop?.tradeLicense || storeInfo.regNumber,
+        zone: currentShop?.zone || storeInfo.zone,
+        branchType: currentShop?.branchType || 'Commercial Branch',
+        assignedInspector: currentShop?.assignedInspector || 'Insp. R. Deshmukh',
+        inspectorBadge: currentShop?.inspectorBadge || 'LM-BLR-402',
+        complianceStatus: currentShop?.complianceStatus || 'Pending Inspector Verification',
+        documentStatus: currentShop?.documentStatus || 'pending_review',
+        instrument: currentShop?.instruments?.[0] || null
+      });
+    }
+    navigateTo('certificate-view');
+  };
+
+  const handleViewRegistryCertificate = (item) => {
+    setCertificateData({
+      certId: item.certId,
+      ruleForm: 'Form XVII (Rule 14)',
+      actYear: 'Act of 2009',
+      statusBadge: item.status === 'Compliant' ? 'VERIFIED & COMPLIANT' : 'RENEWAL DUE / PROVISIONAL',
+      daysLeft: 365,
+      validUntil: item.expiryDate || '12 Jan 2026',
+      verifiedDate: '13 Jan 2025',
+      inspectorSeal: item.stampSeal || 'SEAL-LM-BLR-0428',
+      inspectorName: item.inspector || 'Insp. R. Deshmukh',
+      inspectorBadge: 'LM-BLR-402',
+      instrumentModel: item.instrument || 'Electronic Countertop Scale',
+      serialNumber: item.serial || '#KA-BLR-88412',
+      shopLocation: `${item.shopName}, ${item.zone}`,
+      shopName: item.shopName,
+      merchantUid: item.merchantUid || '#EST-44091',
+      workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
       digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-      calibrationTests: testCalibrationData
+      calibrationTests: testCalibrationData,
+      isHistorical: false,
+      inProgress: false
+    });
+    navigateTo('certificate-view');
+  };
+
+  const handleViewVisitCertificate = (visit) => {
+    setCertificateData({
+      certId: visit.certificateId || 'CERT-KA-2025-9921',
+      ruleForm: 'Form XVII (Rule 14)',
+      actYear: 'Act of 2009',
+      statusBadge: 'VERIFIED & COMPLIANT',
+      daysLeft: 365,
+      validUntil: '16 Jan 2026',
+      verifiedDate: '16 Jan 2025',
+      inspectorSeal: 'SEAL-LM-BLR-2025-0428',
+      inspectorName: visit.assignedOfficer || currentInspector?.name || 'Insp. R. Deshmukh',
+      inspectorBadge: visit.officerBadge || currentInspector?.badge || 'LM-BLR-402',
+      instrumentModel: visit.instrumentName ? `${visit.instrumentName} (${visit.model})` : 'Electronic Counter Scale',
+      serialNumber: visit.serialNumber || '#KA-BLR-88412',
+      shopLocation: `${visit.shopName}, ${visit.address}`,
+      shopName: visit.shopName,
+      merchantUid: visit.merchantUid || '#EST-44091',
+      workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
+      digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+      calibrationTests: testCalibrationData,
+      isHistorical: false,
+      inProgress: false
     });
     navigateTo('certificate-view');
   };
@@ -1305,14 +1524,28 @@ export const AppProvider = ({ children }) => {
 
     if (match) {
       showToast(`Verified record found for ${match.shopName}!`, 'success');
-      setCertificateData((prev) => ({
-        ...prev,
+      setCertificateData({
         certId: match.certId,
+        ruleForm: 'Form XVII (Rule 14)',
+        actYear: 'Act of 2009',
+        statusBadge: match.status === 'Compliant' ? 'VERIFIED & COMPLIANT' : 'RENEWAL DUE / PROVISIONAL',
+        daysLeft: 365,
+        validUntil: match.expiryDate || '12 Jan 2026',
+        verifiedDate: '13 Jan 2025',
+        inspectorSeal: match.stampSeal || 'SEAL-LM-BLR-0428',
+        inspectorName: match.inspector || 'Insp. R. Deshmukh',
+        inspectorBadge: 'LM-BLR-402',
+        instrumentModel: match.instrument || 'Electronic Countertop Scale',
+        serialNumber: match.serial || '#KA-BLR-88412',
         shopLocation: `${match.shopName}, ${match.zone}`,
-        instrumentModel: match.instrument,
-        validUntil: match.expiryDate,
-        inspectorSeal: match.stampSeal || 'SEAL-LM-BLR-0428'
-      }));
+        shopName: match.shopName,
+        merchantUid: match.merchantUid || '#EST-44091',
+        workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
+        digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+        calibrationTests: testCalibrationData,
+        isHistorical: false,
+        inProgress: false
+      });
       navigateTo('certificate-view');
     } else {
       showToast(`Verification query "${query}" found on National Registry.`, 'success');
@@ -1346,6 +1579,9 @@ export const AppProvider = ({ children }) => {
         handleSelectOwnerShop,
         handleAddOwnerShop,
         handleViewHistoricalCertificate,
+        handleViewActiveCertificate,
+        handleViewRegistryCertificate,
+        handleViewVisitCertificate,
         adminCredentials: ADMIN_CREDENTIALS,
         language,
         setLanguage,
@@ -1365,6 +1601,7 @@ export const AppProvider = ({ children }) => {
         handleInspectorReviewDocuments,
         getDocumentSubmission,
         certificateData,
+        setCertificateData,
         handleRegisterInstrument,
         handleConfirmVerification,
         handleCompleteInspection,

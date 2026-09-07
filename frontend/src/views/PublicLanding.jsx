@@ -903,7 +903,7 @@ export const PublicLanding = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Owner Full Name *</label>
                     <input
@@ -927,7 +927,7 @@ export const PublicLanding = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Email (For Login) *</label>
                     <input
@@ -952,7 +952,7 @@ export const PublicLanding = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Jurisdiction Zone</label>
                     <select
@@ -978,7 +978,7 @@ export const PublicLanding = () => {
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between">
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <button
                     type="button"
                     onClick={() => setShopTab('login')}
@@ -986,17 +986,17 @@ export const PublicLanding = () => {
                   >
                     Already registered? Sign In
                   </button>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <button
                       type="button"
                       onClick={() => setActiveModal(null)}
-                      className="px-4 py-2 border border-[#DADDD3] rounded-xl text-gray-700 font-semibold hover:bg-gray-50"
+                      className="flex-1 sm:flex-initial px-4 py-2 border border-[#DADDD3] rounded-xl text-gray-700 font-semibold hover:bg-gray-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 bg-[#E0702A] hover:bg-[#c95f1f] text-white font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                      className="flex-1 sm:flex-initial px-5 py-2 bg-[#E0702A] hover:bg-[#c95f1f] text-white font-bold rounded-xl shadow-xs transition-all cursor-pointer"
                     >
                       Sign Up &amp; Register Store
                     </button>

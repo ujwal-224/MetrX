@@ -16,6 +16,7 @@ export const ShopDashboard = () => {
     handleSelectOwnerShop,
     handleAddOwnerShop,
     handleViewHistoricalCertificate,
+    handleViewActiveCertificate,
     showToast
   } = useApp();
 
@@ -93,9 +94,9 @@ export const ShopDashboard = () => {
   };
 
   return (
-    <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 flex flex-col gap-6 min-h-screen">
+    <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 flex flex-col gap-5 sm:gap-6 min-h-screen">
       {/* Top Banner: Merchant Account Identity & Multi-Shop Selector */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs flex flex-col gap-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -104,7 +105,7 @@ export const ShopDashboard = () => {
                 Verified Merchant Account • {storeInfo.contactPerson || 'Shree S. N. Ganesh'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
               Enterprise Commercial Establishments
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -114,7 +115,7 @@ export const ShopDashboard = () => {
 
           <button
             onClick={() => setShowAddShopModal(true)}
-            className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shrink-0"
             type="button"
           >
             <span className="material-symbols-outlined text-base">add_business</span>
@@ -124,17 +125,17 @@ export const ShopDashboard = () => {
 
         {/* Multi-Shop Establishment Tabs */}
         <div>
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+          <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
             Your Establishments ({ownerShops.length} Registered Shops):
           </span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
             {ownerShops.map((shop, idx) => {
               const isSelected = activeShopIndex === idx;
               return (
                 <button
                   key={shop.id}
                   onClick={() => handleSelectOwnerShop(idx)}
-                  className={`p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 ${
+                  className={`p-3 sm:p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 ${
                     isSelected
                       ? 'bg-[#023625]/5 border-[#023625] ring-2 ring-[#023625]/20 shadow-xs'
                       : 'bg-gray-50 hover:bg-white border-gray-200 hover:border-gray-300'
@@ -150,9 +151,6 @@ export const ShopDashboard = () => {
                         {shop.name}
                       </span>
                     </div>
-                    {isSelected && (
-                      <span className="w-2 h-2 rounded-full bg-[#023625] shrink-0"></span>
-                    )}
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-200/50">
@@ -173,11 +171,11 @@ export const ShopDashboard = () => {
       </div>
 
       {/* SECTION 1: Active Shop Profile & Statutory Credentials Card */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                 {activeShop.name}
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -189,17 +187,17 @@ export const ShopDashboard = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             <button
               onClick={() => navigateTo('upload-documents')}
-              className="px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <span className="material-symbols-outlined text-base text-gray-500">upload_file</span>
               <span>Upload Documents (5)</span>
             </button>
             <button
               onClick={() => navigateTo('register-instrument')}
-              className="px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <span className="material-symbols-outlined text-base text-gray-500">add</span>
               <span>Register Scale</span>
@@ -208,7 +206,7 @@ export const ShopDashboard = () => {
         </div>
 
         {/* 6-Field Statutory Metadata Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
             <span className="text-[10px] uppercase font-bold text-gray-400">Trade License Number</span>
             <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.tradeLicense}</span>
@@ -233,7 +231,7 @@ export const ShopDashboard = () => {
 
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
             <span className="text-[10px] uppercase font-bold text-gray-400">Assigned Field Inspector</span>
-            <span className="text-xs font-bold text-[#023625] mt-0.5">
+            <span className="text-xs font-bold text-[#023625] mt-0.5 truncate">
               {activeShop.assignedInspector || 'Insp. R. Deshmukh'} ({activeShop.inspectorBadge || 'Badge #LM-BLR-402'})
             </span>
           </div>
@@ -248,11 +246,11 @@ export const ShopDashboard = () => {
       </div>
 
       {/* SECTION 2: Statutory Documents Verification & Upload Status */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-lg text-[#023625]">folder_shared</span>
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-sm sm:text-base font-bold text-gray-900">
               Mandatory Statutory Documents (5/5 Files Required)
             </h2>
           </div>
@@ -278,7 +276,7 @@ export const ShopDashboard = () => {
         </div>
 
         {/* 5 Documents Summary Chips */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
           <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
             <span className="text-[10px] uppercase font-bold text-gray-400">1. Business Reg</span>
             <span className="text-xs font-bold text-gray-900 truncate">Trade License</span>
@@ -465,17 +463,17 @@ export const ShopDashboard = () => {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-2 mt-4">
+          <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2 mt-4">
             <button
               onClick={() => navigateTo('register-instrument')}
-              className="px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+              className="w-full sm:w-auto px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center justify-center gap-1 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">add</span>
               <span>Add Scale to Shop</span>
             </button>
             <button
-              onClick={() => navigateTo('certificate-view')}
-              className="px-3.5 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold transition-colors flex items-center gap-1"
+              onClick={() => handleViewActiveCertificate()}
+              className="w-full sm:w-auto px-3.5 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold transition-colors flex items-center justify-center gap-1"
             >
               <span className="material-symbols-outlined text-sm">verified</span>
               <span>View Active Certificate</span>
@@ -485,10 +483,10 @@ export const ShopDashboard = () => {
       </div>
 
       {/* SECTION 4: Previously Certified Scales & Historical Stamping Archive */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#023625] flex items-center justify-center border border-emerald-100">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#023625] flex items-center justify-center border border-emerald-100 shrink-0">
               <span className="material-symbols-outlined text-lg">history_edu</span>
             </div>
             <div>
@@ -512,15 +510,15 @@ export const ShopDashboard = () => {
             {activeShop.certificationHistory.map((cert) => (
               <div
                 key={cert.certId}
-                className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 hover:bg-gray-50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                className="p-3.5 sm:p-4 rounded-xl border border-gray-200 bg-gray-50/70 hover:bg-gray-50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4"
               >
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
-                    <span className="material-symbols-outlined text-xl">verified</span>
+                <div className="flex items-start gap-3 sm:gap-3.5">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-gray-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+                    <span className="material-symbols-outlined text-lg sm:text-xl">verified</span>
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono font-extrabold text-sm text-gray-900">
+                      <span className="font-mono font-extrabold text-xs sm:text-sm text-gray-900">
                         {cert.certId}
                       </span>
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
@@ -539,7 +537,7 @@ export const ShopDashboard = () => {
                       <span>Valid Until: <strong>{cert.validUntil}</strong></span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                    <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5 flex-wrap">
                       <span>Seal: <strong className="font-mono text-gray-700">{cert.inspectorSeal}</strong></span>
                       <span className="text-gray-300">•</span>
                       <span>Officer: <strong className="text-gray-700">{cert.inspectorName} ({cert.inspectorBadge})</strong></span>
@@ -550,7 +548,7 @@ export const ShopDashboard = () => {
                 <div className="w-full md:w-auto shrink-0 flex items-center gap-2 justify-end">
                   <button
                     onClick={() => handleViewHistoricalCertificate(cert)}
-                    className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-300 text-[#023625] text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-colors"
+                    className="w-full md:w-auto px-4 py-2 bg-white hover:bg-gray-100 border border-gray-300 text-[#023625] text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-1.5 transition-colors"
                     type="button"
                   >
                     <span className="material-symbols-outlined text-sm">visibility</span>
@@ -561,7 +559,7 @@ export const ShopDashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <div className="p-6 sm:p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
             <span className="material-symbols-outlined text-3xl text-gray-300 mb-1 block">receipt_long</span>
             <p className="text-xs font-bold text-gray-700">No Past Certificates on Record for this Branch</p>
             <p className="text-[11px] text-gray-400 mt-0.5">
@@ -573,11 +571,11 @@ export const ShopDashboard = () => {
 
       {/* MODAL: Register New Shop / Branch */}
       {showAddShopModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg border border-gray-200 shadow-2xl p-6 flex flex-col gap-4">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg border border-gray-200 shadow-2xl p-4 sm:p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between border-b border-gray-100 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">
                   Register New Shop / Branch Establishment
                 </h3>
                 <p className="text-xs text-gray-500">
@@ -586,7 +584,7 @@ export const ShopDashboard = () => {
               </div>
               <button
                 onClick={() => setShowAddShopModal(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center shrink-0"
               >
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
@@ -604,7 +602,7 @@ export const ShopDashboard = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-gray-700 block mb-1">Branch Type</label>
                   <select
@@ -643,7 +641,7 @@ export const ShopDashboard = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-gray-700 block mb-1">Trade License (Optional)</label>
                   <input

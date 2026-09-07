@@ -9,6 +9,7 @@ export const InspectorSchedule = () => {
     handleStartInspection,
     documentSubmissions,
     handleInspectorReviewDocuments,
+    handleViewVisitCertificate,
     showToast
   } = useApp();
 
@@ -53,10 +54,10 @@ export const InspectorSchedule = () => {
   };
 
   return (
-    <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 min-h-screen">
-      <div className="flex flex-col gap-6">
+    <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
+      <div className="flex flex-col gap-5 sm:gap-6">
         {/* View Title & Summary Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-gray-200 pb-4 sm:pb-5">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -64,7 +65,7 @@ export const InspectorSchedule = () => {
                 Official Field Route • {activeZone} • {inspectorName} ({inspectorBadge})
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
               Assigned Verification Schedule
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -73,21 +74,21 @@ export const InspectorSchedule = () => {
           </div>
 
           {/* KPI Summary Chips */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="bg-white border border-gray-200 px-3.5 py-2 rounded-xl flex items-center gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex-1 sm:flex-initial bg-white border border-gray-200 px-3 sm:px-3.5 py-2 rounded-xl flex items-center gap-2.5 shadow-xs">
               <span className="material-symbols-outlined text-amber-600 text-lg">pending_actions</span>
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-bold text-gray-400">Actionable</span>
-                <span className="text-sm font-extrabold text-gray-900">
+                <span className="text-xs sm:text-sm font-extrabold text-gray-900">
                   {inspectorVisits.filter((v) => v.isNextUp).length > 0 ? `${inspectorVisits.filter((v) => v.isNextUp).length} Next Up` : 'Queue Clear'}
                 </span>
               </div>
             </div>
-            <div className="bg-white border border-gray-200 px-3.5 py-2 rounded-xl flex items-center gap-2.5 shadow-xs">
+            <div className="flex-1 sm:flex-initial bg-white border border-gray-200 px-3 sm:px-3.5 py-2 rounded-xl flex items-center gap-2.5 shadow-xs">
               <span className="material-symbols-outlined text-emerald-700 text-lg">verified</span>
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-bold text-gray-400">Completed</span>
-                <span className="text-sm font-extrabold text-gray-900">
+                <span className="text-xs sm:text-sm font-extrabold text-gray-900">
                   {inspectorVisits.filter((v) => v.statusType === 'completed').length} Certified
                 </span>
               </div>
@@ -96,14 +97,14 @@ export const InspectorSchedule = () => {
         </div>
 
         {/* Search & Filter Bar Component */}
-        <div className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2.5 flex-1 w-full pl-2">
+        <div className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 shadow-xs">
+          <div className="flex items-center gap-2 flex-1 w-full pl-1 sm:pl-2">
             <span className="material-symbols-outlined text-gray-400 text-lg">search</span>
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-transparent border-0 text-gray-900 placeholder:text-gray-400 text-xs sm:text-sm focus:ring-0 focus:outline-none"
-              placeholder="Search your assigned shop name, commercial license, or street address..."
+              placeholder="Search assigned shop name, license, or address..."
               type="text"
             />
           </div>
@@ -299,7 +300,7 @@ export const InspectorSchedule = () => {
 
                       {isCompleted ? (
                         <button
-                          onClick={() => navigateTo('certificate-view')}
+                          onClick={() => handleViewVisitCertificate(visit)}
                           className="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all"
                           type="button"
                         >

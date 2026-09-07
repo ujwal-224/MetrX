@@ -40,10 +40,10 @@ export const RequestVerification = () => {
   };
 
   return (
-    <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 min-h-screen">
-      <div className="max-w-3xl mx-auto px-0 sm:px-2 pt-2">
+    <main className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
+      <div className="max-w-3xl mx-auto px-0 sm:px-2 pt-1 sm:pt-2">
         {/* Breadcrumb / Back Link */}
-        <div className="mb-4 flex items-center gap-2 text-gray-500 text-xs">
+        <div className="mb-3 sm:mb-4 flex items-center gap-2 text-gray-500 text-xs">
           <button
             onClick={() => navigateTo('shop-dashboard')}
             className="hover:text-gray-900 transition-colors flex items-center gap-1 font-medium"
@@ -56,8 +56,8 @@ export const RequestVerification = () => {
         </div>
 
         {/* Main Header Area */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl text-gray-900 font-bold tracking-tight">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl text-gray-900 font-bold tracking-tight">
             Schedule Field Verification Visit
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">

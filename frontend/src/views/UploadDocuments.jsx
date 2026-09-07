@@ -90,10 +90,10 @@ export const UploadDocuments = () => {
   const allUploaded = Object.values(files).every((f) => f.uploaded);
 
   return (
-    <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 min-h-screen">
+    <main className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumb Navigation */}
-        <div className="mb-4 flex items-center gap-2 text-xs text-gray-500">
+        <div className="mb-3 sm:mb-4 flex items-center gap-2 text-xs text-gray-500">
           <button
             onClick={() => navigateTo('shop-dashboard')}
             className="hover:text-gray-900 transition-colors flex items-center gap-1 font-medium"
@@ -106,13 +106,13 @@ export const UploadDocuments = () => {
         </div>
 
         {/* Header Title */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[#023625] bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
               Rule 14 • Legal Metrology Mandate
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Upload Statutory Verification Documents
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">

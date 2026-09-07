@@ -38,10 +38,10 @@ export const FieldInspection = () => {
   };
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-4 py-8 min-h-screen">
+    <main className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       {/* Breadcrumb Bar */}
-      <div className="max-w-2xl mx-auto mb-unit-4">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-unit-2 text-xs text-outline">
+      <div className="max-w-2xl mx-auto mb-3 sm:mb-4">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
           <button
             onClick={() => navigateTo('inspector-schedule')}
             className="hover:text-primary flex items-center gap-1 transition-colors font-medium"
@@ -49,34 +49,34 @@ export const FieldInspection = () => {
             <span className="material-symbols-outlined text-sm">arrow_back</span>
             <span>Today's Inspection Queue</span>
           </button>
-          <span className="text-outline-variant">/</span>
-          <span className="text-on-surface font-semibold">Step 4: Audit &amp; Stamping</span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F0E8] text-[#2E7D32] ml-2">
+          <span className="text-gray-300">/</span>
+          <span className="text-gray-900 font-semibold">Step 4: Audit &amp; Stamping</span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F0E8] text-[#2E7D32]">
             On-Site Active
           </span>
         </nav>
       </div>
 
       {/* Main Inspection Card Container */}
-      <section className="max-w-2xl mx-auto bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 md:p-8 shadow-sm">
+      <section className="max-w-2xl mx-auto bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm">
         {/* Header Zone */}
-        <div className="pb-5 border-b border-outline-variant">
-          <div className="flex items-start justify-between gap-3">
+        <div className="pb-4 sm:pb-5 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
             <div>
-              <span className="text-[11px] uppercase tracking-wider font-bold text-[#E0702A] block">
+              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-[#E0702A] block">
                 Inspector Terminal • On-Site Verification
               </span>
-              <h1 className="text-xl md:text-2xl font-bold text-primary tracking-tight">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 tracking-tight">
                 {storeInfo.name}
               </h1>
-              <p className="text-xs md:text-sm text-on-surface-variant mt-1">
-                Verifying Scale: <strong className="text-on-surface">{activeInstrument.name}</strong> •{' '}
+              <p className="text-xs md:text-sm text-gray-500 mt-0.5">
+                Verifying Scale: <strong className="text-gray-800">{activeInstrument.name}</strong> •{' '}
                 <span className="font-mono">{activeInstrument.serialNumber}</span>
               </p>
             </div>
-            <div className="bg-surface-container-low border border-outline-variant/60 rounded-xl p-2.5 text-center shrink-0">
-              <span className="block text-[10px] uppercase font-bold text-outline">Accuracy</span>
-              <span className="block text-sm font-bold text-primary">Class III (1g)</span>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 sm:p-2.5 text-center shrink-0 self-start sm:self-auto">
+              <span className="block text-[9px] sm:text-[10px] uppercase font-bold text-gray-400">Accuracy</span>
+              <span className="block text-xs sm:text-sm font-bold text-[#023625]">Class III (1g)</span>
             </div>
           </div>
         </div>

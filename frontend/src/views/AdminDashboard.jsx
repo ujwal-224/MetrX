@@ -44,9 +44,9 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-8 min-h-screen">
+    <main className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       {/* Header Banner - Rich Metrology Forest Green Palette */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#DADDD3]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 sm:pb-6 border-b border-[#DADDD3]">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E0702A] animate-pulse"></span>
@@ -54,7 +54,7 @@ export const AdminDashboard = () => {
               Directorate of Legal Metrology • Administration Command Center
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#023625] tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#023625] tracking-tight">
             Department Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -63,10 +63,10 @@ export const AdminDashboard = () => {
         </div>
 
         {/* Action Button to Provision Inspector */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1b4a36] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1b4a36] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
           >
             <span className="material-symbols-outlined text-base">person_add</span>
             <span>Provision New Inspector</span>
@@ -75,43 +75,43 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Summary KPI Cards - Green & Amber Palette */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
-        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#023625] rounded-2xl p-5 shadow-xs transition-all">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 my-5 sm:my-6">
+        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#023625] rounded-2xl p-4 sm:p-5 shadow-xs transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase text-gray-500">Live Operations</span>
             <span className="w-8 h-8 rounded-lg bg-[#E7F0E8] text-[#023625] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">sync_saved_locally</span>
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-[#023625]">{operations.length} Active Audits</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{operations.length} Active Audits</div>
           <span className="text-xs text-[#E0702A] font-semibold flex items-center gap-1 mt-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#E0702A] animate-ping"></span>
             Real-time tracking of inspectors &amp; shops
           </span>
         </div>
 
-        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#023625] rounded-2xl p-5 shadow-xs transition-all">
+        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#023625] rounded-2xl p-4 sm:p-5 shadow-xs transition-all">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase text-gray-500">Authorized Inspectors</span>
             <span className="w-8 h-8 rounded-lg bg-[#E7F0E8] text-[#023625] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">badge</span>
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-[#023625]">{inspectors.length} Field Officers</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{inspectors.length} Field Officers</div>
           <span className="text-xs text-[#2E7D32] font-semibold mt-1 flex items-center gap-1">
             <span className="material-symbols-outlined text-xs">verified</span>
             Admin-Provisioned Credentials Only
           </span>
         </div>
 
-        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#E0702A] rounded-2xl p-5 shadow-xs transition-all">
+        <div className="bg-white border-2 border-[#DADDD3] hover:border-[#E0702A] rounded-2xl p-4 sm:p-5 shadow-xs transition-all sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase text-gray-500">Registered Shop Owners</span>
             <span className="w-8 h-8 rounded-lg bg-[#FAF8F4] border border-amber-200 text-[#E0702A] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">storefront</span>
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-[#023625]">{merchants.length} Stores Synced</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{merchants.length} Stores Synced</div>
           {merchants.some((m) => !m.assignedInspector) ? (
             <span className="text-xs text-[#E0702A] font-bold mt-1 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[#E0702A] animate-ping"></span>
@@ -126,34 +126,34 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#DADDD3] mb-6">
+      <div className="flex items-center gap-1.5 sm:gap-2 border-b border-[#DADDD3] mb-5 sm:mb-6 overflow-x-auto no-scrollbar pb-1 touch-pan-x">
         <button
           onClick={() => setActiveTab('operations')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === 'operations'
               ? 'border-[#023625] text-[#023625]'
               : 'border-transparent text-gray-500 hover:text-gray-900'
           }`}
         >
           <span className="material-symbols-outlined text-base">route</span>
-          <span>1. Live Inspector Operations on Shops ({operations.length})</span>
+          <span>1. Live Field Operations ({operations.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('inspectors')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === 'inspectors'
               ? 'border-[#023625] text-[#023625]'
               : 'border-transparent text-gray-500 hover:text-gray-900'
           }`}
         >
           <span className="material-symbols-outlined text-base">badge</span>
-          <span>2. Inspector Accounts &amp; Access ({inspectors.length})</span>
+          <span>2. Inspector Accounts ({inspectors.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('merchants')}
-          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === 'merchants'
               ? 'border-[#023625] text-[#023625]'
               : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -172,9 +172,9 @@ export const AdminDashboard = () => {
       {/* TAB 1: Live Inspector Operations on Shops */}
       {activeTab === 'operations' && (
         <div className="bg-white border border-[#DADDD3] rounded-2xl shadow-xs overflow-hidden">
-          <div className="p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 sm:p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-[#023625]">
+              <h3 className="text-sm sm:text-base font-bold text-[#023625]">
                 Real-Time Metrological Operations by Field Officers
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
@@ -271,9 +271,9 @@ export const AdminDashboard = () => {
       {/* TAB 2: Inspector Accounts (Admin-Provisioned ONLY) */}
       {activeTab === 'inspectors' && (
         <div className="bg-white border border-[#DADDD3] rounded-2xl shadow-xs overflow-hidden">
-          <div className="p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 sm:p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-[#023625]">
+              <h3 className="text-sm sm:text-base font-bold text-[#023625]">
                 Authorized Inspector Accounts Ledger
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
@@ -358,9 +358,9 @@ export const AdminDashboard = () => {
       {/* TAB 3: Registered Shop Owners (Self-Registered by Merchants) */}
       {activeTab === 'merchants' && (
         <div className="bg-white border border-[#DADDD3] rounded-2xl shadow-xs overflow-hidden">
-          <div className="p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 sm:p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-[#023625]">
+              <h3 className="text-sm sm:text-base font-bold text-[#023625]">
                 Registered Shop Owners &amp; Merchants Directory
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
@@ -473,27 +473,27 @@ export const AdminDashboard = () => {
 
       {/* Modal: Create / Provision New Inspector Account */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#DADDD3] relative">
-            <div className="flex items-center justify-between pb-4 border-b border-[#DADDD3]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-gray-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-[#DADDD3] relative max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-[#DADDD3]">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-[#E7F0E8] text-[#023625] flex items-center justify-center">
+                <span className="w-8 h-8 rounded-lg bg-[#E7F0E8] text-[#023625] flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-lg">person_add</span>
                 </span>
                 <div>
-                  <h3 className="text-base font-bold text-[#023625]">Provision New Field Inspector</h3>
-                  <p className="text-[11px] text-gray-500">Government Legal Metrology Enforcement Officer</p>
+                  <h3 className="text-sm sm:text-base font-bold text-[#023625]">Provision New Field Inspector</h3>
+                  <p className="text-[10px] sm:text-[11px] text-gray-500">Government Legal Metrology Enforcement Officer</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center shrink-0"
               >
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="pt-4 space-y-4 text-xs">
+            <form onSubmit={handleFormSubmit} className="pt-4 space-y-3.5 sm:space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-gray-700 mb-1">Inspector Full Name *</label>
                 <input
@@ -506,7 +506,7 @@ export const AdminDashboard = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">Badge Number *</label>
                   <input
@@ -544,7 +544,7 @@ export const AdminDashboard = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">Login Email *</label>
                   <input

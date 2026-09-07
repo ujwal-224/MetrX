@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const StateRegistry = () => {
-  const { registry, navigateTo, activeRole, showToast } = useApp();
+  const { registry, navigateTo, activeRole, showToast, handleViewRegistryCertificate } = useApp();
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState('all');
 
@@ -21,9 +21,9 @@ export const StateRegistry = () => {
   });
 
   return (
-    <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 min-h-screen">
+    <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       {/* Breadcrumb Hierarchy */}
-      <div className="mb-unit-4 flex items-center gap-unit-2 text-body-sm font-body-sm text-on-surface-variant">
+      <div className="mb-3 sm:mb-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap">
         <button
           onClick={() => {
             if (activeRole === 'inspector') navigateTo('inspector-schedule');
@@ -31,7 +31,7 @@ export const StateRegistry = () => {
             else if (activeRole === 'public') navigateTo('public-portal');
             else navigateTo('shop-dashboard');
           }}
-          className="hover:text-primary transition-colors flex items-center gap-unit-1"
+          className="hover:text-primary transition-colors flex items-center gap-1 font-medium"
         >
           <span className="material-symbols-outlined text-base">
             {activeRole === 'inspector' ? 'route' : activeRole === 'admin' ? 'dashboard' : activeRole === 'public' ? 'public' : 'storefront'}
@@ -40,17 +40,17 @@ export const StateRegistry = () => {
             {activeRole === 'inspector' ? "Inspector Route" : activeRole === 'admin' ? "Admin Command Center" : activeRole === 'public' ? 'Citizen Portal' : 'Shop Dashboard'}
           </span>
         </button>
-        <span className="material-symbols-outlined text-sm text-outline">chevron_right</span>
-        <span className="text-primary font-semibold">State Compliance Registry &amp; Ledger</span>
+        <span className="material-symbols-outlined text-sm text-gray-400">chevron_right</span>
+        <span className="text-[#023625] font-semibold">State Compliance Registry &amp; Ledger</span>
       </div>
 
       {/* Header & KPI Summary */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-unit-4 mb-unit-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-5 sm:mb-6">
         <div>
-          <h1 className="font-headline-lg text-2xl md:text-headline-lg text-primary tracking-tight font-bold">
+          <h1 className="text-xl sm:text-2xl md:text-3xl text-gray-900 tracking-tight font-bold">
             State Compliance Registry &amp; Ledger
           </h1>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
             Directorate of Legal Metrology, Government of Karnataka • Form XVII Public Verification Index
           </p>
         </div>
@@ -165,7 +165,7 @@ export const StateRegistry = () => {
                     <td className="py-3.5 px-4 text-on-surface-variant text-xs">{item.inspector}</td>
                     <td className="py-3.5 px-4 text-right">
                       <button
-                        onClick={() => navigateTo('certificate-view')}
+                        onClick={() => handleViewRegistryCertificate(item)}
                         className="px-2.5 py-1 text-xs bg-surface-container border border-outline-variant hover:border-primary text-primary font-semibold rounded transition-all"
                       >
                         View Cert

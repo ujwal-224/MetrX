@@ -59,7 +59,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-xs no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Brand Identity */}
         <div
           onClick={() => {
@@ -68,25 +68,25 @@ export const Header = () => {
             else if (activeRole === 'shop-owner') navigateTo('shop-dashboard');
             else navigateTo('public-portal');
           }}
-          className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer select-none group shrink-0"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#023625] text-[#bceed3] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-xl">balance</span>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#023625] text-[#bceed3] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+            <span className="material-symbols-outlined text-lg sm:text-xl">balance</span>
           </div>
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 leading-none">
-              <span className="font-extrabold text-base tracking-tight text-[#023625]">METRA</span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
+              <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#023625]">METRA</span>
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                 Official
               </span>
             </div>
-            <span className="text-[11px] text-gray-500 font-medium leading-tight mt-0.5 hidden sm:inline">
+            <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium leading-tight mt-0.5 hidden sm:inline">
               Legal Metrology Portal
             </span>
           </div>
         </div>
 
-        {/* Center: Role-Tailored Navigation Bar (Spacious, single-line tabs) */}
+        {/* Center: Role-Tailored Navigation Bar for Large Screens */}
         {navItems.length > 0 && (
           <nav className="hidden lg:flex items-center gap-1 bg-gray-100/90 p-1 rounded-xl border border-gray-200/70 shadow-xs">
             {navItems.map((item) => {
@@ -112,25 +112,25 @@ export const Header = () => {
         )}
 
         {/* Right: Auth Profile, Login/Logout & Language */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {activeRole === 'public' ? (
-            /* Unauthenticated: Direct Login Button to scroll to login cards */
+            /* Unauthenticated: Direct Login Button */
             <button
               onClick={scrollToLogin}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#E0702A] hover:bg-[#c95f1f] text-white transition-all shadow-xs active:scale-95 font-bold text-xs cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#E0702A] hover:bg-[#c95f1f] text-white transition-all shadow-xs active:scale-95 font-bold text-[11px] sm:text-xs cursor-pointer whitespace-nowrap"
             >
-              <span className="material-symbols-outlined text-base">login</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">login</span>
               <span>Login to Portal</span>
             </button>
           ) : (
             /* Authenticated in Role: Show Role Identity & Logout Button */
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* User Identity Pill */}
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50/90 border border-gray-200 text-left shadow-2xs">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50/90 border border-gray-200 text-left shadow-2xs">
                 <div className={`w-2.5 h-2.5 rounded-full ${
                   activeRole === 'admin' ? 'bg-[#023625]' : activeRole === 'inspector' ? 'bg-emerald-500' : 'bg-amber-500'
                 }`}></div>
-                <div className="flex flex-col text-xs leading-none max-w-[140px] md:max-w-[170px]">
+                <div className="flex flex-col text-xs leading-none max-w-[120px] lg:max-w-[170px]">
                   <span className="font-bold text-gray-800 truncate">
                     {activeRole === 'admin'
                       ? 'Dr. Sharma (Admin)'
@@ -151,11 +151,11 @@ export const Header = () => {
               {/* Explicit Logout Button */}
               <button
                 onClick={logout}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 text-[11px] sm:text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
                 title="Log out and return to landing page"
               >
                 <span className="material-symbols-outlined text-sm">logout</span>
-                <span>Logout</span>
+                <span className="hidden xs:inline">Logout</span>
               </button>
             </div>
           )}
@@ -164,7 +164,7 @@ export const Header = () => {
           <div className="flex items-center rounded-lg border border-gray-200 p-0.5 bg-gray-100/90 shrink-0 shadow-2xs">
             <button
               onClick={() => setLanguage('EN')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+              className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
                 language === 'EN' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
@@ -172,7 +172,7 @@ export const Header = () => {
             </button>
             <button
               onClick={() => setLanguage('HI')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${
+              className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
                 language === 'HI' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
@@ -182,16 +182,16 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Sub-header Navigation Row for tablet & mobile or medium screens (lg:hidden) */}
+      {/* Sub-header Navigation Row for Tablet & Mobile (lg:hidden) */}
       {navItems.length > 0 && (
-        <div className="flex lg:hidden overflow-x-auto no-scrollbar px-4 py-2 bg-gray-50/95 border-t border-gray-200/80 gap-1.5 text-xs touch-pan-x">
+        <div className="flex lg:hidden overflow-x-auto no-scrollbar px-3 sm:px-4 py-2 bg-gray-50/95 border-t border-gray-200/80 gap-1.5 text-xs touch-pan-x">
           {navItems.map((item) => {
             const isActive = currentView === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => navigateTo(item.id)}
-                className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer text-xs ${
                   isActive
                     ? 'bg-[#023625] text-white shadow-xs'
                     : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-100'

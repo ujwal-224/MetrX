@@ -16,9 +16,9 @@ export const TrackStatus = () => {
   const docStatus = docData.status || verificationStatus.documentStatus || 'pending_review';
 
   return (
-    <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 min-h-screen">
+    <main className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       {/* Breadcrumb Hierarchy */}
-      <div className="max-w-3xl mx-auto w-full mb-4 flex items-center gap-2 text-xs text-gray-500">
+      <div className="max-w-3xl mx-auto w-full mb-3 sm:mb-4 flex items-center gap-2 text-xs text-gray-500">
         <button
           onClick={() => navigateTo('shop-dashboard')}
           className="hover:text-gray-900 transition-colors flex items-center gap-1 font-medium"
@@ -27,18 +27,18 @@ export const TrackStatus = () => {
           <span>Shop Dashboard</span>
         </button>
         <span className="material-symbols-outlined text-sm text-gray-400">chevron_right</span>
-        <span className="text-[#023625] font-semibold">Appointment &amp; Compliance Tracker</span>
+        <span className="text-[#023625] font-semibold truncate">Appointment &amp; Compliance Tracker</span>
       </div>
 
       {/* Section Headline Header */}
-      <div className="max-w-3xl mx-auto w-full mb-6">
+      <div className="max-w-3xl mx-auto w-full mb-4 sm:mb-6">
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
             Application Status • Ref #{verificationStatus.applicationRef}
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
           Track Your Verification Progress
         </h1>
         <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -47,23 +47,23 @@ export const TrackStatus = () => {
       </div>
 
       {/* Central Tracking Card */}
-      <div className="max-w-3xl w-full mx-auto bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col">
+      <div className="max-w-3xl w-full mx-auto bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-xs flex flex-col">
         {/* Instrument Details Sub-bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-gray-100 mb-6 gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200 text-[#023625] shrink-0">
-              <span className="material-symbols-outlined text-2xl">scale</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 sm:pb-5 border-b border-gray-100 mb-4 sm:mb-6 gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200 text-[#023625] shrink-0">
+              <span className="material-symbols-outlined text-xl sm:text-2xl">scale</span>
             </div>
             <div>
-              <div className="text-base font-bold text-gray-900">
+              <div className="text-sm sm:text-base font-bold text-gray-900">
                 {activeInstrument.name} ({activeInstrument.model})
               </div>
-              <span className="text-xs text-gray-500 font-mono">
+              <span className="text-[11px] sm:text-xs text-gray-500 font-mono">
                 Serial: {activeInstrument.serialNumber} • Capacity: {activeInstrument.capacity}
               </span>
             </div>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] sm:text-xs font-bold self-start sm:self-auto">
             <span className="material-symbols-outlined text-sm">event</span>
             <span>
               {currentStep >= 3 ? `Slot: ${verificationStatus.slotLabel}` : 'Slot: Pending Verification'}
@@ -72,8 +72,8 @@ export const TrackStatus = () => {
         </div>
 
         {/* 5-Step Progress Stepper */}
-        <div className="w-full py-4 mb-6">
-          <div className="relative flex items-center justify-between">
+        <div className="w-full py-3 sm:py-4 mb-4 sm:mb-6 overflow-x-auto no-scrollbar">
+          <div className="relative flex items-center justify-between min-w-[340px] px-2 sm:px-0">
             {/* Connecting line */}
             <div className="absolute left-0 top-4 w-full h-1 bg-gray-200 z-0"></div>
             <div
