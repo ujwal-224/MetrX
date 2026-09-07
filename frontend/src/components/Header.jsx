@@ -27,9 +27,7 @@ export const Header = () => {
       { id: 'inspector-schedule', label: "Today's Route", icon: 'route' },
       { id: 'field-inspection', label: 'Conduct Inspection', icon: 'fact_check' },
     ],
-    'admin': [
-      { id: 'admin-dashboard', label: 'Command Center', icon: 'dashboard' },
-    ],
+    'admin': [],
     'public': []
   };
 
@@ -38,7 +36,7 @@ export const Header = () => {
   const roleLabels = {
     'shop-owner': { title: 'Shop Owner', badge: 'Merchant', icon: 'storefront' },
     'inspector': { title: 'Field Inspector', badge: 'Enforcement', icon: 'badge' },
-    'admin': { title: 'Department Admin', badge: 'Controller', icon: 'shield_person' },
+    'admin': { title: 'Admin', badge: 'Admin', icon: 'shield_person' },
     'public': { title: 'Citizen & Consumer', badge: 'Public', icon: 'public' }
   };
 
@@ -75,7 +73,7 @@ export const Header = () => {
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#023625]">METRA</span>
+              <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#023625]">MetrX</span>
               <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                 Official
               </span>
@@ -133,14 +131,14 @@ export const Header = () => {
                 <div className="flex flex-col text-xs leading-none max-w-[120px] lg:max-w-[170px]">
                   <span className="font-bold text-gray-800 truncate">
                     {activeRole === 'admin'
-                      ? 'Dr. Sharma (Admin)'
+                      ? 'Admin'
                       : activeRole === 'inspector'
                       ? (currentInspector?.name || 'Insp. Deshmukh')
                       : storeInfo.name}
                   </span>
                   <span className="text-[10px] text-gray-500 truncate mt-0.5">
                     {activeRole === 'admin'
-                      ? 'State Controller'
+                      ? 'Administrator'
                       : activeRole === 'inspector'
                       ? `Badge #${currentInspector?.badgeNumber || 'LM-402'}`
                       : 'Merchant • Ward 4'}

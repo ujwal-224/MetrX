@@ -22,7 +22,7 @@ export const Sidebar = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-headline-sm text-title-md text-on-primary leading-tight font-bold tracking-tight">
-              METRA Authority
+              MetrX Authority
             </span>
             <span className="font-body-sm text-body-sm text-on-primary-container">
               Legal Metrology Division

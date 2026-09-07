@@ -9,7 +9,7 @@ import QRCode from 'qrcode';
 export const generateCertificateQR = async (certId, metadata = {}) => {
   try {
     const payload = JSON.stringify({
-      system: 'METRA_LEGAL_METROLOGY_INDIA',
+      system: 'METRX_LEGAL_METROLOGY_INDIA',
       act: 'Legal Metrology Act, 2009 (Rule 14)',
       certId,
       shop: metadata.shopName || 'Commercial Establishment',

@@ -111,12 +111,12 @@ export const PublicLanding = () => {
 
               {/* Headline */}
               <h1 className="text-2xl sm:text-4xl md:text-5xl text-[#023625] font-bold tracking-tight text-balance leading-tight mb-3">
-                National Legal Metrology Digital System
+                Digital Metrology
               </h1>
 
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-gray-600 max-w-2xl mb-6 leading-relaxed">
-                Integrated digital compliance ecosystem under The Legal Metrology Act, 2009. Commercial merchants can register stores and schedule statutory audits, authorized enforcement officers execute on-site verification &amp; holographic stamping, and department administrators oversee state-wide inspection operations.
+                An integrated digital platform for weighing and measuring instrument verification under Legal Metrology regulations. Businesses can register instruments and submit verification requests, authorized officers can conduct and record field inspections, and digital certificates with QR authentication enable transparent verification and complete lifecycle tracking.
               </p>
 
               {/* Public Certificate Verification Search Widget */}

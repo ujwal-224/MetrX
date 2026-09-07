@@ -161,43 +161,51 @@ export const ShopDashboard = () => {
             Your Establishments ({ownerShops.length} Registered Shops):
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
-            {ownerShops.map((shop, idx) => {
-              const isSelected = activeShopIndex === idx;
-              return (
-                <button
-                  key={shop.id}
-                  onClick={() => handleSelectOwnerShop(idx)}
-                  className={`p-3 sm:p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 ${
-                    isSelected
-                      ? 'bg-[#023625]/5 border-[#023625] ring-2 ring-[#023625]/20 shadow-xs'
-                      : 'bg-gray-50 hover:bg-white border-gray-200 hover:border-gray-300'
-                  }`}
-                  type="button"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`material-symbols-outlined text-lg ${isSelected ? 'text-[#023625]' : 'text-gray-400'}`}>
-                        storefront
-                      </span>
-                      <span className="text-xs font-bold text-gray-900 truncate max-w-[180px]">
-                        {shop.name}
+            {ownerShops.length === 0 ? (
+              <div className="sm:col-span-2 lg:col-span-3 p-6 text-center bg-gray-50 border border-dashed border-gray-300 rounded-xl text-xs text-gray-500">
+                <span className="material-symbols-outlined text-3xl text-gray-400 mb-1 block">storefront</span>
+                <span className="font-semibold text-gray-700 block">No store registered under this account yet</span>
+                <span>Click &quot;+ Register New Shop / Branch&quot; above to register your first commercial establishment.</span>
+              </div>
+            ) : (
+              ownerShops.map((shop, idx) => {
+                const isSelected = activeShopIndex === idx;
+                return (
+                  <button
+                    key={shop.id}
+                    onClick={() => handleSelectOwnerShop(idx)}
+                    className={`p-3 sm:p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 ${
+                      isSelected
+                        ? 'bg-[#023625]/5 border-[#023625] ring-2 ring-[#023625]/20 shadow-xs'
+                        : 'bg-gray-50 hover:bg-white border-gray-200 hover:border-gray-300'
+                    }`}
+                    type="button"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`material-symbols-outlined text-lg ${isSelected ? 'text-[#023625]' : 'text-gray-400'}`}>
+                          storefront
+                        </span>
+                        <span className="text-xs font-bold text-gray-900 truncate max-w-[180px]">
+                          {shop.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-200/50">
+                      <span className="font-mono">{shop.merchantUid}</span>
+                      <span className={`font-semibold px-2 py-0.5 rounded text-[10px] ${
+                        shop.documentStatus === 'verified'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-900'
+                      }`}>
+                        {shop.documentStatus === 'verified' ? 'Verified' : 'Review Due'}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-200/50">
-                    <span className="font-mono">{shop.merchantUid}</span>
-                    <span className={`font-semibold px-2 py-0.5 rounded text-[10px] ${
-                      shop.documentStatus === 'verified'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {shop.documentStatus === 'verified' ? 'Verified' : 'Review Due'}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

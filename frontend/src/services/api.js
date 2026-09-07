@@ -43,6 +43,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(userData)
     }),
+  getInspectors: () => request('/auth/inspectors'),
+  createInspector: (inspectorData) =>
+    request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...inspectorData,
+        role: 'inspector'
+      })
+    }),
+  deleteUser: (id) =>
+    request(`/auth/users/${id}`, {
+      method: 'DELETE'
+    }),
   getMe: () => request('/auth/me'),
 
   // Shops

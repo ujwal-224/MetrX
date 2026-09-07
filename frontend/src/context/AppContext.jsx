@@ -27,7 +27,20 @@ export const AppProvider = ({ children }) => {
   // Current Logged In Inspector State
   const [currentInspector, setCurrentInspector] = useState(null);
 
-  // Multi-Shop Establishments Owned by the Merchant (Dynamic from PostgreSQL)
+  // Current Logged In Merchant / Shop Owner
+  const [currentMerchant, setCurrentMerchant] = useState(() => {
+    try {
+      const saved = localStorage.getItem('metrx_merchant');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // All Establishments across platform (For Admin Overview & Registry)
+  const [allShops, setAllShops] = useState([]);
+
+  // Multi-Shop Establishments Owned by the Logged-In Merchant ONLY
   const [ownerShops, setOwnerShops] = useState([]);
   const [activeShopIndex, setActiveShopIndexState] = useState(0);
 
@@ -39,45 +52,24 @@ export const AppProvider = ({ children }) => {
   const [checklist, setChecklist] = useState(defaultInspectionChecklist);
   const [registry, setRegistry] = useState([]);
 
-  // Inspector Accounts (Admin-Provisioned Official Officers)
-  const [inspectors, setInspectors] = useState([
-    {
-      id: 'insp-1',
-      name: 'Insp. R. Deshmukh',
-      badgeNumber: 'LM-BLR-402',
-      email: 'insp123@metrx.com',
-      password: '12345678',
-      zone: 'Ward 4 (Commercial Circle)',
-      phone: '+91 94480 33120',
-      status: 'Active',
-      authorizedBy: 'Dr. K. V. Sharma (Admin)',
-      issuedAt: '01 Jan 2024'
-    },
-    {
-      id: 'insp-2',
-      name: 'Insp. K. S. Rao',
-      badgeNumber: 'LM-BLR-319',
-      email: 'ksrao@metrx.com',
-      password: '12345678',
-      zone: 'Ward 2 (Commercial Ganj)',
-      phone: '+91 98452 77102',
-      status: 'Active',
-      authorizedBy: 'Dr. K. V. Sharma (Admin)',
-      issuedAt: '15 Feb 2024'
-    },
-    {
-      id: 'insp-3',
-      name: 'Insp. P. Kulkarni',
-      badgeNumber: 'LM-BLR-504',
-      email: 'pkulkarni@metrx.com',
-      password: '12345678',
-      zone: 'Ward 1 (APMC Yard)',
-      phone: '+91 98450 66190',
-      status: 'Active',
-      authorizedBy: 'Dr. K. V. Sharma (Admin)',
-      issuedAt: '10 Mar 2024'
+  // Inspector Accounts (Admin-Provisioned Official Officers only)
+  const [inspectors, setInspectors] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_inspectors') || '[]');
+    } catch {
+      return [];
     }
-  ]);
+  });
+
+  useEffect(() => {
+    if (inspectors && inspectors.length > 0) {
+      try {
+        localStorage.setItem('metrx_inspectors', JSON.stringify(inspectors));
+      } catch (e) {
+        console.warn('[Cache Inspectors Error]', e);
+      }
+    }
+  }, [inspectors]);
 
   // Shop Owner / Merchant Accounts (Self-Created by Shop Owners)
   const [merchants, setMerchants] = useState([]);
@@ -91,7 +83,7 @@ export const AppProvider = ({ children }) => {
     status: 'not_uploaded',
     documentStatus: 'not_uploaded',
     step: 1,
-    applicationRef: 'METRA-LMIS-PENDING',
+    applicationRef: 'METRX-LMIS-PENDING',
     slotLabel: 'Select Visit Slot',
     timeLabel: 'Morning / Afternoon',
     inspectorName: 'Pending Admin Allocation',
@@ -152,9 +144,9 @@ export const AppProvider = ({ children }) => {
             certificationHistory: []
           }));
 
-          setOwnerShops(formattedShops);
+          setAllShops(formattedShops);
 
-          // Populate merchants ledger
+          // Populate merchants ledger for Admin Command Center
           const formattedMerchants = formattedShops.map((bShop) => {
             const isAssigned = bShop.assignedInspector &&
               bShop.assignedInspector !== 'Pending Admin Allocation' &&
@@ -178,9 +170,19 @@ export const AppProvider = ({ children }) => {
           });
           setMerchants(formattedMerchants);
 
-          // Active shop profile setup
-          if (formattedShops.length > 0) {
-            const active = formattedShops[0];
+          // Scope ownerShops strictly to the logged-in merchant's account
+          let userShops = [];
+          if (currentMerchant?.email) {
+            userShops = formattedShops.filter(
+              (s) => s.email && s.email.toLowerCase() === currentMerchant.email.toLowerCase()
+            );
+          }
+
+          setOwnerShops(userShops);
+
+          // Active shop profile setup for the authenticated shop owner
+          if (userShops.length > 0) {
+            const active = userShops[0];
             setStoreInfo({
               id: active.id,
               name: active.name,
@@ -190,6 +192,7 @@ export const AppProvider = ({ children }) => {
               division: 'Bengaluru Central Division',
               contactPerson: active.ownerName,
               phone: active.phone,
+              email: active.email,
               zone: active.zone,
               assignedInspector: active.assignedInspector,
               inspectorBadge: active.inspectorBadge,
@@ -197,16 +200,13 @@ export const AppProvider = ({ children }) => {
             });
             setInstruments(active.instruments || []);
 
-            const isAssigned = active.assignedInspector &&
-              active.assignedInspector !== 'Pending Admin Allocation' &&
-              active.assignedInspector !== 'Unassigned (Action Required)';
             setVerificationStatus((prev) => ({
               ...prev,
               documentStatus: active.documentStatus || 'not_uploaded',
               step: active.complianceStatus?.includes('Scheduled') ? 3 : active.documentStatus === 'verified' ? 2 : 1,
               inspectorName: active.assignedInspector || 'Pending Admin Allocation',
               inspectorBadge: active.inspectorBadge || 'LM-PENDING',
-              applicationRef: `METRA-LMIS-${active.merchantUid.replace('#', '')}`
+              applicationRef: `METRX-LMIS-${active.merchantUid.replace('#', '')}`
             }));
           }
 
@@ -233,23 +233,32 @@ export const AppProvider = ({ children }) => {
           });
           setOperations(ops);
 
-          // Build Document Submissions strictly from real shop submissions
-          const docsMap = {};
+          // Build Document Submissions strictly from real shop submissions while preserving cached fileData
+          let cachedDocs = {};
+          try {
+            cachedDocs = JSON.parse(localStorage.getItem('metrx_submissions') || '{}');
+          } catch {}
+
+          const docsMap = { ...cachedDocs };
           backendShops.forEach((bShop) => {
             if (bShop.documentSubmissionData || bShop.documentStatus) {
+              const existingLocal = cachedDocs[bShop.id] || {};
               docsMap[bShop.id] = {
                 merchantId: bShop.id,
                 shopName: bShop.name,
-                status: bShop.documentStatus || 'not_uploaded',
-                submittedAt: bShop.updatedAt ? new Date(bShop.updatedAt).toLocaleDateString('en-GB') : 'Recently',
-                reviewedBy: bShop.reviewedBy || bShop.assignedInspector || 'Pending Allocation',
-                reviewedAt: bShop.documentStatus === 'verified' ? 'Verified' : null,
-                remarks: bShop.documentsRemarks || '',
-                docs: bShop.documentSubmissionData || null
+                status: bShop.documentStatus || existingLocal.status || 'not_uploaded',
+                submittedAt: bShop.updatedAt ? new Date(bShop.updatedAt).toLocaleDateString('en-GB') : existingLocal.submittedAt || 'Recently',
+                reviewedBy: bShop.reviewedBy || bShop.assignedInspector || existingLocal.reviewedBy || 'Pending Allocation',
+                reviewedAt: bShop.documentStatus === 'verified' ? 'Verified' : existingLocal.reviewedAt || null,
+                remarks: bShop.documentsRemarks || existingLocal.remarks || '',
+                docs: bShop.documentSubmissionData || existingLocal.docs || null
               };
             }
           });
           setDocumentSubmissions(docsMap);
+          try {
+            localStorage.setItem('metrx_submissions', JSON.stringify(docsMap));
+          } catch {}
 
           // Build State Compliance Registry from real shops
           const regList = formattedShops.map((s, idx) => ({
@@ -266,6 +275,74 @@ export const AppProvider = ({ children }) => {
             stampSeal: s.instruments?.[0]?.sealNumber || 'SEAL-PENDING'
           }));
           setRegistry(regList);
+
+          // Fetch provisioned inspectors from PostgreSQL backend & reconcile with assigned shop inspectors
+          let loadedInspectors = [];
+          try {
+            const inspRes = await api.getInspectors();
+            if (inspRes.success && Array.isArray(inspRes.data) && inspRes.data.length > 0) {
+              loadedInspectors = inspRes.data;
+            }
+          } catch (inspErr) {
+            console.warn('[Fetch Inspectors Endpoint Notice]', inspErr.message);
+          }
+
+          // Cross-reconcile with cached local inspectors
+          try {
+            const cached = JSON.parse(localStorage.getItem('metrx_inspectors') || '[]');
+            if (Array.isArray(cached) && cached.length > 0) {
+              const ids = new Set(loadedInspectors.map((i) => i.name.trim().toLowerCase()));
+              cached.forEach((c) => {
+                if (!ids.has(c.name.trim().toLowerCase())) {
+                  loadedInspectors.push(c);
+                  ids.add(c.name.trim().toLowerCase());
+                }
+              });
+            }
+          } catch (cacheErr) {
+            console.warn('[Inspector Cache Notice]', cacheErr);
+          }
+
+          // Always extract all assigned inspectors directly from all shops in PostgreSQL
+          const existingNames = new Set(loadedInspectors.map((i) => i.name.trim().toLowerCase()));
+
+          formattedShops.forEach((s) => {
+            if (
+              s.assignedInspector &&
+              s.assignedInspector !== 'Pending Admin Allocation' &&
+              s.assignedInspector !== 'Unassigned (Action Required)' &&
+              !existingNames.has(s.assignedInspector.trim().toLowerCase())
+            ) {
+              existingNames.add(s.assignedInspector.trim().toLowerCase());
+              const cleanName = s.assignedInspector.trim();
+              const cleanId = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const discoveredInsp = {
+                id: `insp-${cleanId || Date.now()}`,
+                name: cleanName,
+                badgeNumber: s.inspectorBadge && s.inspectorBadge !== 'LM-PENDING' ? s.inspectorBadge : '5456',
+                email: `${cleanId || 'officer'}@metrx.com`,
+                password: 'password123',
+                zone: s.zone || 'Ward 4 (Commercial Circle)',
+                phone: '+91 98000 11223',
+                status: 'Active',
+                authorizedBy: 'Admin',
+                issuedAt: 'Assigned Field Officer'
+              };
+              loadedInspectors.push(discoveredInsp);
+
+              // Save to PostgreSQL DB in background
+              api.createInspector({
+                name: discoveredInsp.name,
+                email: discoveredInsp.email,
+                password: discoveredInsp.password,
+                phone: discoveredInsp.phone,
+                inspectorBadgeId: discoveredInsp.badgeNumber,
+                assignedZone: discoveredInsp.zone
+              }).catch(() => {});
+            }
+          });
+
+          setInspectors(loadedInspectors);
         }
       } catch (err) {
         console.warn('[Backend Sync Warning]', err.message);
@@ -436,7 +513,7 @@ export const AppProvider = ({ children }) => {
           model: 'Standard Calibration Model',
           specification: 'Max 30kg (e=1g)',
           classBadge: 'Class III Commercial',
-          applicationRef: `METRA-${activeInsp.badgeNumber}-${(m.merchantUid || 'EST').replace('#', '')}`,
+          applicationRef: `METRX-${activeInsp.badgeNumber}-${(m.merchantUid || 'EST').replace('#', '')}`,
           assignedOfficer: activeInsp.name,
           officerBadge: `Badge #${activeInsp.badgeNumber}`
         });
@@ -468,7 +545,7 @@ export const AppProvider = ({ children }) => {
           specification: scale.capacity || 'Max 30kg (e=1g)',
           serialNumber: scale.serialNumber || '#KA-BLR-88412',
           classBadge: scale.class || 'Class III Commercial',
-          applicationRef: `METRA-${activeInsp.badgeNumber}-${(s.merchantUid || 'EST').replace('#', '')}`,
+          applicationRef: `METRX-${activeInsp.badgeNumber}-${(s.merchantUid || 'EST').replace('#', '')}`,
           assignedOfficer: activeInsp.name,
           officerBadge: `Badge #${activeInsp.badgeNumber}`
         });
@@ -579,26 +656,48 @@ export const AppProvider = ({ children }) => {
 
   // Authenticated Shop Owner Login
   const handleMerchantLogin = async (email, password) => {
+    const cleanEmail = email.trim().toLowerCase();
     try {
       // 1. Attempt backend authentication
-      const res = await api.login(email.trim(), password);
+      const res = await api.login(cleanEmail, password);
       if (res.success && res.data) {
+        const merchantUser = {
+          id: res.data._id || res.data.id,
+          name: res.data.name,
+          email: res.data.email.toLowerCase(),
+          phone: res.data.phone || ''
+        };
+        setCurrentMerchant(merchantUser);
         localStorage.setItem('metrx_token', res.data.token);
         localStorage.setItem('metrx_user', JSON.stringify(res.data));
+        localStorage.setItem('metrx_merchant', JSON.stringify(merchantUser));
 
-        // Sync local store details if present
-        const match = merchants.find((m) => m.email.toLowerCase() === email.trim().toLowerCase());
-        if (match) {
-          setStoreInfo((prev) => ({
-            ...prev,
-            name: match.name,
-            merchantUid: match.merchantUid,
-            regNumber: match.tradeLicense,
-            location: match.address,
-            contactPerson: match.ownerName,
-            phone: match.phone,
-            zone: match.zone
-          }));
+        // Filter ONLY shops belonging to this specific merchant
+        const myShops = allShops.filter(
+          (s) => (s.email && s.email.toLowerCase() === cleanEmail) ||
+                 (s.ownerName && res.data.name && s.ownerName.toLowerCase() === res.data.name.toLowerCase())
+        );
+
+        setOwnerShops(myShops);
+        if (myShops.length > 0) {
+          setActiveShopIndexState(0);
+          const active = myShops[0];
+          setStoreInfo({
+            id: active.id,
+            name: active.name,
+            regNumber: active.tradeLicense,
+            merchantUid: active.merchantUid,
+            location: active.address,
+            division: 'Bengaluru Central Division',
+            contactPerson: active.ownerName,
+            phone: active.phone,
+            email: active.email,
+            zone: active.zone,
+            assignedInspector: active.assignedInspector,
+            inspectorBadge: active.inspectorBadge,
+            certificateId: 'PENDING'
+          });
+          setInstruments(active.instruments || []);
         }
 
         setActiveRole('shop-owner');
@@ -613,10 +712,46 @@ export const AppProvider = ({ children }) => {
     }
 
     const match = merchants.find(
-      (m) => m.email.toLowerCase() === email.trim().toLowerCase() && m.password === password
+      (m) => m.email && m.email.toLowerCase() === cleanEmail && m.password === password
     );
 
     if (match) {
+      const merchantUser = {
+        id: match.id,
+        name: match.ownerName || match.name,
+        email: cleanEmail,
+        phone: match.phone || ''
+      };
+      setCurrentMerchant(merchantUser);
+      localStorage.setItem('metrx_merchant', JSON.stringify(merchantUser));
+
+      const myShops = allShops.filter(
+        (s) => (s.email && s.email.toLowerCase() === cleanEmail) ||
+               (s.ownerName && match.ownerName && s.ownerName.toLowerCase() === match.ownerName.toLowerCase())
+      );
+
+      setOwnerShops(myShops.length > 0 ? myShops : [
+        {
+          id: match.id,
+          name: match.name,
+          ownerName: match.ownerName,
+          email: cleanEmail,
+          merchantUid: match.merchantUid,
+          tradeLicense: match.tradeLicense,
+          zone: match.zone,
+          address: match.address,
+          phone: match.phone,
+          assignedInspector: match.assignedInspector,
+          inspectorBadge: match.assignedInspectorBadge,
+          status: 'Active Commercial Establishment',
+          complianceStatus: match.complianceStatus || 'Pending Inspector Assignment',
+          documentStatus: 'not_uploaded',
+          registeredScalesCount: 1,
+          instruments: [],
+          certificationHistory: []
+        }
+      ]);
+
       setStoreInfo((prev) => ({
         ...prev,
         name: match.name,
@@ -625,6 +760,7 @@ export const AppProvider = ({ children }) => {
         location: match.address,
         contactPerson: match.ownerName,
         phone: match.phone,
+        email: cleanEmail,
         zone: match.zone
       }));
       setActiveRole('shop-owner');
@@ -727,11 +863,22 @@ export const AppProvider = ({ children }) => {
     };
     setInstruments([newScale]);
 
-    // Sync into ownerShops multi-shop list
+    const assignedEmail = (data.email || newMerch.email).toLowerCase().trim();
+    const merchantUser = {
+      id: finalId,
+      name: data.ownerName || 'Merchant Owner',
+      email: assignedEmail,
+      phone: data.phone || '+91 98000 00000'
+    };
+    setCurrentMerchant(merchantUser);
+    localStorage.setItem('metrx_merchant', JSON.stringify(merchantUser));
+
+    // Sync into ownerShops multi-shop list (strictly for this merchant)
     const newOwnerShop = {
       id: finalId,
       name: newMerch.name,
       ownerName: newMerch.ownerName,
+      email: assignedEmail,
       branchType: 'Commercial Retail Store',
       merchantUid: finalUid,
       tradeLicense: newMerch.tradeLicense,
@@ -749,7 +896,8 @@ export const AppProvider = ({ children }) => {
       instruments: [newScale],
       certificationHistory: []
     };
-    setOwnerShops((prev) => [newOwnerShop, ...prev]);
+    setOwnerShops([newOwnerShop]);
+    setAllShops((prev) => [newOwnerShop, ...prev]);
     setActiveShopIndexState(0);
 
     // Entry into Admin Live Field Operations queue
@@ -798,18 +946,25 @@ export const AppProvider = ({ children }) => {
 
   // Admin Assigns / Reassigns Inspector to a Merchant Store
   const handleAssignInspectorToMerchant = async (merchantId, inspectorId) => {
-    const selectedInspector = inspectors.find((insp) => insp.id === inspectorId);
+    const selectedInspector = inspectors.find((insp) => insp.id === inspectorId || insp.name === inspectorId);
     if (!selectedInspector) {
-      showToast('Please select a valid inspector', 'error');
+      showToast('Please select a valid active inspector', 'error');
       return;
     }
 
-    let targetMerchant = null;
+    const targetMerchant = merchants.find(
+      (m) => m.id === merchantId || m.name === merchantId || m.merchantUid === merchantId
+    );
 
+    const mId = targetMerchant ? targetMerchant.id : merchantId;
+    const mName = targetMerchant ? targetMerchant.name : merchantId;
+    const mUid = targetMerchant ? targetMerchant.merchantUid : '#EST-SHOP';
+    const mZone = targetMerchant ? targetMerchant.zone : 'Ward 4';
+
+    // Sync into merchants ledger
     setMerchants((prev) =>
       prev.map((m) => {
-        if (m.id === merchantId) {
-          targetMerchant = m;
+        if (m.id === mId || m.name === mName || m.merchantUid === mUid) {
           return {
             ...m,
             assignedInspector: selectedInspector.name,
@@ -821,10 +976,10 @@ export const AppProvider = ({ children }) => {
       })
     );
 
-    // Sync into ownerShops
-    setOwnerShops((prev) =>
+    // Sync into allShops
+    setAllShops((prev) =>
       prev.map((s) => {
-        if (s.id === merchantId || (targetMerchant && s.name === targetMerchant.name)) {
+        if (s.id === mId || s.name === mName || s.merchantUid === mUid) {
           return {
             ...s,
             assignedInspector: selectedInspector.name,
@@ -836,9 +991,24 @@ export const AppProvider = ({ children }) => {
       })
     );
 
-    // Sync into storeInfo if active
+    // Sync into ownerShops
+    setOwnerShops((prev) =>
+      prev.map((s) => {
+        if (s.id === mId || s.name === mName || s.merchantUid === mUid) {
+          return {
+            ...s,
+            assignedInspector: selectedInspector.name,
+            inspectorBadge: selectedInspector.badgeNumber,
+            complianceStatus: 'Inspector Assigned'
+          };
+        }
+        return s;
+      })
+    );
+
+    // Sync into active store profile if currently viewing this shop
     setStoreInfo((prev) => {
-      if (prev.id === merchantId || (targetMerchant && prev.name === targetMerchant.name)) {
+      if (prev?.id === mId || prev?.name === mName || prev?.merchantUid === mUid) {
         return {
           ...prev,
           assignedInspector: selectedInspector.name,
@@ -848,9 +1018,9 @@ export const AppProvider = ({ children }) => {
       return prev;
     });
 
-    // Call backend API to persist assignment in MongoDB
+    // Call backend API to persist assignment in PostgreSQL
     try {
-      await api.assignInspector(merchantId, {
+      await api.assignInspector(mId, {
         inspectorName: selectedInspector.name,
         inspectorBadge: selectedInspector.badgeNumber
       });
@@ -859,34 +1029,35 @@ export const AppProvider = ({ children }) => {
     }
 
     // Sync with Operations Queue
-    const merchantName = targetMerchant ? targetMerchant.name : 'Store';
-    const merchantUid = targetMerchant ? targetMerchant.merchantUid : '#EST-NEW';
-    const zoneName = targetMerchant ? targetMerchant.zone : 'Ward 4';
-
     setOperations((prev) => {
-      const existingIdx = prev.findIndex((op) => op.shopName === merchantName || op.merchantUid === merchantUid);
+      const existingIdx = prev.findIndex(
+        (op) =>
+          op.id === `OP-${mId}` ||
+          op.shopName === mName ||
+          op.merchantUid === mUid
+      );
       if (existingIdx >= 0) {
         const updated = [...prev];
         updated[existingIdx] = {
           ...updated[existingIdx],
           inspectorName: selectedInspector.name,
           badgeNumber: selectedInspector.badgeNumber,
-          liveStatus: 'Assigned / Awaiting Documents',
+          liveStatus: 'Inspector Assigned • Pending Docs',
           remarks: `Assigned by Department Admin to ${selectedInspector.name}`
         };
         return updated;
       } else {
         const newOp = {
-          id: `OP-${Date.now()}`,
+          id: `OP-${mId}`,
           inspectorName: selectedInspector.name,
           badgeNumber: selectedInspector.badgeNumber,
-          shopName: merchantName,
-          merchantUid: merchantUid,
-          zone: zoneName.split(' ')[0] || 'Ward 4',
+          shopName: mName,
+          merchantUid: mUid,
+          zone: mZone.split(' ')[0] || 'Ward 4',
           operationType: 'On-Site Stamping & Verification',
-          scaleModel: 'Commercial Electronic Scale',
+          scaleModel: 'Digital Metrology Model 2025',
           slot: '11:30 AM – 01:00 PM (Assigned Slot)',
-          liveStatus: 'Assigned / Awaiting Documents',
+          liveStatus: 'Inspector Assigned • Pending Docs',
           statusType: 'scheduled',
           remarks: `Assigned by Controller to ${selectedInspector.name}`
         };
@@ -894,27 +1065,63 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    showToast(`Assigned ${selectedInspector.name} (${selectedInspector.badgeNumber}) to ${merchantName}!`, 'success');
+    // Sync into Registry
+    setRegistry((prev) =>
+      prev.map((r) => {
+        if (r.shopName === mName || r.merchantUid === mUid) {
+          return {
+            ...r,
+            inspector: selectedInspector.name
+          };
+        }
+        return r;
+      })
+    );
+
+    showToast(`Reassigned Inspector to ${selectedInspector.name} (${selectedInspector.badgeNumber}) for ${mName}!`, 'success');
   };
 
   // Admin Provisions a New Inspector Account
-  const handleCreateInspector = (data) => {
+  const handleCreateInspector = async (data) => {
     const badgeNum = data.badgeNumber || `LM-BLR-${Math.floor(100 + Math.random() * 900)}`;
+    const email = data.email || `${data.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@metrx.com`;
+    const password = data.password || '12345678';
+    const zone = data.zone || 'Ward 4 (Commercial Circle)';
+    const phone = data.phone || '+91 98000 11223';
+
     const newInsp = {
       id: `insp-${Date.now()}`,
       name: data.name,
       badgeNumber: badgeNum,
-      email: data.email || `${data.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@metrx.com`,
-      password: data.password || '12345678',
-      zone: data.zone || 'Ward 4 (Commercial Circle)',
-      phone: data.phone || '+91 98000 11223',
+      email,
+      password,
+      zone,
+      phone,
       status: 'Active',
-      authorizedBy: 'Dr. K. V. Sharma (Admin)',
+      authorizedBy: 'Admin',
       issuedAt: 'Today'
     };
 
-    setInspectors((prev) => [newInsp, ...prev]);
-    showToast(`Inspector provisioned: ${newInsp.name} (${newInsp.badgeNumber}). Credentials are now live.`, 'success');
+    setInspectors((prev) => [newInsp, ...prev.filter((i) => i.name.toLowerCase() !== data.name.toLowerCase())]);
+
+    // Save permanently in PostgreSQL backend DB
+    try {
+      const res = await api.createInspector({
+        name: data.name,
+        email,
+        password,
+        phone,
+        inspectorBadgeId: badgeNum,
+        assignedZone: zone
+      });
+      if (res.success && res.data?.id) {
+        newInsp.id = res.data.id;
+      }
+    } catch (err) {
+      console.warn('[Backend Create Inspector Error]', err.message);
+    }
+
+    showToast(`Inspector provisioned: ${newInsp.name} (${newInsp.badgeNumber}). Account saved permanently.`, 'success');
     return newInsp;
   };
 
@@ -932,9 +1139,34 @@ export const AppProvider = ({ children }) => {
     );
   };
 
+  // Admin Permanently Deletes an Inspector Account
+  const handleDeleteInspector = async (id) => {
+    const target = inspectors.find((insp) => insp.id === id);
+    const updated = inspectors.filter((insp) => insp.id !== id);
+    setInspectors(updated);
+    try {
+      localStorage.setItem('metrx_inspectors', JSON.stringify(updated));
+    } catch {}
+
+    if (target?.email) {
+      try {
+        await api.deleteUser(target.email);
+      } catch (err) {
+        console.warn('[Delete Inspector Backend Error]', err.message);
+      }
+    }
+    showToast(`Inspector ${target?.name || ''} deleted permanently.`, 'info');
+  };
+
   const logout = () => {
     setActiveRole('public');
     setCurrentView('public-portal');
+    setCurrentMerchant(null);
+    setCurrentInspector(null);
+    localStorage.removeItem('metrx_merchant');
+    localStorage.removeItem('metrx_user');
+    localStorage.removeItem('metrx_token');
+    setOwnerShops([]);
     showToast('Logged out successfully. Returned to Portal.', 'info');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1072,19 +1304,35 @@ export const AppProvider = ({ children }) => {
       instrumentPhotos: { title: 'Instrument Photos', subTitle: 'Installed Counter Scale Front & Profile View', fileName: 'Countertop_Scale_Front_Profile.jpg', fileSize: '4.5 MB', uploadedAt: nowStr, status: 'Uploaded' }
     };
 
-    setDocumentSubmissions((prev) => ({
-      ...prev,
-      [targetId]: {
-        merchantId: targetId,
-        shopName: storeInfo.name || currentShop.name,
-        status: 'pending_review',
-        submittedAt: nowStr,
-        reviewedBy: currentShop.assignedInspector || currentInspector?.name || 'Insp. R. Deshmukh',
-        reviewedAt: null,
-        remarks: 'All 5 statutory documents submitted by merchant. Awaiting physical inspection clearance by Inspector.',
-        docs: submissionPayload
+    const sName = (storeInfo.name || currentShop.name || 'Store').trim();
+    const subObj = {
+      merchantId: targetId,
+      shopName: sName,
+      status: 'pending_review',
+      submittedAt: nowStr,
+      reviewedBy: currentShop.assignedInspector || currentInspector?.name || 'Insp. R. Deshmukh',
+      reviewedAt: null,
+      remarks: 'All 5 statutory documents submitted by merchant. Awaiting physical inspection clearance by Inspector.',
+      docs: submissionPayload
+    };
+
+    setDocumentSubmissions((prev) => {
+      const updated = {
+        ...prev,
+        [targetId]: subObj,
+        [sName.toLowerCase()]: subObj,
+        [sName]: subObj
+      };
+      if (currentShop.merchantUid) {
+        updated[currentShop.merchantUid] = subObj;
       }
-    }));
+      try {
+        localStorage.setItem('metrx_submissions', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('localStorage quota', e);
+      }
+      return updated;
+    });
 
     setVerificationStatus((prev) => ({
       ...prev,
@@ -1645,12 +1893,17 @@ export const AppProvider = ({ children }) => {
     showToast(`Switched active establishment to ${targetShop.name}`, 'info');
   };
 
-  const handleAddOwnerShop = (newShopData) => {
+  const handleAddOwnerShop = async (newShopData) => {
     const uid = `#EST-${Math.floor(10000 + Math.random() * 90000)}`;
+    const newShopId = `shop-${Date.now()}`;
+    const merchantEmail = currentMerchant?.email || storeInfo.email || '';
+    const merchantOwner = currentMerchant?.name || storeInfo.contactPerson || 'Store Owner';
+
     const newShop = {
-      id: `shop-${Date.now()}`,
+      id: newShopId,
       name: newShopData.name || 'Commercial Branch',
-      ownerName: storeInfo.contactPerson || storeInfo.name || 'Store Owner',
+      ownerName: merchantOwner,
+      email: merchantEmail,
       branchType: newShopData.branchType || 'Commercial Retail Branch',
       merchantUid: uid,
       tradeLicense: newShopData.tradeLicense || `BBMP/TL/2025/${Math.floor(1000 + Math.random() * 9000)}`,
@@ -1659,8 +1912,8 @@ export const AppProvider = ({ children }) => {
       zone: newShopData.zone || storeInfo.zone || 'Ward 4 (Commercial Circle)',
       address: newShopData.address || storeInfo.location || 'Commercial Road, Bengaluru',
       phone: newShopData.phone || storeInfo.phone || '',
-      assignedInspector: null,
-      inspectorBadge: null,
+      assignedInspector: 'Pending Admin Allocation',
+      inspectorBadge: 'LM-PENDING',
       status: 'Active Commercial Establishment',
       complianceStatus: 'Pending Inspector Assignment',
       documentStatus: 'pending_upload',
@@ -1687,14 +1940,35 @@ export const AppProvider = ({ children }) => {
       certificationHistory: []
     };
 
+    // Persist to PostgreSQL backend
+    try {
+      await api.createShop({
+        id: newShopId,
+        name: newShop.name,
+        ownerName: newShop.ownerName,
+        email: merchantEmail,
+        branchType: newShop.branchType,
+        merchantUid: uid,
+        tradeLicense: newShop.tradeLicense,
+        gstin: newShop.gstin,
+        zone: newShop.zone,
+        address: newShop.address,
+        phone: newShop.phone,
+        scaleModel: newShopData.scaleModel,
+        scaleType: newShopData.scaleType
+      });
+    } catch (err) {
+      console.warn('[Backend Add Branch Error]', err.message);
+    }
+
     setOwnerShops((prev) => [...prev, newShop]);
+    setAllShops((prev) => [newShop, ...prev]);
     setMerchants((prev) => [
       {
         id: newShop.id,
         name: newShop.name,
         ownerName: newShop.ownerName,
-        email: storeInfo.email || '',
-        password: 'password123',
+        email: merchantEmail,
         merchantUid: newShop.merchantUid,
         tradeLicense: newShop.tradeLicense,
         zone: newShop.zone,
@@ -1930,6 +2204,7 @@ export const AppProvider = ({ children }) => {
         handleAssignInspectorToMerchant,
         handleCreateInspector,
         handleToggleInspectorStatus,
+        handleDeleteInspector,
         currentInspector,
         getInspectorVisits,
         handleStartInspection,

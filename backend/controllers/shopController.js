@@ -1,10 +1,16 @@
 import prisma from '../config/prisma.js';
 
-// @desc    Get all shops (or filter by merchant)
+// @desc    Get all shops (or filter by merchant email / ownerId)
 // @route   GET /api/shops
 export const getShops = async (req, res) => {
   try {
+    const { ownerId, email } = req.query;
+    const where = {};
+    if (ownerId) where.ownerId = ownerId;
+    if (email) where.email = email.toLowerCase().trim();
+
     const shops = await prisma.shop.findMany({
+      where,
       include: {
         instruments: true
       },
@@ -77,13 +83,22 @@ export const createShop = async (req, res) => {
     const id = customId || `shop-${Date.now().toString(36)}`;
     const uid = merchantUid || `#EST-${Math.floor(10000 + Math.random() * 90000)}`;
 
+    let resolvedOwnerId = null;
+    if (email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: email.toLowerCase().trim() }
+      }).catch(() => null);
+      if (existingUser) resolvedOwnerId = existingUser.id;
+    }
+
     const shop = await prisma.shop.create({
       data: {
         id,
         shopCode: id,
+        ownerId: resolvedOwnerId,
         name: name || 'Commercial Establishment',
         ownerName: ownerName || 'Proprietor',
-        email: email || '',
+        email: email ? email.toLowerCase().trim() : '',
         branchType: branchType || 'Main Commercial Branch',
         merchantUid: uid,
         tradeLicense: tradeLicense || `BBMP/TL/2025/${Math.floor(1000 + Math.random() * 9000)}`,
@@ -142,8 +157,22 @@ export const assignInspectorToShop = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Inspector name is required' });
     }
 
+    const existing = await prisma.shop.findFirst({
+      where: {
+        OR: [
+          { id: req.params.id },
+          { merchantUid: req.params.id },
+          { name: req.params.id }
+        ]
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
     const shop = await prisma.shop.update({
-      where: { id: req.params.id },
+      where: { id: existing.id },
       data: {
         assignedInspector: inspectorName,
         inspectorBadge: inspectorBadge || 'LM-BLR-402',

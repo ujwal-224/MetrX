@@ -30,40 +30,55 @@ const mapRoleToFrontend = (role) => {
   }
 };
 
-// @desc    Register a new user
+// @desc    Register a new user (or provision inspector)
 // @route   POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role, phone } = req.body;
+    const { name, email, password, role, phone, badgeNumber, inspectorBadgeId, zone, assignedZone } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide name, email, and password' });
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'Please provide name and email' });
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const prismaRole = mapRoleToPrisma(role);
+    const badge = inspectorBadgeId || badgeNumber || (prismaRole === 'INSPECTOR' ? `LM-BLR-${Math.floor(100 + Math.random() * 900)}` : null);
+    const zoneName = assignedZone || zone || (prismaRole === 'INSPECTOR' ? 'Ward 4 (Commercial Circle)' : null);
+
     const userExists = await prisma.user.findUnique({
       where: { email: cleanEmail }
     });
 
     if (userExists) {
-      // User already exists, generate token and return
-      const token = generateToken(userExists.id, userExists.role);
+      // If updating or ensuring inspector details
+      const updatedUser = await prisma.user.update({
+        where: { id: userExists.id },
+        data: {
+          role: prismaRole,
+          ...(badge ? { inspectorBadgeId: badge } : {}),
+          ...(zoneName ? { assignedZone: zoneName } : {}),
+          ...(phone ? { phone } : {})
+        }
+      });
+
+      const token = generateToken(updatedUser.id, updatedUser.role);
       return res.status(200).json({
         success: true,
         data: {
-          id: userExists.id,
-          _id: userExists.id,
-          name: userExists.name,
-          email: userExists.email,
-          role: mapRoleToFrontend(userExists.role),
-          phone: userExists.phone || '',
+          id: updatedUser.id,
+          _id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: mapRoleToFrontend(updatedUser.role),
+          phone: updatedUser.phone || '',
+          inspectorBadgeId: updatedUser.inspectorBadgeId || '',
+          assignedZone: updatedUser.assignedZone || '',
           token
         }
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const prismaRole = mapRoleToPrisma(role);
+    const hashedPassword = await bcrypt.hash(password || '12345678', 10);
 
     const user = await prisma.user.create({
       data: {
@@ -71,7 +86,9 @@ export const registerUser = async (req, res) => {
         email: cleanEmail,
         password: hashedPassword,
         role: prismaRole,
-        phone: phone || ''
+        phone: phone || '',
+        inspectorBadgeId: badge,
+        assignedZone: zoneName
       }
     });
 
@@ -86,11 +103,52 @@ export const registerUser = async (req, res) => {
         email: user.email,
         role: mapRoleToFrontend(user.role),
         phone: user.phone || '',
+        inspectorBadgeId: user.inspectorBadgeId || '',
+        assignedZone: user.assignedZone || '',
         token
       }
     });
   } catch (error) {
     console.error('[Register User Error]', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get all provisioned inspectors
+// @route   GET /api/auth/inspectors
+export const getInspectors = async (req, res) => {
+  try {
+    const inspectors = await prisma.user.findMany({
+      where: { role: 'INSPECTOR' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+        inspectorBadgeId: true,
+        assignedZone: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formatted = inspectors.map((insp) => ({
+      id: insp.id,
+      name: insp.name,
+      badgeNumber: insp.inspectorBadgeId || `LM-BLR-${insp.id.slice(0, 4)}`,
+      email: insp.email,
+      zone: insp.assignedZone || 'Ward 4 (Commercial Circle)',
+      phone: insp.phone || '+91 98000 11223',
+      status: 'Active',
+      authorizedBy: 'Admin',
+      issuedAt: insp.createdAt ? new Date(insp.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Today'
+    }));
+
+    return res.json({ success: true, count: formatted.length, data: formatted });
+  } catch (error) {
+    console.error('[Get Inspectors Error]', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -156,6 +214,26 @@ export const getMe = async (req, res) => {
       }
     });
   } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete user account (Inspector / User)
+// @route   DELETE /api/auth/users/:id
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { id },
+          { email: id }
+        ]
+      }
+    });
+    return res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('[Delete User Error]', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

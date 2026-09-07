@@ -17,7 +17,43 @@ export const InspectorSchedule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterActive, setFilterActive] = useState(true);
   const [selectedShopDocs, setSelectedShopDocs] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [blobUrl, setBlobUrl] = useState(null);
   const [inspectorNotes, setInspectorNotes] = useState('All 5 statutory documents and serial specifications verified with State Registry.');
+
+  // Convert Base64 / Data URLs to Blob URLs so browsers can render PDFs without iframe sandbox blocking
+  React.useEffect(() => {
+    if (previewDoc?.fileData) {
+      if (typeof previewDoc.fileData === 'string' && previewDoc.fileData.startsWith('data:')) {
+        try {
+          const parts = previewDoc.fileData.split(',');
+          const mime = parts[0].match(/:(.*?);/)?.[1] || 'application/pdf';
+          const binary = atob(parts[1]);
+          const array = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            array[i] = binary.charCodeAt(i);
+          }
+          const blob = new Blob([array], { type: mime });
+          const url = URL.createObjectURL(blob);
+          setBlobUrl(url);
+          return () => {
+            URL.revokeObjectURL(url);
+          };
+        } catch (e) {
+          console.warn('[Blob URL Conversion Notice]', e);
+          setBlobUrl(previewDoc.fileData);
+        }
+      } else {
+        setBlobUrl(previewDoc.fileData);
+      }
+    } else {
+      setBlobUrl(null);
+    }
+  }, [previewDoc]);
+
+  const handleOpenDocPreview = (docConfig) => {
+    setPreviewDoc(docConfig);
+  };
 
   const inspectorVisits = getInspectorVisits ? getInspectorVisits() : [];
 
@@ -36,14 +72,47 @@ export const InspectorSchedule = () => {
   const inspectorBadge = currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'Badge #LM-BLR-402';
 
   const openDocReview = (visit) => {
-    const merchantId = visit.merchantId || visit.id?.replace('visit-dyn-', '') || 'merch-1';
-    const matchingDoc = documentSubmissions[merchantId] || (getDocumentSubmission ? getDocumentSubmission(merchantId) : null) || {};
+    const merchantId = visit.merchantId || visit.shopId || visit.id?.replace('visit-dyn-', '').replace('visit-shop-', '') || 'merch-1';
+    const shopName = (visit.shopName || '').trim();
+
+    // Look across all document sub keys
+    let matchingDoc =
+      documentSubmissions[merchantId] ||
+      documentSubmissions[shopName.toLowerCase()] ||
+      documentSubmissions[shopName] ||
+      documentSubmissions[visit.shopId] ||
+      documentSubmissions[visit.id] ||
+      Object.values(documentSubmissions).find(
+        (sub) =>
+          (sub.shopName && shopName && sub.shopName.toLowerCase().trim() === shopName.toLowerCase().trim()) ||
+          (sub.merchantId && (sub.merchantId === merchantId || sub.merchantId === visit.shopId))
+      );
+
+    if (!matchingDoc) {
+      try {
+        const cached = JSON.parse(localStorage.getItem('metrx_submissions') || '{}');
+        matchingDoc =
+          cached[merchantId] ||
+          cached[shopName.toLowerCase()] ||
+          cached[shopName] ||
+          Object.values(cached).find(
+            (sub) => sub.shopName && shopName && sub.shopName.toLowerCase().trim() === shopName.toLowerCase().trim()
+          );
+      } catch {}
+    }
+
+    if (!matchingDoc && getDocumentSubmission) {
+      matchingDoc = getDocumentSubmission(merchantId);
+    }
+
     setSelectedShopDocs({
       shopName: visit.shopName,
       regNumber: visit.regNumber,
       merchantId: merchantId,
       model: visit.model,
       instrumentName: visit.instrumentName,
+      serialNumber: visit.serialNumber || '#KA-BLR-88412',
+      zone: visit.address || activeZone,
       ...matchingDoc
     });
   };
@@ -158,7 +227,9 @@ export const InspectorSchedule = () => {
               const isCompleted = visit.statusType === 'completed';
               const merchantId = visit.merchantId || visit.id?.replace('visit-dyn-', '') || 'merch-1';
               const docInfo = documentSubmissions[merchantId] || (getDocumentSubmission ? getDocumentSubmission(merchantId) : null) || {};
-              const docState = docInfo.status || 'pending_review';
+              const docMap = docInfo.docs || {};
+              const uploadedCount = Object.values(docMap).filter((d) => d && (d.uploaded || d.fileName || (typeof d === 'string' && d.length > 0))).length;
+              const docState = docInfo.status || (uploadedCount > 0 ? 'pending_review' : 'not_uploaded');
 
               return (
                 <article
@@ -264,20 +335,25 @@ export const InspectorSchedule = () => {
                             <span className="material-symbols-outlined text-xs text-red-700">report</span>
                             <span>Flagged Fraud</span>
                           </span>
-                        ) : (
+                        ) : uploadedCount > 0 ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px] border border-amber-300">
                             <span className="material-symbols-outlined text-xs text-amber-700">pending</span>
-                            <span>5 Docs Uploaded</span>
+                            <span>{uploadedCount}/5 Docs Uploaded</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 font-bold text-[11px] border border-gray-300">
+                            <span className="material-symbols-outlined text-xs text-gray-500">pending_actions</span>
+                            <span>Docs Not Uploaded</span>
                           </span>
                         )}
 
                         <button
                           onClick={() => openDocReview(visit)}
-                          className="px-3 py-1 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-xs font-bold text-[#023625] shadow-xs flex items-center gap-1 transition-colors"
+                          className="px-3 py-1 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-xs font-bold text-[#023625] shadow-xs flex items-center gap-1 transition-colors cursor-pointer"
                           type="button"
                         >
                           <span className="material-symbols-outlined text-sm">description</span>
-                          <span>Review 5 Docs</span>
+                          <span>{uploadedCount > 0 ? `Review Docs (${uploadedCount}/5)` : 'Inspect Docs (Pending)'}</span>
                         </button>
                       </div>
                     </div>
@@ -373,8 +449,9 @@ export const InspectorSchedule = () => {
 
             {/* 5 Uploaded Documents Inspection Grid */}
             <div className="flex flex-col gap-3">
-              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                5 Mandatory Submitted Documents:
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center justify-between">
+                <span>5 Mandatory Submitted Documents:</span>
+                <span className="text-[11px] font-normal text-gray-500">Click &quot;View Document&quot; to inspect evidentiary files</span>
               </span>
 
               {/* 1. Business Registration */}
@@ -384,7 +461,7 @@ export const InspectorSchedule = () => {
                 return (
                   <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625] shrink-0">
                         <span className="material-symbols-outlined text-lg">description</span>
                       </div>
                       <div>
@@ -393,18 +470,42 @@ export const InspectorSchedule = () => {
                         </h3>
                         <p className="text-[11px] text-gray-500">
                           Trade License / GSTIN: {isUploaded ? (
-                            <strong className="text-gray-800">{doc.fileName}</strong>
+                            <strong className="text-gray-800 font-mono">{doc.fileName}</strong>
                           ) : (
                             <em className="text-gray-400 font-normal">Pending submission by merchant</em>
                           )}
                         </p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {isUploaded ? 'Uploaded' : 'Pending'}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isUploaded ? (
+                        <button
+                          onClick={() =>
+                            handleOpenDocPreview({
+                              type: 'businessRegistration',
+                              title: 'Commercial Trade License & Business Registration',
+                              fileName: doc.fileName || 'Trade_License_BBMP_2025.pdf',
+                              fileSize: doc.fileSize,
+                              fileData: doc.fileData,
+                              fileType: doc.fileType,
+                              uploadedAt: doc.uploadedAt,
+                              shopName: selectedShopDocs.shopName,
+                              regNumber: selectedShopDocs.regNumber,
+                              zone: selectedShopDocs.zone
+                            })
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                          <span>View Document</span>
+                        </button>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                          Pending Upload
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -416,7 +517,7 @@ export const InspectorSchedule = () => {
                 return (
                   <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625] shrink-0">
                         <span className="material-symbols-outlined text-lg">badge</span>
                       </div>
                       <div>
@@ -424,19 +525,43 @@ export const InspectorSchedule = () => {
                           2. Owner ID Proof
                         </h3>
                         <p className="text-[11px] text-gray-500">
-                          Government ID / Aadhaar: {isUploaded ? (
-                            <strong className="text-gray-800">{doc.fileName}</strong>
+                          Government Photo ID / Aadhaar: {isUploaded ? (
+                            <strong className="text-gray-800 font-mono">{doc.fileName}</strong>
                           ) : (
                             <em className="text-gray-400 font-normal">Pending submission by merchant</em>
                           )}
                         </p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {isUploaded ? 'Uploaded' : 'Pending'}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isUploaded ? (
+                        <button
+                          onClick={() =>
+                            handleOpenDocPreview({
+                              type: 'ownerId',
+                              title: 'Proprietor Government Photo Identity Proof',
+                              fileName: doc.fileName || 'Govt_Photo_Identity_Card.pdf',
+                              fileSize: doc.fileSize,
+                              fileData: doc.fileData,
+                              fileType: doc.fileType,
+                              uploadedAt: doc.uploadedAt,
+                              shopName: selectedShopDocs.shopName,
+                              regNumber: selectedShopDocs.regNumber,
+                              zone: selectedShopDocs.zone
+                            })
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                          <span>View Document</span>
+                        </button>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                          Pending Upload
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -448,7 +573,7 @@ export const InspectorSchedule = () => {
                 return (
                   <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625] shrink-0">
                         <span className="material-symbols-outlined text-lg">receipt_long</span>
                       </div>
                       <div>
@@ -457,18 +582,43 @@ export const InspectorSchedule = () => {
                         </h3>
                         <p className="text-[11px] text-gray-500">
                           Scale Tax Invoice: {isUploaded ? (
-                            <strong className="text-gray-800">{doc.fileName}</strong>
+                            <strong className="text-gray-800 font-mono">{doc.fileName}</strong>
                           ) : (
                             <em className="text-gray-400 font-normal">Pending submission by merchant</em>
                           )}
                         </p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {isUploaded ? 'Uploaded' : 'Pending'}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isUploaded ? (
+                        <button
+                          onClick={() =>
+                            handleOpenDocPreview({
+                              type: 'purchaseInvoice',
+                              title: 'Manufacturer Metrological Scale Tax Invoice',
+                              fileName: doc.fileName || 'Scale_Manufacturer_Tax_Invoice.pdf',
+                              fileSize: doc.fileSize,
+                              fileData: doc.fileData,
+                              fileType: doc.fileType,
+                              uploadedAt: doc.uploadedAt,
+                              shopName: selectedShopDocs.shopName,
+                              regNumber: selectedShopDocs.regNumber,
+                              model: selectedShopDocs.model,
+                              serialNumber: selectedShopDocs.serialNumber
+                            })
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                          <span>View Document</span>
+                        </button>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                          Pending Upload
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -480,7 +630,7 @@ export const InspectorSchedule = () => {
                 return (
                   <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625] shrink-0">
                         <span className="material-symbols-outlined text-lg">photo_camera</span>
                       </div>
                       <div>
@@ -489,18 +639,42 @@ export const InspectorSchedule = () => {
                         </h3>
                         <p className="text-[11px] text-gray-500">
                           Serial &amp; Model Spec Plate: {isUploaded ? (
-                            <strong className="text-gray-800">{doc.fileName}</strong>
+                            <strong className="text-gray-800 font-mono">{doc.fileName}</strong>
                           ) : (
                             <em className="text-gray-400 font-normal">Pending submission by merchant</em>
                           )}
                         </p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {isUploaded ? 'Uploaded' : 'Pending'}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isUploaded ? (
+                        <button
+                          onClick={() =>
+                            handleOpenDocPreview({
+                              type: 'instrumentPlate',
+                              title: 'Scale Specification & Serial Number Nameplate Photo',
+                              fileName: doc.fileName || 'Instrument_Spec_Nameplate.jpg',
+                              fileSize: doc.fileSize,
+                              fileData: doc.fileData,
+                              fileType: doc.fileType,
+                              uploadedAt: doc.uploadedAt,
+                              shopName: selectedShopDocs.shopName,
+                              model: selectedShopDocs.model,
+                              serialNumber: selectedShopDocs.serialNumber
+                            })
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                          <span>View Photo</span>
+                        </button>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                          Pending Upload
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -512,7 +686,7 @@ export const InspectorSchedule = () => {
                 return (
                   <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625]">
+                      <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[#023625] shrink-0">
                         <span className="material-symbols-outlined text-lg">camera_alt</span>
                       </div>
                       <div>
@@ -521,18 +695,42 @@ export const InspectorSchedule = () => {
                         </h3>
                         <p className="text-[11px] text-gray-500">
                           Installed Scale View: {isUploaded ? (
-                            <strong className="text-gray-800">{doc.fileName}</strong>
+                            <strong className="text-gray-800 font-mono">{doc.fileName}</strong>
                           ) : (
                             <em className="text-gray-400 font-normal">Pending submission by merchant</em>
                           )}
                         </p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                      isUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
-                    }`}>
-                      {isUploaded ? 'Uploaded' : 'Pending'}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isUploaded ? (
+                        <button
+                          onClick={() =>
+                            handleOpenDocPreview({
+                              type: 'instrumentPhotos',
+                              title: 'Installed Countertop Scale Front & Profile View',
+                              fileName: doc.fileName || 'Installed_Counter_Scale_Front.jpg',
+                              fileSize: doc.fileSize,
+                              fileData: doc.fileData,
+                              fileType: doc.fileType,
+                              uploadedAt: doc.uploadedAt,
+                              shopName: selectedShopDocs.shopName,
+                              model: selectedShopDocs.model,
+                              serialNumber: selectedShopDocs.serialNumber
+                            })
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                          <span>View Photo</span>
+                        </button>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                          Pending Upload
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -562,7 +760,7 @@ export const InspectorSchedule = () => {
                 {/* 2nd Option: Fraud / Reject */}
                 <button
                   onClick={() => handleDecision('fraud')}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                   type="button"
                 >
                   <span className="material-symbols-outlined text-base">report</span>
@@ -572,13 +770,102 @@ export const InspectorSchedule = () => {
                 {/* 1st Option: Verified */}
                 <button
                   onClick={() => handleDecision('verified')}
-                  className="flex-1 sm:flex-initial px-5 py-2.5 bg-[#023625] hover:bg-[#1a4b38] text-white rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="flex-1 sm:flex-initial px-5 py-2.5 bg-[#023625] hover:bg-[#1a4b38] text-white rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                   type="button"
                 >
                   <span className="material-symbols-outlined text-base">verified</span>
                   <span>Approve &amp; Mark Verified</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Direct Document Display Modal */}
+      {previewDoc && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-5xl h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-gray-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Clean Modal Header */}
+            <div className="px-5 py-3.5 bg-[#023625] text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="material-symbols-outlined text-xl text-emerald-300 shrink-0">
+                  {previewDoc.fileData?.startsWith('data:image/') || previewDoc.fileType?.includes('image') || previewDoc.fileName?.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)
+                    ? 'photo'
+                    : 'description'}
+                </span>
+                <div className="min-w-0">
+                  <span className="font-bold text-sm text-white font-mono truncate block">
+                    {previewDoc.fileName || 'Uploaded_Document.pdf'}
+                  </span>
+                  <span className="text-[11px] text-emerald-200 block truncate">
+                    {previewDoc.title}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {blobUrl && (
+                  <button
+                    onClick={() => window.open(blobUrl, '_blank')}
+                    className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Open in new window"
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                    <span className="hidden sm:inline">Fullscreen</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setPreviewDoc(null)}
+                  className="w-8 h-8 rounded-full bg-white/15 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  title="Close"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Document Direct Display Body */}
+            <div className="flex-1 w-full h-full bg-gray-100 flex items-center justify-center overflow-hidden">
+              {previewDoc.fileData?.startsWith('data:image/') ||
+              previewDoc.fileType?.includes('image') ||
+              previewDoc.fileName?.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? (
+                <div className="w-full h-full p-4 flex items-center justify-center bg-gray-950 overflow-auto">
+                  <img
+                    src={blobUrl || previewDoc.fileData}
+                    alt={previewDoc.fileName}
+                    className="max-h-full max-w-full object-contain rounded shadow"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={blobUrl || previewDoc.fileData}
+                  className="w-full h-full border-0"
+                  title={previewDoc.fileName}
+                />
+              )}
+            </div>
+
+            {/* Clean Modal Footer */}
+            <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500 shrink-0">
+              <span className="font-mono text-[11px]">
+                {previewDoc.fileName} {previewDoc.fileSize ? `(${previewDoc.fileSize})` : ''}
+              </span>
+              <button
+                onClick={() => setPreviewDoc(null)}
+                className="px-4 py-1.5 bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold rounded-lg cursor-pointer"
+                type="button"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

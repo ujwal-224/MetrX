@@ -72,6 +72,26 @@ export const UploadDocuments = () => {
 
   const [isUploading, setIsUploading] = useState(false);
 
+  const handleFileUpload = (key, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFiles((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          fileName: file.name,
+          fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+          fileData: event.target.result,
+          fileType: file.type,
+          uploaded: true
+        }
+      }));
+      showToast(`Attached file: ${file.name}`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSimulateFile = (key, customName, size) => {
     setFiles((prev) => ({
       ...prev,
@@ -353,11 +373,12 @@ export const UploadDocuments = () => {
                     <span>{doc.uploaded ? 'Re-Upload' : 'Upload File'}</span>
                     <input
                       type="file"
+                      accept="image/*,.pdf"
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          handleSimulateFile(key, file.name, `${(file.size / 1024 / 1024).toFixed(1)} MB`);
+                          handleFileUpload(key, file);
                         }
                       }}
                     />

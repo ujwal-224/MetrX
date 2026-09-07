@@ -8,6 +8,7 @@ export const AdminDashboard = () => {
     operations,
     handleCreateInspector,
     handleToggleInspectorStatus,
+    handleDeleteInspector,
     handleAssignInspectorToMerchant,
     showToast
   } = useApp();
@@ -51,14 +52,14 @@ export const AdminDashboard = () => {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E0702A] animate-pulse"></span>
             <span className="text-xs font-bold uppercase tracking-wider text-[#023625]">
-              Directorate of Legal Metrology • Administration Command Center
+              Directorate of Legal Metrology • Administration
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#023625] tracking-tight">
             Department Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            Logged In: <strong className="text-gray-900">Dr. K. V. Sharma</strong> (State Controller of Legal Metrology)
+            Logged In: <strong className="text-gray-900">Admin</strong>
           </p>
         </div>
 
@@ -267,39 +268,52 @@ export const AdminDashboard = () => {
                     </td>
 
                     <td className="py-4 px-4 text-right">
-                      {op.badgeNumber === 'LM-PENDING' ? (
+                      <div className="flex items-center justify-end gap-2">
                         <select
                           defaultValue=""
                           onChange={(e) => {
                             if (e.target.value) {
-                              const targetMerch = merchants.find((m) => m.id === op.id?.replace('OP-', '') || m.name === op.shopName || m.merchantUid === op.merchantUid);
+                              const targetMerch = merchants.find(
+                                (m) =>
+                                  m.id === op.id?.replace('OP-', '') ||
+                                  m.name === op.shopName ||
+                                  m.merchantUid === op.merchantUid
+                              );
                               if (targetMerch) {
                                 handleAssignInspectorToMerchant(targetMerch.id, e.target.value);
+                              } else {
+                                handleAssignInspectorToMerchant(op.shopName, e.target.value);
                               }
                               e.target.value = '';
                             }
                           }}
-                          className="bg-[#023625] text-white border border-[#023625] hover:bg-[#1b4a36] px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer outline-none transition-all shadow-xs"
+                          className={`px-2.5 py-1 text-xs font-bold rounded-lg cursor-pointer outline-none transition-all shadow-xs ${
+                            op.badgeNumber === 'LM-PENDING'
+                              ? 'bg-[#023625] text-white border border-[#023625] hover:bg-[#1b4a36]'
+                              : 'bg-white hover:bg-gray-50 text-[#023625] border border-[#DADDD3] hover:border-[#023625]'
+                          }`}
                         >
                           <option value="" disabled className="text-gray-700 bg-white">
-                            Assign Inspector Now...
+                            {op.badgeNumber === 'LM-PENDING' ? 'Assign Inspector...' : 'Reassign Inspector...'}
                           </option>
                           {inspectors
                             .filter((insp) => insp.status === 'Active')
                             .map((insp) => (
                               <option key={insp.id} value={insp.id} className="text-gray-900 bg-white">
-                                {insp.name} ({insp.badgeNumber})
+                                {insp.name} ({insp.badgeNumber} • {insp.zone?.split(' ')[0] || 'Ward'})
                               </option>
                             ))}
                         </select>
-                      ) : (
-                        <button
-                          onClick={() => showToast(`Auditing live field telemetry for ${op.inspectorName} at ${op.shopName}`, 'info')}
-                          className="px-2.5 py-1 text-xs bg-white hover:bg-gray-100 border border-[#DADDD3] text-[#023625] font-semibold rounded-lg transition-all"
-                        >
-                          Inspect Dossier
-                        </button>
-                      )}
+
+                        {op.badgeNumber !== 'LM-PENDING' && (
+                          <button
+                            onClick={() => showToast(`Auditing live field telemetry for ${op.inspectorName} at ${op.shopName}`, 'info')}
+                            className="px-2.5 py-1 text-xs bg-white hover:bg-gray-100 border border-[#DADDD3] text-[#023625] font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                          >
+                            Dossier
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )))}
@@ -343,53 +357,81 @@ export const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7F0E8]">
-                {inspectors.map((insp) => (
-                  <tr key={insp.id} className="hover:bg-[#FAF8F4] transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#023625]">
-                      {insp.badgeNumber}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-gray-900">{insp.name}</div>
-                      <div className="text-[11px] text-gray-500">{insp.phone}</div>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-gray-700 font-medium">
-                      {insp.zone}
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono text-gray-800">
-                      <div>{insp.email}</div>
-                      <div className="text-[10px] text-gray-400">Password: ••••••••</div>
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                        insp.status === 'Active'
-                          ? 'bg-[#E7F0E8] text-[#2E7D32] border border-[#c3ecd5]'
-                          : 'bg-red-100 text-red-800 border border-red-200'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          insp.status === 'Active' ? 'bg-emerald-600' : 'bg-red-600'
-                        }`}></span>
-                        <span>{insp.status}</span>
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleToggleInspectorStatus(insp.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          insp.status === 'Active'
-                            ? 'bg-red-50 hover:bg-red-100 border border-red-200 text-red-700'
-                            : 'bg-[#E7F0E8] hover:bg-[#c3ecd5] border border-[#c3ecd5] text-[#023625]'
-                        }`}
-                      >
-                        {insp.status === 'Active' ? 'Suspend Access' : 'Reactivate'}
-                      </button>
+                {inspectors.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="material-symbols-outlined text-4xl text-gray-300">badge</span>
+                        <span className="font-semibold text-sm text-gray-700">No Inspector Accounts Provisioned</span>
+                        <span className="text-xs text-gray-400">Click &quot;Create Inspector Account&quot; above to provision new official inspector credentials.</span>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  inspectors.map((insp) => (
+                    <tr key={insp.id} className="hover:bg-[#FAF8F4] transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#023625]">
+                        {insp.badgeNumber}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-gray-900">{insp.name}</div>
+                        <div className="text-[11px] text-gray-500">{insp.phone}</div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-gray-700 font-medium">
+                        {insp.zone}
+                      </td>
+
+                      <td className="py-3.5 px-4 font-mono text-gray-800">
+                        <div>{insp.email}</div>
+                        <div className="text-[10px] text-gray-400">Password: ••••••••</div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          insp.status === 'Active'
+                            ? 'bg-[#E7F0E8] text-[#2E7D32] border border-[#c3ecd5]'
+                            : 'bg-red-100 text-red-800 border border-red-200'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            insp.status === 'Active' ? 'bg-emerald-600' : 'bg-red-600'
+                          }`}></span>
+                          <span>{insp.status}</span>
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleToggleInspectorStatus(insp.id)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              insp.status === 'Active'
+                                ? 'bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800'
+                                : 'bg-[#E7F0E8] hover:bg-[#c3ecd5] border border-[#c3ecd5] text-[#023625]'
+                            }`}
+                            title={insp.status === 'Active' ? 'Suspend Access' : 'Reactivate'}
+                          >
+                            {insp.status === 'Active' ? 'Suspend Access' : 'Reactivate'}
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to permanently delete inspector "${insp.name}" (${insp.badgeNumber})?`)) {
+                                handleDeleteInspector(insp.id);
+                              }
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 transition-all flex items-center gap-1 cursor-pointer"
+                            title="Permanently Delete Inspector Account"
+                          >
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -7,13 +7,13 @@ const router = express.Router();
 export const seedDatabase = async () => {
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // 1. Create Official Administrative Accounts (Admin & Inspectors)
+  // 1. Create Official Super-Admin Account ONLY
   await prisma.user.upsert({
     where: { email: 'admin123@metrx.com' },
     update: {},
     create: {
       id: 'usr-admin-1',
-      name: 'Dr. K. V. Sharma (Admin)',
+      name: 'Admin',
       email: 'admin123@metrx.com',
       password: hashedPassword,
       role: 'ADMIN',
@@ -22,37 +22,7 @@ export const seedDatabase = async () => {
     }
   });
 
-  await prisma.user.upsert({
-    where: { email: 'deshmukh@metrology.gov.in' },
-    update: {},
-    create: {
-      id: 'usr-deshmukh-1',
-      name: 'Insp. R. Deshmukh',
-      email: 'deshmukh@metrology.gov.in',
-      password: hashedPassword,
-      role: 'INSPECTOR',
-      phone: '+91 94480 33120',
-      inspectorBadgeId: 'LM-BLR-402',
-      assignedZone: 'Ward 4 (Commercial Circle)'
-    }
-  });
-
-  await prisma.user.upsert({
-    where: { email: 'ksrao@metrx.com' },
-    update: {},
-    create: {
-      id: 'usr-ksrao-1',
-      name: 'Insp. K. S. Rao',
-      email: 'ksrao@metrx.com',
-      password: hashedPassword,
-      role: 'INSPECTOR',
-      phone: '+91 98452 77102',
-      inspectorBadgeId: 'LM-BLR-319',
-      assignedZone: 'Ward 2 (Commercial Ganj)'
-    }
-  });
-
-  return { success: true, message: 'System administrative accounts initialized' };
+  return { success: true, message: 'Super-Admin account initialized' };
 };
 
 // @desc    Seed demo database data

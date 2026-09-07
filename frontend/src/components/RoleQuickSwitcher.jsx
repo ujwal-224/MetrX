@@ -31,7 +31,7 @@ export const RoleQuickSwitcher = () => {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 font-bold tracking-wide text-white">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E0702A] ring-4 ring-[#E0702A]/20"></span>
-            <span className="text-sm font-semibold tracking-tight">METRA</span>
+            <span className="text-sm font-semibold tracking-tight">MetrX</span>
             <span className="text-white/40 font-normal hidden sm:inline">•</span>
             <span className="text-xs font-normal text-[#c3ecd5] hidden md:inline">
               National Legal Metrology Digital System
