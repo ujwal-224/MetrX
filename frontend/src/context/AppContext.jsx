@@ -798,6 +798,47 @@ export const AppProvider = ({ children }) => {
     };
     setInstruments([newScale]);
 
+    // Also sync into ownerShops multi-shop list so Merchant has it in their dashboard
+    const newOwnerShop = {
+      id: newMerch.id,
+      name: newMerch.name,
+      ownerName: newMerch.ownerName,
+      branchType: 'Commercial Retail Store',
+      merchantUid: uid,
+      tradeLicense: newMerch.tradeLicense,
+      gstin: `29AABCU${Math.floor(1000 + Math.random() * 9000)}R1ZM`,
+      shopActReg: `KA/BLR/${Math.floor(10000 + Math.random() * 90000)}/2025`,
+      zone: newMerch.zone,
+      address: newMerch.address,
+      phone: newMerch.phone,
+      assignedInspector: 'Pending Admin Allocation',
+      inspectorBadge: 'PENDING',
+      status: 'Active Commercial Establishment',
+      complianceStatus: 'Pending Inspector Assignment',
+      documentStatus: 'pending_review',
+      registeredScalesCount: Number(data.registeredScales) || 1,
+      instruments: [newScale],
+      certificationHistory: []
+    };
+    setOwnerShops((prev) => [newOwnerShop, ...prev]);
+
+    // Also add an entry into Admin Live Field Operations queue
+    const newOperation = {
+      id: `OP-${Date.now()}`,
+      inspectorName: 'Unassigned (Action Required)',
+      badgeNumber: 'LM-PENDING',
+      shopName: newMerch.name,
+      merchantUid: uid,
+      zone: newMerch.zone.split(' ')[0] || 'Ward 4',
+      operationType: 'Initial Shop Verification',
+      scaleModel: newScale.model,
+      slot: 'Awaiting Inspector Assignment',
+      liveStatus: 'New Registration • Pending Allocation',
+      statusType: 'scheduled',
+      remarks: 'Self-registered by merchant. Requires Inspector Assignment.'
+    };
+    setOperations((prev) => [newOperation, ...prev]);
+
     setStoreInfo({
       name: newMerch.name,
       regNumber: newMerch.tradeLicense,
@@ -813,7 +854,7 @@ export const AppProvider = ({ children }) => {
 
     setActiveRole('shop-owner');
     setCurrentView('shop-dashboard');
-    showToast(`Store registered successfully! Merchant UID: ${uid}. Account synced with Admin.`, 'success');
+    showToast(`Store registered successfully! Merchant UID: ${uid}. Synced with Admin Operations.`, 'success');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return newMerch;
   };
