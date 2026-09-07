@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const ShopDashboard = () => {
@@ -8,104 +8,334 @@ export const ShopDashboard = () => {
     instruments,
     setActiveInstrumentIndex,
     activeInstrumentIndex,
-    storeInfo
+    verificationStatus,
+    documentSubmissions,
+    storeInfo,
+    ownerShops,
+    activeShopIndex,
+    handleSelectOwnerShop,
+    handleAddOwnerShop,
+    handleViewHistoricalCertificate,
+    showToast
   } = useApp();
 
-  const daysLeft = activeInstrument.daysRemaining ?? 28;
+  const [showAddShopModal, setShowAddShopModal] = useState(false);
+  const [newShopForm, setNewShopForm] = useState({
+    name: '',
+    branchType: 'Retail Branch',
+    tradeLicense: '',
+    gstin: '',
+    zone: 'Ward 4 (Commercial Circle)',
+    address: '',
+    phone: '',
+    scaleType: 'Electronic Countertop',
+    scaleModel: 'Contech CA-30 Series'
+  });
+
+  const activeShop = ownerShops?.[activeShopIndex] || ownerShops?.[0] || {
+    name: storeInfo.name,
+    branchType: 'Main Commercial Branch',
+    tradeLicense: storeInfo.regNumber,
+    gstin: '29AABCU9603R1ZM',
+    shopActReg: 'KA/BLR/44091/2023',
+    zone: storeInfo.zone,
+    address: storeInfo.location,
+    phone: storeInfo.phone,
+    assignedInspector: storeInfo.assignedInspector || 'Insp. R. Deshmukh',
+    inspectorBadge: 'LM-BLR-402',
+    status: 'Active Commercial Establishment',
+    complianceStatus: 'Documents Verified',
+    documentStatus: 'verified',
+    registeredScalesCount: instruments.length,
+    certificationHistory: []
+  };
+
+  const daysLeft = activeInstrument?.daysRemaining ?? 28;
   const circumference = 590.6;
   const strokeOffset = Math.max(0, circumference - (circumference * (daysLeft / 365)));
 
+  const currentDocData = documentSubmissions[activeShop.id] || documentSubmissions['merch-1'] || {};
+  const currentDocStatus = currentDocData.status || activeShop.documentStatus || verificationStatus.documentStatus || 'pending_review';
+  const isDocVerified = currentDocStatus === 'verified';
+  const isDocFraud = currentDocStatus === 'fraud';
+
+  const handleBookVisitClick = () => {
+    if (isDocFraud) {
+      showToast('Action Blocked: Legal Metrology Officer flagged submitted documents as Fraud.', 'error');
+      return;
+    }
+    if (isDocVerified) {
+      navigateTo('request-verification');
+    } else {
+      navigateTo('upload-documents');
+    }
+  };
+
+  const onAddShopSubmit = (e) => {
+    e.preventDefault();
+    if (!newShopForm.name.trim() || !newShopForm.address.trim()) {
+      showToast('Please fill in Establishment Name and Address', 'error');
+      return;
+    }
+    handleAddOwnerShop(newShopForm);
+    setShowAddShopModal(false);
+    setNewShopForm({
+      name: '',
+      branchType: 'Retail Branch',
+      tradeLicense: '',
+      gstin: '',
+      zone: 'Ward 4 (Commercial Circle)',
+      address: '',
+      phone: '',
+      scaleType: 'Electronic Countertop',
+      scaleModel: 'Contech CA-30 Series'
+    });
+  };
+
   return (
-    <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 flex flex-col gap-6">
-      {/* Top Store Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              {storeInfo.name}
-            </h1>
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-              Verified Merchant
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Ward 4, Commercial Circle, Bengaluru • License #{storeInfo.regNumber}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
-          <button
-            onClick={() => navigateTo('register-instrument')}
-            className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-          >
-            <span className="material-symbols-outlined text-base text-gray-500">add</span>
-            <span>Register New Scale</span>
-          </button>
-          <button
-            onClick={() => navigateTo('request-verification')}
-            className="flex-1 sm:flex-initial justify-center px-4 py-2 rounded-lg bg-[#e0702a] hover:bg-[#c95f1e] text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 active:scale-95"
-          >
-            <span className="material-symbols-outlined text-base">calendar_month</span>
-            <span>Book Visit</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Action Alert Banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
-            <span className="material-symbols-outlined text-xl">event_upcoming</span>
-          </div>
+    <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 flex flex-col gap-6 min-h-screen">
+      {/* Top Banner: Merchant Account Identity & Multi-Shop Selector */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-amber-900 text-sm sm:text-base">
-                Annual Scale Re-Stamping Due in {daysLeft} Days
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-200 text-amber-900">
-                Action Due
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                Verified Merchant Account • {storeInfo.contactPerson || 'Shree S. N. Ganesh'}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-amber-800 mt-0.5 leading-relaxed">
-              Karnataka Legal Metrology regulations mandate annual on-site physical calibration tests and holographic wire-seal stamping.
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              Enterprise Commercial Establishments
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+              Manage multi-branch shop licenses, mandatory statutory document filings, counter scale verification, and departmental certification history.
             </p>
+          </div>
+
+          <button
+            onClick={() => setShowAddShopModal(true)}
+            className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-base">add_business</span>
+            <span>+ Register New Shop / Branch</span>
+          </button>
+        </div>
+
+        {/* Multi-Shop Establishment Tabs */}
+        <div>
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+            Your Establishments ({ownerShops.length} Registered Shops):
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {ownerShops.map((shop, idx) => {
+              const isSelected = activeShopIndex === idx;
+              return (
+                <button
+                  key={shop.id}
+                  onClick={() => handleSelectOwnerShop(idx)}
+                  className={`p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 ${
+                    isSelected
+                      ? 'bg-[#023625]/5 border-[#023625] ring-2 ring-[#023625]/20 shadow-xs'
+                      : 'bg-gray-50 hover:bg-white border-gray-200 hover:border-gray-300'
+                  }`}
+                  type="button"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`material-symbols-outlined text-lg ${isSelected ? 'text-[#023625]' : 'text-gray-400'}`}>
+                        storefront
+                      </span>
+                      <span className="text-xs font-bold text-gray-900 truncate max-w-[180px]">
+                        {shop.name}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <span className="w-2 h-2 rounded-full bg-[#023625] shrink-0"></span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-200/50">
+                    <span className="font-mono">{shop.merchantUid}</span>
+                    <span className={`font-semibold px-2 py-0.5 rounded text-[10px] ${
+                      shop.documentStatus === 'verified'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-900'
+                    }`}>
+                      {shop.documentStatus === 'verified' ? 'Verified' : 'Review Due'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 1: Active Shop Profile & Statutory Credentials Card */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-gray-900">
+                {activeShop.name}
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                {activeShop.status || 'Active Commercial Establishment'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {activeShop.branchType} • Jurisdiction: <strong>{activeShop.zone}</strong>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigateTo('upload-documents')}
+              className="px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <span className="material-symbols-outlined text-base text-gray-500">upload_file</span>
+              <span>Upload Documents (5)</span>
+            </button>
+            <button
+              onClick={() => navigateTo('register-instrument')}
+              className="px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <span className="material-symbols-outlined text-base text-gray-500">add</span>
+              <span>Register Scale</span>
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={() => navigateTo('request-verification')}
-          className="shrink-0 bg-[#e0702a] hover:bg-[#c95f1e] text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-xs transition-all flex items-center gap-1 active:scale-95"
-        >
-          <span>Choose Date</span>
-          <span className="material-symbols-outlined text-base">arrow_forward</span>
-        </button>
+        {/* 6-Field Statutory Metadata Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">Trade License Number</span>
+            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.tradeLicense}</span>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">GSTIN / Tax ID</span>
+            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.gstin || '29AABCU9603R1ZM'}</span>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">Shop &amp; Establishment Act Reg</span>
+            <span className="text-xs font-bold text-gray-900 font-mono mt-0.5">{activeShop.shopActReg || 'KA/BLR/44091/2023'}</span>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">Premises Physical Address</span>
+            <span className="text-xs font-medium text-gray-800 truncate mt-0.5" title={activeShop.address}>
+              {activeShop.address}
+            </span>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">Assigned Field Inspector</span>
+            <span className="text-xs font-bold text-[#023625] mt-0.5">
+              {activeShop.assignedInspector || 'Insp. R. Deshmukh'} ({activeShop.inspectorBadge || 'Badge #LM-BLR-402'})
+            </span>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">Registered Scales at Branch</span>
+            <span className="text-xs font-bold text-gray-900 mt-0.5">
+              {activeShop.instruments?.length || activeShop.registeredScalesCount || 1} Commercial Instruments
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Multiple Devices Selector (if any) */}
-      {instruments.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0">
-            Registered Scales:
-          </span>
-          {instruments.map((inst, idx) => (
-            <button
-              key={inst.id}
-              onClick={() => setActiveInstrumentIndex(idx)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
-                activeInstrumentIndex === idx
-                  ? 'bg-[#023625] text-white font-bold shadow-xs'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <span className="material-symbols-outlined text-sm">scale</span>
-              <span>{inst.model}</span>
-              <span className="text-[10px] opacity-75 font-mono">({inst.serialNumber})</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* SECTION 2: Statutory Documents Verification & Upload Status */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg text-[#023625]">folder_shared</span>
+            <h2 className="text-base font-bold text-gray-900">
+              Mandatory Statutory Documents (5/5 Files Required)
+            </h2>
+          </div>
 
-      {/* Main Two-Column Card Grid */}
+          <div className="flex items-center gap-2">
+            {isDocVerified ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300">
+                <span className="material-symbols-outlined text-sm text-emerald-700">verified</span>
+                <span>Verified by Inspector</span>
+              </span>
+            ) : isDocFraud ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-900 text-xs font-bold border border-red-300">
+                <span className="material-symbols-outlined text-sm text-red-700">report</span>
+                <span>Flagged as Fraud / Blocked</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                <span className="material-symbols-outlined text-sm text-amber-700">pending</span>
+                <span>Under Inspector Scrutiny</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 5 Documents Summary Chips */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400">1. Business Reg</span>
+            <span className="text-xs font-bold text-gray-900 truncate">Trade License</span>
+            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-xs">check</span> Uploaded
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400">2. Owner ID</span>
+            <span className="text-xs font-bold text-gray-900 truncate">Aadhaar Card</span>
+            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-xs">check</span> Uploaded
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400">3. Scale Invoice</span>
+            <span className="text-xs font-bold text-gray-900 truncate">Purchase Bill</span>
+            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-xs">check</span> Uploaded
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400">4. Plate Photo</span>
+            <span className="text-xs font-bold text-gray-900 truncate">Serial Nameplate</span>
+            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-xs">check</span> Uploaded
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400">5. Scale Photo</span>
+            <span className="text-xs font-bold text-gray-900 truncate">Counter Setup</span>
+            <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-xs">check</span> Uploaded
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <p className="text-xs text-gray-500">
+            Rule 14 mandates electronic submission and officer verification of all 5 documents before physical testing.
+          </p>
+          <button
+            onClick={() => navigateTo('upload-documents')}
+            className="w-full sm:w-auto px-4 py-2 bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
+            <span>Manage &amp; Upload 5 Documents</span>
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 3: Active Counter Scales & Calibration Countdown Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left Column: Visual Countdown Gauge Card */}
         <div className="md:col-span-6 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-between text-center shadow-xs">
@@ -115,7 +345,7 @@ export const ShopDashboard = () => {
             </span>
             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
               <span className="material-symbols-outlined text-xs">verified</span>
-              <span>{activeInstrument.status}</span>
+              <span>{activeInstrument?.status || 'Stamping Active'}</span>
             </span>
           </div>
 
@@ -129,7 +359,7 @@ export const ShopDashboard = () => {
                 cy="110"
                 fill="none"
                 r="94"
-                stroke="#E0702A"
+                stroke={daysLeft < 30 ? '#E0702A' : '#023625'}
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeOffset}
                 strokeLinecap="round"
@@ -145,7 +375,7 @@ export const ShopDashboard = () => {
                 Days Remaining
               </span>
               <span className="text-[11px] text-gray-400 mt-1">
-                Expires on <strong className="text-gray-700">{activeInstrument.expiresOn}</strong>
+                Expires on <strong className="text-gray-700">{activeInstrument?.expiresOn || 'Within 30 Days'}</strong>
               </span>
             </div>
           </div>
@@ -153,22 +383,19 @@ export const ShopDashboard = () => {
           {/* Primary Action Button */}
           <div className="w-full flex flex-col gap-2 mt-4">
             <button
-              onClick={() => navigateTo('request-verification')}
-              className="w-full h-11 bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 active:scale-95"
+              onClick={handleBookVisitClick}
+              className="w-full h-11 bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
             >
               <span className="material-symbols-outlined text-lg">calendar_month</span>
-              <span>Schedule Inspector Visit</span>
+              <span>{isDocVerified ? 'Schedule Inspector Visit' : 'Upload Docs & Book Visit'}</span>
             </button>
-            <a
-              href="tel:180063872"
-              className="text-xs text-gray-500 hover:text-gray-800 py-1 font-medium transition-colors"
-            >
-              Need help? Toll-Free 1800-METRA
-            </a>
+            <span className="text-xs text-gray-400 py-0.5 font-medium">
+              Statutory Fee ₹150 • Rule 14 Legal Metrology
+            </span>
           </div>
         </div>
 
-        {/* Right Column: Scale Details & Status Card */}
+        {/* Right Column: Scale Details & Switcher Card */}
         <div className="md:col-span-6 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-xs">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
@@ -177,108 +404,285 @@ export const ShopDashboard = () => {
                   <span className="material-symbols-outlined text-lg">scale</span>
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-gray-900 leading-none">
-                    {activeInstrument.name}
-                  </h2>
-                  <span className="text-xs text-gray-500">{activeInstrument.model}</span>
+                  <h3 className="text-base font-bold text-gray-900 leading-none">
+                    {activeInstrument?.name || 'Counter Scale'}
+                  </h3>
+                  <span className="text-xs text-gray-400 font-mono mt-0.5 block">
+                    {activeInstrument?.model || 'Contech CA-30'}
+                  </span>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                Class III
+
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                {activeInstrument?.class || 'Class III Commercial'}
               </span>
             </div>
 
-            {/* Spec List */}
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500">Serial Number</span>
-                <span className="font-mono font-bold text-gray-900">{activeInstrument.serialNumber}</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500">Weighing Capacity</span>
-                <span className="font-semibold text-gray-900">{activeInstrument.capacity}</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500">Physical Wire Seal</span>
-                <span className="font-mono font-semibold text-emerald-700 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">lock</span>
-                  {activeInstrument.sealNumber} (Intact)
+            {/* Instrument Multiple Devices Selector */}
+            {instruments.length > 1 && (
+              <div className="mb-4">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  Select Counter Instrument ({instruments.length} Scales Registered):
                 </span>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {instruments.map((inst, idx) => (
+                    <button
+                      key={inst.id}
+                      onClick={() => setActiveInstrumentIndex(idx)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                        activeInstrumentIndex === idx
+                          ? 'bg-[#023625] text-white font-bold shadow-xs'
+                          : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">scale</span>
+                      <span>{inst.model}</span>
+                      <span className="text-[10px] opacity-75 font-mono">({inst.serialNumber})</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500">Certificate Status</span>
-                <span className="font-mono font-bold text-gray-900">CERT-KA-2024-9921</span>
+            )}
+
+            {/* Detailed Spec List */}
+            <div className="flex flex-col gap-2.5 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50">
+                <span className="text-gray-500 font-medium">Serial Number</span>
+                <span className="font-mono font-bold text-gray-900">{activeInstrument?.serialNumber}</span>
               </div>
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-gray-500">Inspection Zone</span>
-                <span className="font-medium text-gray-700">Ward 4 (Insp. R. Deshmukh)</span>
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50">
+                <span className="text-gray-500 font-medium">Capacity &amp; Division</span>
+                <span className="font-semibold text-gray-900">{activeInstrument?.capacity}</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50">
+                <span className="text-gray-500 font-medium">Installed Location</span>
+                <span className="font-semibold text-gray-900">{activeInstrument?.counter || 'Billing Counter 1'}</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50">
+                <span className="text-gray-500 font-medium">Holographic Seal Ref</span>
+                <span className="font-mono text-[#023625] font-bold">{activeInstrument?.sealNumber}</span>
               </div>
             </div>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-2 mt-4">
+          <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-2 mt-4">
+            <button
+              onClick={() => navigateTo('register-instrument')}
+              className="px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              <span>Add Scale to Shop</span>
+            </button>
             <button
               onClick={() => navigateTo('certificate-view')}
-              className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 flex items-center justify-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold transition-colors flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-sm text-emerald-700">verified</span>
-              <span>View Certificate</span>
-            </button>
-            <button
-              onClick={() => navigateTo('track-status')}
-              className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm text-blue-600">pending_actions</span>
-              <span>Track Visit</span>
+              <span className="material-symbols-outlined text-sm">verified</span>
+              <span>View Active Certificate</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Simple 3-Step Process Card */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-          How Re-Verification Works in 3 Simple Steps:
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 font-bold flex items-center justify-center shrink-0">
-              1
+      {/* SECTION 4: Previously Certified Scales & Historical Stamping Archive */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#023625] flex items-center justify-center border border-emerald-100">
+              <span className="material-symbols-outlined text-lg">history_edu</span>
             </div>
             <div>
-              <strong className="text-gray-900 block font-semibold">Book a Date Online</strong>
-              <span className="text-gray-500 mt-0.5 block leading-relaxed">
-                Choose a morning or afternoon slot. Government fee is ₹150 payable on-site.
-              </span>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                Previously Certified Scales &amp; Stamping Archive
+              </h2>
+              <p className="text-xs text-gray-500">
+                Official historical records of verified and stamped instruments for <strong>{activeShop.name}</strong>.
+              </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 font-bold flex items-center justify-center shrink-0">
-              2
-            </div>
-            <div>
-              <strong className="text-gray-900 block font-semibold">Inspector Visits Shop</strong>
-              <span className="text-gray-500 mt-0.5 block leading-relaxed">
-                Officer tests calibration with standard weights and affixes official 2025 tamper seal.
-              </span>
-            </div>
-          </div>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 self-start sm:self-auto">
+            {activeShop.certificationHistory?.length || 0} Certificates Issued
+          </span>
+        </div>
 
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-700 font-bold flex items-center justify-center shrink-0">
-              3
+        {/* Certificate Archive List */}
+        {activeShop.certificationHistory && activeShop.certificationHistory.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {activeShop.certificationHistory.map((cert) => (
+              <div
+                key={cert.certId}
+                className="p-4 rounded-xl border border-gray-200 bg-gray-50/70 hover:bg-gray-50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+                    <span className="material-symbols-outlined text-xl">verified</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono font-extrabold text-sm text-gray-900">
+                        {cert.certId}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        {cert.statusBadge}
+                      </span>
+                      <span className="text-xs text-gray-400 font-mono">
+                        {cert.serialNumber}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mt-1 flex-wrap">
+                      <span>Scale: <strong>{cert.instrumentModel}</strong></span>
+                      <span className="text-gray-300">•</span>
+                      <span>Verified: <strong>{cert.verifiedDate}</strong></span>
+                      <span className="text-gray-300">•</span>
+                      <span>Valid Until: <strong>{cert.validUntil}</strong></span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                      <span>Seal: <strong className="font-mono text-gray-700">{cert.inspectorSeal}</strong></span>
+                      <span className="text-gray-300">•</span>
+                      <span>Officer: <strong className="text-gray-700">{cert.inspectorName} ({cert.inspectorBadge})</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full md:w-auto shrink-0 flex items-center gap-2 justify-end">
+                  <button
+                    onClick={() => handleViewHistoricalCertificate(cert)}
+                    className="px-4 py-2 bg-white hover:bg-gray-100 border border-gray-300 text-[#023625] text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-colors"
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-sm">visibility</span>
+                    <span>View Certificate</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <span className="material-symbols-outlined text-3xl text-gray-300 mb-1 block">receipt_long</span>
+            <p className="text-xs font-bold text-gray-700">No Past Certificates on Record for this Branch</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              Once an Inspector conducts the physical weights audit, verified certificates will be archived here.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: Register New Shop / Branch */}
+      {showAddShopModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg border border-gray-200 shadow-2xl p-6 flex flex-col gap-4">
+            <div className="flex items-start justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Register New Shop / Branch Establishment
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Add another commercial branch under <strong>{storeInfo.contactPerson || 'Shree S. N. Ganesh'}</strong>.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddShopModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
             </div>
-            <div>
-              <strong className="text-gray-900 block font-semibold">Get Legal Certificate</strong>
-              <span className="text-gray-500 mt-0.5 block leading-relaxed">
-                Instant digital certificate Form XVII with authentic QR code valid for 1 full year.
-              </span>
-            </div>
+
+            <form onSubmit={onAddShopSubmit} className="flex flex-col gap-3.5 text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Establishment / Branch Name *</label>
+                <input
+                  value={newShopForm.name}
+                  onChange={(e) => setNewShopForm({ ...newShopForm, name: e.target.value })}
+                  placeholder="e.g. Ganesh Dry Fruits &amp; Spices (Branch 4)"
+                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Branch Type</label>
+                  <select
+                    value={newShopForm.branchType}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, branchType: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
+                  >
+                    <option value="Retail Branch">Retail Branch</option>
+                    <option value="Supermarket">Supermarket</option>
+                    <option value="Wholesale Depot">Wholesale Depot</option>
+                    <option value="Confectionery">Confectionery</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Jurisdiction Zone</label>
+                  <select
+                    value={newShopForm.zone}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, zone: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
+                  >
+                    <option value="Ward 4 (Commercial Circle)">Ward 4 (Commercial Circle)</option>
+                    <option value="Ward 2 (Commercial Ganj)">Ward 2 (Commercial Ganj)</option>
+                    <option value="Ward 1 (APMC Yard)">Ward 1 (APMC Yard)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Shop Address *</label>
+                <input
+                  value={newShopForm.address}
+                  onChange={(e) => setNewShopForm({ ...newShopForm, address: e.target.value })}
+                  placeholder="e.g. Shop #55, Market Road, Bengaluru - 560001"
+                  className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Trade License (Optional)</label>
+                  <input
+                    value={newShopForm.tradeLicense}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, tradeLicense: e.target.value })}
+                    placeholder="BBMP/TL/2025/..."
+                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Scale Model</label>
+                  <input
+                    value={newShopForm.scaleModel}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, scaleModel: e.target.value })}
+                    placeholder="Contech CA-30"
+                    className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2 mt-2">
+                <button
+                  onClick={() => setShowAddShopModal(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs"
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-xs shadow-xs"
+                >
+                  Register Branch
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 };

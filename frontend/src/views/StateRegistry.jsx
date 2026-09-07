@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const StateRegistry = () => {
-  const { registry, navigateTo, showToast } = useApp();
+  const { registry, navigateTo, activeRole, showToast } = useApp();
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState('all');
 
@@ -25,11 +25,20 @@ export const StateRegistry = () => {
       {/* Breadcrumb Hierarchy */}
       <div className="mb-unit-4 flex items-center gap-unit-2 text-body-sm font-body-sm text-on-surface-variant">
         <button
-          onClick={() => navigateTo('shop-dashboard')}
+          onClick={() => {
+            if (activeRole === 'inspector') navigateTo('inspector-schedule');
+            else if (activeRole === 'admin') navigateTo('admin-dashboard');
+            else if (activeRole === 'public') navigateTo('public-portal');
+            else navigateTo('shop-dashboard');
+          }}
           className="hover:text-primary transition-colors flex items-center gap-unit-1"
         >
-          <span className="material-symbols-outlined text-base">account_balance</span>
-          <span>Legal Metrology Division</span>
+          <span className="material-symbols-outlined text-base">
+            {activeRole === 'inspector' ? 'route' : activeRole === 'admin' ? 'dashboard' : activeRole === 'public' ? 'public' : 'storefront'}
+          </span>
+          <span>
+            {activeRole === 'inspector' ? "Inspector Route" : activeRole === 'admin' ? "Admin Command Center" : activeRole === 'public' ? 'Citizen Portal' : 'Shop Dashboard'}
+          </span>
         </button>
         <span className="material-symbols-outlined text-sm text-outline">chevron_right</span>
         <span className="text-primary font-semibold">State Compliance Registry &amp; Ledger</span>

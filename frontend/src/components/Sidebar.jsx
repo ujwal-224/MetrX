@@ -164,18 +164,6 @@ export const Sidebar = () => {
                 <span className="material-symbols-outlined text-lg">checklist</span>
                 <span>Active Inspection Checklist</span>
               </button>
-
-              <button
-                onClick={() => navigateTo('state-registry')}
-                className={`text-left px-3 py-2.5 flex items-center gap-3 rounded-lg text-label-md font-medium transition-all ${
-                  currentView === 'state-registry'
-                    ? 'bg-secondary text-white border-l-4 border-[#E0702A] font-semibold shadow-sm'
-                    : 'text-[#c3ecd5] hover:text-white hover:bg-secondary/40'
-                }`}
-              >
-                <span className="material-symbols-outlined text-lg">account_balance</span>
-                <span>State Store Registry</span>
-              </button>
             </>
           )}
         </nav>

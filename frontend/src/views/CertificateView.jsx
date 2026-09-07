@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const CertificateView = () => {
-  const { navigateTo, certificateData, storeInfo, showToast } = useApp();
+  const { navigateTo, certificateData, storeInfo, activeRole, showToast } = useApp();
   const [showSpecs, setShowSpecs] = useState(false);
 
   const handlePrint = () => {
@@ -40,11 +40,20 @@ export const CertificateView = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigateTo('shop-dashboard')}
+            onClick={() => {
+              if (activeRole === 'inspector') navigateTo('inspector-schedule');
+              else if (activeRole === 'admin') navigateTo('admin-dashboard');
+              else if (activeRole === 'public') navigateTo('public-portal');
+              else navigateTo('shop-dashboard');
+            }}
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container transition-colors text-xs font-semibold"
           >
-            <span className="material-symbols-outlined text-sm">storefront</span>
-            <span>Dashboard</span>
+            <span className="material-symbols-outlined text-sm">
+              {activeRole === 'inspector' ? 'arrow_back' : activeRole === 'admin' ? 'dashboard' : activeRole === 'public' ? 'public' : 'storefront'}
+            </span>
+            <span>
+              {activeRole === 'inspector' ? 'Inspector Route' : activeRole === 'admin' ? 'Admin Center' : activeRole === 'public' ? 'Public Portal' : 'Dashboard'}
+            </span>
           </button>
           <button
             onClick={handlePrint}

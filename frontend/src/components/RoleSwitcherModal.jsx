@@ -107,14 +107,14 @@ export const RoleSwitcherModal = () => {
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-[#E0702A] animate-pulse"></span>
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                Persona Switcher
+                1-Click Stakeholder Login
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-              Select User Role / Perspective
+              Select Role to Log In
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Experience the Legal Metrology Digital Verification System from any stakeholder's point of view:
+              Choose your stakeholder role to instantly access the dedicated portal (no password required):
             </p>
           </div>
 

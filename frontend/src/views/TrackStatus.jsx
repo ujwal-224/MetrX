@@ -6,200 +6,262 @@ export const TrackStatus = () => {
     navigateTo,
     activeInstrument,
     verificationStatus,
+    documentSubmissions,
     jumpToTourStep,
     showToast
   } = useApp();
 
   const currentStep = verificationStatus.step || 2;
+  const docData = documentSubmissions['merch-1'] || {};
+  const docStatus = docData.status || verificationStatus.documentStatus || 'pending_review';
 
   return (
     <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 min-h-screen">
       {/* Breadcrumb Hierarchy */}
-      <div className="max-w-3xl mx-auto w-full mb-unit-4 flex items-center gap-unit-2 text-xs text-on-surface-variant">
+      <div className="max-w-3xl mx-auto w-full mb-4 flex items-center gap-2 text-xs text-gray-500">
         <button
           onClick={() => navigateTo('shop-dashboard')}
-          className="hover:text-primary transition-colors flex items-center gap-unit-1"
+          className="hover:text-gray-900 transition-colors flex items-center gap-1 font-medium"
         >
           <span className="material-symbols-outlined text-sm">storefront</span>
           <span>Shop Dashboard</span>
         </button>
-        <span className="material-symbols-outlined text-sm text-outline">chevron_right</span>
-        <span className="text-primary font-semibold">Step 3: Appointment Tracker</span>
+        <span className="material-symbols-outlined text-sm text-gray-400">chevron_right</span>
+        <span className="text-[#023625] font-semibold">Appointment &amp; Compliance Tracker</span>
       </div>
 
       {/* Section Headline Header */}
-      <div className="max-w-3xl mx-auto w-full mb-unit-6">
+      <div className="max-w-3xl mx-auto w-full mb-6">
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-            Confirmed Appointment • Booking Ref #{verificationStatus.applicationRef}
+            Application Status • Ref #{verificationStatus.applicationRef}
           </span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">
-          Track Your Verification Visit
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+          Track Your Verification Progress
         </h1>
-        <p className="text-xs md:text-sm text-on-surface-variant mt-1">
-          An accredited Legal Metrology Officer has been scheduled to inspect and stamp your commercial scale on-site.
+        <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          Official statutory workflow for countertop scale re-verification under Legal Metrology Act 2009.
         </p>
       </div>
 
       {/* Central Tracking Card */}
-      <div className="max-w-3xl w-full mx-auto bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 md:p-8 shadow-sm flex flex-col">
+      <div className="max-w-3xl w-full mx-auto bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col">
         {/* Instrument Details Sub-bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-outline-variant mb-6 gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-gray-100 mb-6 gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center border border-outline-variant text-primary shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200 text-[#023625] shrink-0">
               <span className="material-symbols-outlined text-2xl">scale</span>
             </div>
             <div>
-              <div className="text-base font-bold text-on-surface">
+              <div className="text-base font-bold text-gray-900">
                 {activeInstrument.name} ({activeInstrument.model})
               </div>
-              <span className="text-xs text-outline font-mono">
+              <span className="text-xs text-gray-500 font-mono">
                 Serial: {activeInstrument.serialNumber} • Capacity: {activeInstrument.capacity}
               </span>
             </div>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E7F0E8] border border-[#C3ECD5] text-[#2E7D32] text-xs font-bold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
             <span className="material-symbols-outlined text-sm">event</span>
-            <span>Slot: {verificationStatus.slotLabel}</span>
+            <span>
+              {currentStep >= 3 ? `Slot: ${verificationStatus.slotLabel}` : 'Slot: Pending Verification'}
+            </span>
           </div>
         </div>
 
-        {/* 4-Step Progress Stepper */}
+        {/* 5-Step Progress Stepper */}
         <div className="w-full py-4 mb-6">
           <div className="relative flex items-center justify-between">
             {/* Connecting line */}
-            <div className="absolute left-0 top-5 w-full h-1 bg-surface-container-high z-0"></div>
+            <div className="absolute left-0 top-4 w-full h-1 bg-gray-200 z-0"></div>
             <div
-              className="absolute left-0 top-5 h-1 bg-secondary z-0 transition-all duration-500"
+              className="absolute left-0 top-4 h-1 bg-[#023625] z-0 transition-all duration-500"
               style={{
                 width:
                   currentStep === 1
                     ? '0%'
                     : currentStep === 2
-                    ? '33%'
+                    ? '25%'
                     : currentStep === 3
-                    ? '66%'
+                    ? '50%'
+                    : currentStep === 4
+                    ? '75%'
                     : '100%'
               }}
             ></div>
 
-            {/* Step 1 */}
+            {/* Step 1: Requested */}
             <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#E7F0E8] border-2 border-[#2E7D32] text-[#2E7D32] flex items-center justify-center shadow-xs">
-                <span className="material-symbols-outlined text-base sm:text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  check
+              <div className="w-8 h-8 rounded-full bg-emerald-100 border-2 border-emerald-700 text-emerald-800 flex items-center justify-center shadow-xs">
+                <span className="material-symbols-outlined text-base">check</span>
+              </div>
+              <span className="text-[11px] font-bold text-gray-900 mt-1.5">Requested</span>
+              <span className="text-[10px] text-gray-400 hidden sm:block">{verificationStatus.requestedAt}</span>
+            </div>
+
+            {/* Step 2: Documents Uploaded */}
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-xs relative z-10 ${
+                  docStatus === 'verified'
+                    ? 'bg-emerald-100 border-emerald-700 text-emerald-800'
+                    : docStatus === 'fraud'
+                    ? 'bg-red-100 border-red-600 text-red-700'
+                    : currentStep === 2
+                    ? 'bg-[#023625] border-[#023625] text-white'
+                    : 'bg-white border-gray-300 text-gray-400'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {docStatus === 'verified' ? 'check' : docStatus === 'fraud' ? 'close' : 'description'}
                 </span>
               </div>
-              <span className="text-[11px] sm:text-xs font-bold text-on-surface mt-1.5">Requested</span>
-              <span className="text-[10px] sm:text-[11px] text-outline hidden sm:block">{verificationStatus.requestedAt}</span>
+              <span className={`text-[11px] font-bold mt-1.5 ${currentStep === 2 ? 'text-[#023625]' : 'text-gray-700'}`}>
+                Documents
+              </span>
+              <span className={`text-[10px] font-semibold hidden sm:block ${
+                docStatus === 'verified' ? 'text-emerald-700' : docStatus === 'fraud' ? 'text-red-600' : 'text-amber-600'
+              }`}>
+                {docStatus === 'verified' ? 'Verified' : docStatus === 'fraud' ? 'Fraud / Blocked' : '5 Uploaded'}
+              </span>
             </div>
 
-            {/* Step 2 */}
+            {/* Step 3: Scheduled */}
             <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="relative flex items-center justify-center">
-                {currentStep === 2 && (
-                  <span className="absolute w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-primary-container/20 animate-ping"></span>
-                )}
-                <div
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 text-white flex items-center justify-center shadow-xs relative z-10 ${
-                    currentStep >= 2 ? 'bg-primary-container border-primary' : 'bg-surface-container border-outline-variant text-outline'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-sm sm:text-base">event_available</span>
-                </div>
+              <div
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                  currentStep >= 3
+                    ? 'bg-[#023625] border-[#023625] text-white'
+                    : 'bg-white border-gray-300 text-gray-400'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">event_available</span>
               </div>
-              <span className="text-[11px] sm:text-xs font-bold text-primary mt-1.5 flex items-center gap-1">
-                {currentStep === 2 && <span className="w-1.5 h-1.5 rounded-full bg-[#E0702A]"></span>}
+              <span className={`text-[11px] font-medium mt-1.5 ${currentStep >= 3 ? 'text-[#023625] font-bold' : 'text-gray-400'}`}>
                 Scheduled
               </span>
-              <span className="text-[10px] sm:text-[11px] text-secondary font-medium hidden sm:block">Slot Confirmed</span>
+              <span className="text-[10px] text-gray-400 hidden sm:block">Slot Confirmed</span>
             </div>
 
-            {/* Step 3 */}
+            {/* Step 4: Inspected */}
             <div className="relative z-10 flex flex-col items-center text-center">
               <div
-                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 flex items-center justify-center ${
-                  currentStep >= 3
-                    ? 'bg-primary-container border-primary text-white'
-                    : 'bg-surface-container border-outline-variant text-outline'
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                  currentStep >= 4
+                    ? 'bg-[#023625] border-[#023625] text-white'
+                    : 'bg-white border-gray-300 text-gray-400'
                 }`}
               >
-                <span className="material-symbols-outlined text-sm sm:text-base">search</span>
+                <span className="material-symbols-outlined text-sm">search</span>
               </div>
-              <span className={`text-[11px] sm:text-xs font-medium mt-1.5 ${currentStep >= 3 ? 'text-primary font-bold' : 'text-outline'}`}>
+              <span className={`text-[11px] font-medium mt-1.5 ${currentStep >= 4 ? 'text-[#023625] font-bold' : 'text-gray-400'}`}>
                 Inspected
               </span>
-              <span className="text-[10px] sm:text-[11px] text-outline-variant hidden sm:block">Weights Test</span>
+              <span className="text-[10px] text-gray-400 hidden sm:block">Weights Test</span>
             </div>
 
-            {/* Step 4 */}
+            {/* Step 5: Certified */}
             <div className="relative z-10 flex flex-col items-center text-center">
               <div
-                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 flex items-center justify-center ${
-                  currentStep >= 4
-                    ? 'bg-[#2E7D32] border-[#2E7D32] text-white shadow-md'
-                    : 'bg-surface-container border-outline-variant text-outline'
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                  currentStep >= 5
+                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                    : 'bg-white border-gray-300 text-gray-400'
                 }`}
               >
-                <span className="material-symbols-outlined text-sm sm:text-base">verified</span>
+                <span className="material-symbols-outlined text-sm">verified</span>
               </div>
-              <span className={`text-[11px] sm:text-xs font-medium mt-1.5 ${currentStep >= 4 ? 'text-[#2E7D32] font-bold' : 'text-outline'}`}>
+              <span className={`text-[11px] font-medium mt-1.5 ${currentStep >= 5 ? 'text-emerald-700 font-bold' : 'text-gray-400'}`}>
                 Certified
               </span>
-              <span className="text-[10px] sm:text-[11px] text-outline-variant hidden sm:block">Holo Seal</span>
+              <span className="text-[10px] text-gray-400 hidden sm:block">Holo Seal</span>
             </div>
           </div>
         </div>
 
-        {/* Assigned Officer Context Box */}
-        <div className="bg-surface-container-low border border-outline-variant/80 rounded-xl p-4 sm:p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-secondary-container text-primary font-bold flex items-center justify-center shrink-0">
-              RD
-            </div>
+        {/* Document Status Callout Box */}
+        <div className={`p-4 rounded-xl mb-6 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+          docStatus === 'verified'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
+            : docStatus === 'fraud'
+            ? 'bg-red-50 border-red-200 text-red-950'
+            : 'bg-amber-50 border-amber-200 text-amber-950'
+        }`}>
+          <div className="flex items-start gap-2.5">
+            <span className={`material-symbols-outlined text-xl mt-0.5 ${
+              docStatus === 'verified' ? 'text-emerald-700' : docStatus === 'fraud' ? 'text-red-600' : 'text-amber-700'
+            }`}>
+              {docStatus === 'verified' ? 'verified_user' : docStatus === 'fraud' ? 'gavel' : 'description'}
+            </span>
             <div>
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#2E7D32] block">
-                Assigned Verification Officer
-              </span>
-              <h3 className="text-sm sm:text-base font-bold text-primary">
-                {verificationStatus.inspectorName} ({verificationStatus.inspectorBadge})
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-0.5">
-                Visiting your shop on <strong>{verificationStatus.slotLabel}</strong> between <strong>{verificationStatus.timeLabel}</strong>.
+              <div className="text-xs font-bold uppercase tracking-wider">
+                Statutory Document Scrutiny: {docStatus === 'verified' ? 'Verified & Approved' : docStatus === 'fraud' ? 'Flagged as Fraud' : 'Submitted (5/5 Files)'}
+              </div>
+              <p className="text-xs mt-0.5">
+                {docStatus === 'verified'
+                  ? 'All 5 documents verified by Inspector. You can confirm your physical inspection appointment.'
+                  : docStatus === 'fraud'
+                  ? 'Discrepancy detected in submitted scale plate. Scheduling disabled by Legal Metrology Department.'
+                  : '5 documents submitted (Business Reg, Owner ID, Invoice, Plate Photo, Instrument Photo). Awaiting Officer decision.'}
               </p>
             </div>
           </div>
 
-          <div className="w-full sm:w-auto text-left sm:text-right pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l sm:border-outline-variant/60 sm:pl-4">
-            <span className="text-[11px] text-outline block">Estimated Duration</span>
-            <span className="text-xs font-bold text-on-surface">15–20 minutes</span>
+          <div className="shrink-0 w-full sm:w-auto flex items-center gap-2">
+            <button
+              onClick={() => navigateTo('upload-documents')}
+              className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 shadow-xs flex items-center justify-center gap-1"
+            >
+              <span>View 5 Documents</span>
+              <span className="material-symbols-outlined text-sm">open_in_new</span>
+            </button>
+
+            {docStatus === 'verified' && currentStep < 3 && (
+              <button
+                onClick={() => navigateTo('request-verification')}
+                className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-[#E0702A] hover:bg-[#c95f1e] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1"
+              >
+                <span>Schedule Visit</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Inspector Next Step Walkthrough Simulator */}
-        <div className="bg-[#FAF5E8] border border-[#E4D7B5] rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 text-xs text-[#78350F]">
-            <span className="material-symbols-outlined text-lg text-[#E0702A] shrink-0">science</span>
-            <span>
-              <strong>Ready for Step 4?</strong> Experience the inspector's viewpoint to test standard weights and apply the tamper seal.
-            </span>
+        {/* Assigned Officer Context Box */}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 sm:p-5 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 text-[#023625] font-bold flex items-center justify-center shrink-0 border border-emerald-200">
+              RD
+            </div>
+            <div>
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-800 block">
+                Assigned Verification Officer
+              </span>
+              <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                {verificationStatus.inspectorName} ({verificationStatus.inspectorBadge})
+              </h3>
+              <p className="text-xs text-gray-600 mt-0.5">
+                {currentStep >= 3
+                  ? `Visiting your shop on ${verificationStatus.slotLabel} between ${verificationStatus.timeLabel}.`
+                  : 'Assigned for document scrutiny and on-site physical counter testing.'}
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => jumpToTourStep(4)}
-            className="w-full sm:w-auto shrink-0 px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-secondary transition-colors flex items-center justify-center gap-1.5"
-          >
-            <span>Step 4 (Inspector Audit)</span>
-            <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </button>
+
+          <div className="w-full sm:w-auto text-left sm:text-right pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l sm:border-gray-200 sm:pl-4">
+            <span className="text-[11px] text-gray-400 block">Fee Schedule</span>
+            <span className="text-xs font-bold text-gray-900">₹150 (Statutory Rule 14)</span>
+          </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-outline-variant/40 text-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-gray-100 text-xs">
           <button
             onClick={() => showToast('SMS reminder re-sent to registered phone.', 'info')}
-            className="text-secondary hover:underline flex items-center justify-center sm:justify-start gap-1 py-1"
+            className="text-[#023625] hover:underline flex items-center justify-center sm:justify-start gap-1 py-1 font-semibold"
           >
             <span className="material-symbols-outlined text-sm">sms</span>
             <span>Resend SMS Reminder</span>
@@ -207,9 +269,9 @@ export const TrackStatus = () => {
 
           <a
             href="tel:180063872"
-            className="px-4 py-2 border border-outline-variant rounded-lg text-on-surface font-semibold hover:bg-surface-container transition-colors flex items-center justify-center gap-1.5"
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-sm text-primary">call</span>
+            <span className="material-symbols-outlined text-sm text-[#023625]">call</span>
             <span>Helpdesk Support</span>
           </a>
         </div>
@@ -217,3 +279,4 @@ export const TrackStatus = () => {
     </main>
   );
 };
+
