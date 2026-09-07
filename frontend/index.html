@@ -1,0 +1,127 @@
+<!doctype html>
+<html class="h-full" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>METRA — Legal Metrology Digital Verification System</title>
+    <!-- Google Fonts: Inter & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+    <!-- Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Tailwind CSS with Forms & Container Queries -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-container": "#ffdad6",
+              "primary-container": "#1f4d3a",
+              "outline-variant": "#c0c9c2",
+              "outline": "#717973",
+              "secondary": "#416654",
+              "surface-dim": "#dddad1",
+              "inverse-primary": "#a1d1b8",
+              "on-tertiary-container": "#ff985f",
+              "surface-bright": "#fdf9f0",
+              "surface-container-high": "#ece8df",
+              "tertiary-container": "#753000",
+              "on-surface-variant": "#414944",
+              "on-tertiary-fixed-variant": "#783200",
+              "primary": "#023625",
+              "error": "#ba1a1a",
+              "surface-tint": "#3a6753",
+              "on-primary-fixed-variant": "#214f3c",
+              "tertiary-fixed": "#ffdbca",
+              "secondary-fixed": "#c3ecd5",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed-variant": "#2a4e3d",
+              "surface-container-low": "#f7f3ea",
+              "secondary-container": "#c3ecd5",
+              "surface-container": "#f1eee5",
+              "on-surface": "#1c1c16",
+              "background": "#fdf9f0",
+              "on-secondary-container": "#476c5a",
+              "on-error": "#ffffff",
+              "on-secondary": "#ffffff",
+              "tertiary": "#512000",
+              "surface-variant": "#e6e2d9",
+              "surface-container-lowest": "#ffffff",
+              "primary-fixed-dim": "#a1d1b8",
+              "on-tertiary-fixed": "#331100",
+              "on-primary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#002114",
+              "primary-fixed": "#bceed3",
+              "on-background": "#1c1c16",
+              "on-primary-fixed": "#002114",
+              "inverse-surface": "#31302b",
+              "surface": "#fdf9f0",
+              "on-primary-container": "#8dbda4",
+              "tertiary-fixed-dim": "#ffb690",
+              "secondary-fixed-dim": "#a8cfba",
+              "surface-container-highest": "#e6e2d9",
+              "inverse-on-surface": "#f4f0e7",
+              "amber-brand": "#e0702a"
+            },
+            borderRadius: {
+              "DEFAULT": "0.125rem",
+              "lg": "0.25rem",
+              "xl": "0.5rem",
+              "full": "0.75rem"
+            },
+            spacing: {
+              "sidebar-width-expanded": "260px",
+              "unit-6": "24px",
+              "max-content-width": "1440px",
+              "unit-1": "4px",
+              "unit-3": "12px",
+              "sidebar-width-collapsed": "72px",
+              "unit-4": "16px",
+              "unit-10": "40px",
+              "unit-8": "32px",
+              "unit-16": "64px",
+              "unit-12": "48px",
+              "unit-2": "8px",
+              "header-height": "72px"
+            },
+            fontFamily: {
+              "body-sm": ["Inter", "sans-serif"],
+              "label-lg": ["Inter", "sans-serif"],
+              "body-lg": ["Inter", "sans-serif"],
+              "display-xl": ["Playfair Display", "serif"],
+              "title-md": ["Inter", "sans-serif"],
+              "headline-sm": ["Playfair Display", "serif"],
+              "headline-lg": ["Playfair Display", "serif"],
+              "body-md": ["Inter", "sans-serif"],
+              "label-md": ["Inter", "sans-serif"],
+              "label-sm": ["Inter", "sans-serif"],
+              "headline-md": ["Playfair Display", "serif"]
+            },
+            fontSize: {
+              "body-sm": ["12px", { lineHeight: "18px", fontWeight: "400" }],
+              "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+              "body-lg": ["16px", { lineHeight: "26px", fontWeight: "400" }],
+              "display-xl": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "600" }],
+              "title-md": ["16px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "600" }],
+              "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+              "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.015em", fontWeight: "600" }],
+              "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+              "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }],
+              "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.05em", fontWeight: "600" }],
+              "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }]
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-background text-on-surface font-body-md text-body-md h-full min-h-screen flex flex-col antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+    <div id="root" class="h-full min-h-screen flex flex-col"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
