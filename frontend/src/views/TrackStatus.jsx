@@ -4,6 +4,8 @@ import { useApp } from '../context/AppContext';
 export const TrackStatus = () => {
   const {
     navigateTo,
+    storeInfo,
+    activeShop,
     activeInstrument,
     verificationStatus,
     documentSubmissions,
@@ -11,9 +13,10 @@ export const TrackStatus = () => {
     showToast
   } = useApp();
 
+  const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
   const currentStep = verificationStatus.step || 2;
-  const docData = documentSubmissions['merch-1'] || {};
-  const docStatus = docData.status || verificationStatus.documentStatus || 'pending_review';
+  const docData = documentSubmissions[currentMerchantId] || activeShop?.documentSubmissionData || {};
+  const docStatus = docData.status || activeShop?.documentStatus || verificationStatus.documentStatus || 'pending_review';
 
   return (
     <main className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">

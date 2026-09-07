@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
+import prisma from '../config/prisma.js';
 
-// Simple JWT Auth Middleware
+// Simple JWT Auth Middleware using Prisma
 export const protect = async (req, res, next) => {
   let token;
 
@@ -17,7 +17,24 @@ export const protect = async (req, res, next) => {
       );
 
       // Attach user object (without password)
-      req.user = await User.findById(decoded.id).select('-password');
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          phone: true,
+          inspectorBadgeId: true,
+          assignedZone: true
+        }
+      });
+
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'User belonging to token no longer exists' });
+      }
+
+      req.user = user;
       return next();
     } catch (error) {
       return res.status(401).json({ success: false, message: 'Not authorized, token failed' });

@@ -55,12 +55,24 @@ export const ShopDashboard = () => {
   const circumference = 590.6;
   const strokeOffset = Math.max(0, circumference - (circumference * (daysLeft / 365)));
 
-  const currentDocData = documentSubmissions[activeShop.id] || documentSubmissions['merch-1'] || {};
-  const currentDocStatus = currentDocData.status || activeShop.documentStatus || verificationStatus.documentStatus || 'pending_review';
+  const assignedInspectorName = activeShop?.assignedInspector || storeInfo?.assignedInspector;
+  const isInspectorAssigned = assignedInspectorName &&
+    assignedInspectorName !== 'Pending Admin Allocation' &&
+    assignedInspectorName !== 'Unassigned (Action Required)' &&
+    assignedInspectorName !== 'PENDING' &&
+    assignedInspectorName !== '';
+
+  const currentDocData = documentSubmissions[activeShop.id] || activeShop.documentSubmissionData || {};
+  const currentDocStatus = currentDocData.status || activeShop.documentStatus || verificationStatus.documentStatus || 'not_uploaded';
   const isDocVerified = currentDocStatus === 'verified';
   const isDocFraud = currentDocStatus === 'fraud';
 
   const handleBookVisitClick = () => {
+    if (!isInspectorAssigned) {
+      showToast('Inspector Allocation Pending: Department Admin is assigning an Inspector to your store.', 'info');
+      navigateTo('upload-documents');
+      return;
+    }
     if (isDocFraud) {
       showToast('Action Blocked: Legal Metrology Officer flagged submitted documents as Fraud.', 'error');
       return;
@@ -385,7 +397,7 @@ export const ShopDashboard = () => {
               className="w-full h-11 bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
             >
               <span className="material-symbols-outlined text-lg">calendar_month</span>
-              <span>{isDocVerified ? 'Schedule Inspector Visit' : 'Upload Docs & Book Visit'}</span>
+              <span>{!isInspectorAssigned ? 'View Assignment Status' : isDocVerified ? 'Schedule Inspector Visit' : 'Upload Docs & Book Visit'}</span>
             </button>
             <span className="text-xs text-gray-400 py-0.5 font-medium">
               Statutory Fee ₹150 • Rule 14 Legal Metrology

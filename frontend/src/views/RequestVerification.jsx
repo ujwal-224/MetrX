@@ -6,6 +6,7 @@ export const RequestVerification = () => {
     navigateTo,
     activeInstrument,
     storeInfo,
+    activeShop,
     selectedSlot,
     verificationStatus,
     documentSubmissions,
@@ -16,8 +17,10 @@ export const RequestVerification = () => {
   const [slot, setSlot] = useState(selectedSlot || 'slot_1');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const docData = documentSubmissions['merch-1'] || {};
-  const docStatus = docData.status || verificationStatus.documentStatus || 'pending_review';
+  const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
+  const docData = documentSubmissions[currentMerchantId] || activeShop?.documentSubmissionData || {};
+  const docStatus = docData.status || activeShop?.documentStatus || verificationStatus.documentStatus || 'pending_review';
+  const assignedInspectorName = activeShop?.assignedInspector || storeInfo?.assignedInspector || 'Insp. R. Deshmukh';
   const isVerified = docStatus === 'verified';
   const isFraud = docStatus === 'fraud';
 
@@ -97,7 +100,7 @@ export const RequestVerification = () => {
                   Documents Under Inspector Verification
                 </h2>
                 <p className="text-xs text-amber-900 mt-0.5">
-                  Your 5 statutory documents have been submitted to Insp. R. Deshmukh. Once the officer marks them <strong>Verified</strong>, appointment confirmation will be unlocked.
+                  Your 5 statutory documents have been submitted to <strong>{assignedInspectorName}</strong>. Once the officer marks them <strong>Verified</strong>, appointment confirmation will be unlocked.
                 </p>
               </div>
             </div>

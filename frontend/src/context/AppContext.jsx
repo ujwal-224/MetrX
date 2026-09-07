@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 import {
   initialStoreInfo,
@@ -558,6 +558,135 @@ export const AppProvider = ({ children }) => {
     }, 4500);
   };
 
+  // Sync state from backend MongoDB API on mount
+  useEffect(() => {
+    const fetchBackendData = async () => {
+      try {
+        const res = await api.getShops();
+        if (res.success && res.data && res.data.length > 0) {
+          const backendShops = res.data;
+
+          // Merge into ownerShops
+          setOwnerShops((prev) => {
+            const merged = [...prev];
+            backendShops.forEach((bShop) => {
+              const idx = merged.findIndex((s) => s.id === bShop.id || s.name.toLowerCase() === bShop.name.toLowerCase());
+              const formattedShop = {
+                id: bShop.id,
+                name: bShop.name,
+                ownerName: bShop.ownerName,
+                branchType: bShop.branchType || 'Commercial Retail Store',
+                merchantUid: bShop.merchantUid,
+                tradeLicense: bShop.tradeLicense,
+                gstin: bShop.gstin || '',
+                shopActReg: bShop.shopActReg || '',
+                zone: bShop.zone,
+                address: bShop.address,
+                phone: bShop.phone,
+                assignedInspector: bShop.assignedInspector || 'Pending Admin Allocation',
+                inspectorBadge: bShop.inspectorBadge || 'LM-PENDING',
+                status: bShop.status || 'Active Commercial Establishment',
+                complianceStatus: bShop.complianceStatus || 'Pending Inspector Assignment',
+                documentStatus: bShop.documentStatus || 'not_uploaded',
+                registeredScalesCount: bShop.registeredScalesCount || 1,
+                instruments: bShop.instruments || [],
+                certificationHistory: []
+              };
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], ...formattedShop };
+              } else {
+                merged.unshift(formattedShop);
+              }
+            });
+            return merged;
+          });
+
+          // Merge into merchants list
+          setMerchants((prev) => {
+            const merged = [...prev];
+            backendShops.forEach((bShop) => {
+              const idx = merged.findIndex((m) => m.id === bShop.id || m.name.toLowerCase() === bShop.name.toLowerCase());
+              const isAssigned = bShop.assignedInspector && bShop.assignedInspector !== 'Pending Admin Allocation';
+              const formattedMerch = {
+                id: bShop.id,
+                name: bShop.name,
+                ownerName: bShop.ownerName,
+                email: bShop.email || `store${Math.floor(100 + Math.random() * 900)}@metrx.com`,
+                merchantUid: bShop.merchantUid,
+                tradeLicense: bShop.tradeLicense,
+                zone: bShop.zone,
+                address: bShop.address,
+                phone: bShop.phone,
+                registeredScales: bShop.registeredScalesCount || 1,
+                complianceStatus: bShop.complianceStatus || (isAssigned ? 'Inspector Assigned' : 'Pending Inspector Assignment'),
+                assignedInspector: isAssigned ? bShop.assignedInspector : null,
+                assignedInspectorBadge: isAssigned ? bShop.inspectorBadge : null,
+                createdAt: bShop.createdAt ? new Date(bShop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'
+              };
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], ...formattedMerch };
+              } else {
+                merged.unshift(formattedMerch);
+              }
+            });
+            return merged;
+          });
+
+          // Sync into operations queue
+          setOperations((prev) => {
+            const merged = [...prev];
+            backendShops.forEach((bShop) => {
+              const existingIdx = merged.findIndex((op) => op.shopName === bShop.name || op.merchantUid === bShop.merchantUid);
+              const isAssigned = bShop.assignedInspector && bShop.assignedInspector !== 'Pending Admin Allocation';
+              const opEntry = {
+                id: `OP-${bShop.id}`,
+                inspectorName: isAssigned ? bShop.assignedInspector : 'Unassigned (Action Required)',
+                badgeNumber: isAssigned ? (bShop.inspectorBadge || 'LM-BLR-402') : 'LM-PENDING',
+                shopName: bShop.name,
+                merchantUid: bShop.merchantUid,
+                zone: bShop.zone?.split(' ')[0] || 'Ward 4',
+                operationType: 'On-Site Stamping & Verification',
+                scaleModel: 'Commercial Electronic Scale',
+                slot: isAssigned ? '11:30 AM – 01:00 PM (Assigned Slot)' : 'Awaiting Inspector Assignment',
+                liveStatus: isAssigned ? (bShop.complianceStatus === 'Documents Verified' ? 'Docs Verified • Ready for Visit' : 'Inspector Assigned • Pending Docs') : 'New Registration • Pending Allocation',
+                statusType: isAssigned ? 'scheduled' : 'scheduled',
+                remarks: isAssigned ? `Assigned to ${bShop.assignedInspector}` : 'Requires Inspector Assignment by Controller'
+              };
+              if (existingIdx >= 0) {
+                merged[existingIdx] = { ...merged[existingIdx], ...opEntry };
+              } else {
+                merged.unshift(opEntry);
+              }
+            });
+            return merged;
+          });
+
+          // Sync document submissions if stored
+          backendShops.forEach((bShop) => {
+            if (bShop.documentSubmissionData || bShop.documentStatus) {
+              setDocumentSubmissions((prev) => ({
+                ...prev,
+                [bShop.id]: {
+                  merchantId: bShop.id,
+                  shopName: bShop.name,
+                  status: bShop.documentStatus || 'pending_review',
+                  submittedAt: bShop.updatedAt ? new Date(bShop.updatedAt).toLocaleDateString('en-GB') : 'Recently',
+                  reviewedBy: bShop.reviewedBy || bShop.assignedInspector || 'Insp. R. Deshmukh',
+                  reviewedAt: bShop.documentStatus === 'verified' ? 'Verified' : null,
+                  remarks: bShop.documentsRemarks || (bShop.documentStatus === 'verified' ? 'All 5 statutory documents verified.' : 'Awaiting physical inspection clearance.'),
+                  docs: bShop.documentSubmissionData || (prev[bShop.id]?.docs)
+                }
+              }));
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('[Backend Sync Warning]', err.message);
+      }
+    };
+    fetchBackendData();
+  }, []);
+
   // Direct login by role (for demo quick-fill)
   const login = (role) => {
     setActiveRole(role);
@@ -656,12 +785,16 @@ export const AppProvider = ({ children }) => {
       if (existing) {
         return {
           ...existing,
+          merchantId: m.id,
+          shopId: m.id,
           assignedOfficer: activeInsp.name,
           officerBadge: `Badge #${activeInsp.badgeNumber}`
         };
       }
       return {
         id: `visit-dyn-${m.id}`,
+        merchantId: m.id,
+        shopId: m.id,
         timeSlot: idx === 0 ? '10:00 AM – 11:30 AM' : idx === 1 ? '12:00 PM – 1:00 PM' : '02:30 PM – 03:30 PM',
         timeRelative: idx === 0 ? 'NEXT UP • Assigned by Admin' : `Slot ${idx + 1}`,
         isNextUp: idx === 0,
@@ -757,22 +890,69 @@ export const AppProvider = ({ children }) => {
   };
 
   // Shop Owner Self-Registration (Creates account and becomes immediately visible in Admin)
-  const handleRegisterMerchant = (data) => {
+  const handleRegisterMerchant = async (data) => {
     const uid = `#EST-${Math.floor(10000 + Math.random() * 90000)}`;
+    const generatedShopId = `shop-${Date.now().toString(36)}`;
+
+    // 1. Register user account on backend
+    try {
+      await api.register({
+        name: data.ownerName || 'Merchant Owner',
+        email: data.email || `store${Math.floor(100 + Math.random() * 900)}@metrx.com`,
+        password: data.password || '12345678',
+        role: 'shop-owner',
+        phone: data.phone || '+91 98000 00000'
+      });
+    } catch (err) {
+      console.warn('[Backend User Register Warning]', err.message);
+    }
+
+    // 2. Persist shop establishment to backend MongoDB
+    let backendShop = null;
+    try {
+      const res = await api.createShop({
+        id: generatedShopId,
+        name: data.name || 'New Retail Store',
+        ownerName: data.ownerName || 'Merchant Owner',
+        email: data.email || '',
+        merchantUid: uid,
+        tradeLicense: data.tradeLicense || `BBMP/TL/2025/${Math.floor(1000 + Math.random() * 9000)}`,
+        zone: data.zone || 'Ward 4 (Commercial Circle)',
+        address: data.address || `${data.zone || 'Ward 4'}, Commercial Circle, Bengaluru`,
+        phone: data.phone || '+91 98000 00000',
+        registeredScalesCount: Number(data.registeredScales) || 1,
+        assignedInspector: 'Pending Admin Allocation',
+        inspectorBadge: 'LM-PENDING',
+        complianceStatus: 'Pending Inspector Assignment',
+        documentStatus: 'not_uploaded',
+        scaleModel: data.scaleModel || 'Digital Metrology Model 2025',
+        scaleType: data.scaleType || 'Electronic Counter'
+      });
+      if (res.success && res.data) {
+        backendShop = res.data;
+      }
+    } catch (err) {
+      console.error('[Backend Create Shop Failed]', err.message);
+    }
+
+    const finalId = backendShop?.id || generatedShopId;
+    const finalUid = backendShop?.merchantUid || uid;
+
     const newMerch = {
-      id: `merch-${Date.now()}`,
+      id: finalId,
       name: data.name || 'New Retail Store',
       ownerName: data.ownerName || 'Merchant Owner',
       email: data.email || `store${Math.floor(100 + Math.random() * 900)}@metrx.com`,
       password: data.password || '12345678',
-      merchantUid: uid,
+      merchantUid: finalUid,
       tradeLicense: data.tradeLicense || `BBMP/TL/2025/${Math.floor(1000 + Math.random() * 9000)}`,
       zone: data.zone || 'Ward 4 (Commercial Circle)',
-      address: data.address || 'Market Road, Bengaluru',
+      address: data.address || `${data.zone || 'Ward 4'}, Commercial Circle, Bengaluru`,
       phone: data.phone || '+91 98000 00000',
       registeredScales: Number(data.registeredScales) || 1,
       complianceStatus: 'Pending Inspector Assignment',
       assignedInspector: null,
+      assignedInspectorBadge: 'LM-PENDING',
       createdAt: 'Today'
     };
 
@@ -798,13 +978,13 @@ export const AppProvider = ({ children }) => {
     };
     setInstruments([newScale]);
 
-    // Also sync into ownerShops multi-shop list so Merchant has it in their dashboard
+    // Sync into ownerShops multi-shop list
     const newOwnerShop = {
-      id: newMerch.id,
+      id: finalId,
       name: newMerch.name,
       ownerName: newMerch.ownerName,
       branchType: 'Commercial Retail Store',
-      merchantUid: uid,
+      merchantUid: finalUid,
       tradeLicense: newMerch.tradeLicense,
       gstin: `29AABCU${Math.floor(1000 + Math.random() * 9000)}R1ZM`,
       shopActReg: `KA/BLR/${Math.floor(10000 + Math.random() * 90000)}/2025`,
@@ -812,23 +992,24 @@ export const AppProvider = ({ children }) => {
       address: newMerch.address,
       phone: newMerch.phone,
       assignedInspector: 'Pending Admin Allocation',
-      inspectorBadge: 'PENDING',
+      inspectorBadge: 'LM-PENDING',
       status: 'Active Commercial Establishment',
       complianceStatus: 'Pending Inspector Assignment',
-      documentStatus: 'pending_review',
+      documentStatus: 'not_uploaded',
       registeredScalesCount: Number(data.registeredScales) || 1,
       instruments: [newScale],
       certificationHistory: []
     };
     setOwnerShops((prev) => [newOwnerShop, ...prev]);
+    setActiveShopIndexState(0);
 
-    // Also add an entry into Admin Live Field Operations queue
+    // Entry into Admin Live Field Operations queue
     const newOperation = {
-      id: `OP-${Date.now()}`,
+      id: `OP-${finalId}`,
       inspectorName: 'Unassigned (Action Required)',
       badgeNumber: 'LM-PENDING',
       shopName: newMerch.name,
-      merchantUid: uid,
+      merchantUid: finalUid,
       zone: newMerch.zone.split(' ')[0] || 'Ward 4',
       operationType: 'Initial Shop Verification',
       scaleModel: newScale.model,
@@ -840,9 +1021,10 @@ export const AppProvider = ({ children }) => {
     setOperations((prev) => [newOperation, ...prev]);
 
     setStoreInfo({
+      id: finalId,
       name: newMerch.name,
       regNumber: newMerch.tradeLicense,
-      merchantUid: newMerch.merchantUid,
+      merchantUid: finalUid,
       location: newMerch.address,
       division: 'Bengaluru Central Division',
       contactPerson: newMerch.ownerName,
@@ -852,15 +1034,21 @@ export const AppProvider = ({ children }) => {
       certificateId: 'PENDING'
     });
 
+    setVerificationStatus((prev) => ({
+      ...prev,
+      documentStatus: 'not_uploaded',
+      step: 1
+    }));
+
     setActiveRole('shop-owner');
     setCurrentView('shop-dashboard');
-    showToast(`Store registered successfully! Merchant UID: ${uid}. Synced with Admin Operations.`, 'success');
+    showToast(`Store registered successfully! Merchant UID: ${finalUid}. Visible in Admin Command Center.`, 'success');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return newMerch;
   };
 
   // Admin Assigns / Reassigns Inspector to a Merchant Store
-  const handleAssignInspectorToMerchant = (merchantId, inspectorId) => {
+  const handleAssignInspectorToMerchant = async (merchantId, inspectorId) => {
     const selectedInspector = inspectors.find((insp) => insp.id === inspectorId);
     if (!selectedInspector) {
       showToast('Please select a valid inspector', 'error');
@@ -884,20 +1072,58 @@ export const AppProvider = ({ children }) => {
       })
     );
 
+    // Sync into ownerShops
+    setOwnerShops((prev) =>
+      prev.map((s) => {
+        if (s.id === merchantId || (targetMerchant && s.name === targetMerchant.name)) {
+          return {
+            ...s,
+            assignedInspector: selectedInspector.name,
+            inspectorBadge: selectedInspector.badgeNumber,
+            complianceStatus: 'Inspector Assigned'
+          };
+        }
+        return s;
+      })
+    );
+
+    // Sync into storeInfo if active
+    setStoreInfo((prev) => {
+      if (prev.id === merchantId || (targetMerchant && prev.name === targetMerchant.name)) {
+        return {
+          ...prev,
+          assignedInspector: selectedInspector.name,
+          inspectorBadge: selectedInspector.badgeNumber
+        };
+      }
+      return prev;
+    });
+
+    // Call backend API to persist assignment in MongoDB
+    try {
+      await api.assignInspector(merchantId, {
+        inspectorName: selectedInspector.name,
+        inspectorBadge: selectedInspector.badgeNumber
+      });
+    } catch (err) {
+      console.warn('[Backend Assign Inspector Error]', err.message);
+    }
+
     // Sync with Operations Queue
     const merchantName = targetMerchant ? targetMerchant.name : 'Store';
     const merchantUid = targetMerchant ? targetMerchant.merchantUid : '#EST-NEW';
     const zoneName = targetMerchant ? targetMerchant.zone : 'Ward 4';
 
     setOperations((prev) => {
-      const existingIdx = prev.findIndex((op) => op.shopName === merchantName);
+      const existingIdx = prev.findIndex((op) => op.shopName === merchantName || op.merchantUid === merchantUid);
       if (existingIdx >= 0) {
         const updated = [...prev];
         updated[existingIdx] = {
           ...updated[existingIdx],
           inspectorName: selectedInspector.name,
           badgeNumber: selectedInspector.badgeNumber,
-          remarks: `Reassigned by Department Admin to ${selectedInspector.name}`
+          liveStatus: 'Assigned / Awaiting Documents',
+          remarks: `Assigned by Department Admin to ${selectedInspector.name}`
         };
         return updated;
       } else {
@@ -911,7 +1137,7 @@ export const AppProvider = ({ children }) => {
           operationType: 'On-Site Stamping & Verification',
           scaleModel: 'Commercial Electronic Scale',
           slot: '11:30 AM – 01:00 PM (Assigned Slot)',
-          liveStatus: 'Assigned / Route Slotted',
+          liveStatus: 'Assigned / Awaiting Documents',
           statusType: 'scheduled',
           remarks: `Assigned by Controller to ${selectedInspector.name}`
         };
@@ -1084,32 +1310,32 @@ export const AppProvider = ({ children }) => {
     };
   };
 
-  const handleUploadDocuments = (merchantId, customDocs = null) => {
-    const targetId = merchantId || 'merch-1';
+  const handleUploadDocuments = async (merchantId, customDocs = null) => {
+    const currentShop = ownerShops[activeShopIndex] || ownerShops[0] || {};
+    const targetId = merchantId || storeInfo.id || currentShop.id || 'merch-1';
     const nowStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-    setDocumentSubmissions((prev) => {
-      const existing = prev[targetId] || {};
-      return {
-        ...prev,
-        [targetId]: {
-          merchantId: targetId,
-          shopName: storeInfo.name,
-          status: 'pending_review',
-          submittedAt: nowStr,
-          reviewedBy: currentInspector?.name || 'Insp. R. Deshmukh',
-          reviewedAt: null,
-          remarks: 'All 5 statutory documents submitted by merchant. Awaiting physical inspection clearance by Inspector.',
-          docs: customDocs || {
-            businessRegistration: { title: 'Business Registration', subTitle: 'Trade License / GST / Shop & Est. Act Certificate', fileName: 'BBMP_Trade_License_2023_9081.pdf', fileSize: '1.8 MB', uploadedAt: nowStr, status: 'Uploaded' },
-            ownerId: { title: 'Owner ID Proof', subTitle: 'Aadhaar Card / Government Photo ID', fileName: 'Shree_Ganesh_Aadhaar_Card.pdf', fileSize: '1.2 MB', uploadedAt: nowStr, status: 'Uploaded' },
-            purchaseInvoice: { title: 'Purchase Invoice', subTitle: 'Original Scale Purchase Bill / Tax Invoice', fileName: 'Contech_CA30_Tax_Invoice_Bill.pdf', fileSize: '2.4 MB', uploadedAt: nowStr, status: 'Uploaded' },
-            instrumentPlate: { title: 'Instrument Plate Photo', subTitle: 'Scale Specification & Serial Number Nameplate', fileName: 'Contech_Spec_Nameplate_Photo.jpg', fileSize: '3.1 MB', uploadedAt: nowStr, status: 'Uploaded' },
-            instrumentPhotos: { title: 'Instrument Photos', subTitle: 'Installed Counter Scale Front & Profile View', fileName: 'Counter_Scale_Front_Installation.jpg', fileSize: '4.5 MB', uploadedAt: nowStr, status: 'Uploaded' }
-          }
-        }
-      };
-    });
+    const submissionPayload = customDocs || {
+      businessRegistration: { title: 'Business Registration', subTitle: 'Trade License / GST / Shop & Est. Act Certificate', fileName: 'BBMP_Trade_License_2025.pdf', fileSize: '1.8 MB', uploadedAt: nowStr, status: 'Uploaded' },
+      ownerId: { title: 'Owner ID Proof', subTitle: 'Aadhaar Card / Government Photo ID', fileName: 'Proprietor_Aadhaar_Card.pdf', fileSize: '1.2 MB', uploadedAt: nowStr, status: 'Uploaded' },
+      purchaseInvoice: { title: 'Purchase Invoice', subTitle: 'Original Scale Purchase Bill / Tax Invoice', fileName: 'Scale_Manufacturer_Tax_Invoice.pdf', fileSize: '2.4 MB', uploadedAt: nowStr, status: 'Uploaded' },
+      instrumentPlate: { title: 'Instrument Plate Photo', subTitle: 'Scale Specification & Serial Number Nameplate', fileName: 'Model_Nameplate_Serial_Photo.jpg', fileSize: '3.1 MB', uploadedAt: nowStr, status: 'Uploaded' },
+      instrumentPhotos: { title: 'Instrument Photos', subTitle: 'Installed Counter Scale Front & Profile View', fileName: 'Countertop_Scale_Front_Profile.jpg', fileSize: '4.5 MB', uploadedAt: nowStr, status: 'Uploaded' }
+    };
+
+    setDocumentSubmissions((prev) => ({
+      ...prev,
+      [targetId]: {
+        merchantId: targetId,
+        shopName: storeInfo.name || currentShop.name,
+        status: 'pending_review',
+        submittedAt: nowStr,
+        reviewedBy: currentShop.assignedInspector || currentInspector?.name || 'Insp. R. Deshmukh',
+        reviewedAt: null,
+        remarks: 'All 5 statutory documents submitted by merchant. Awaiting physical inspection clearance by Inspector.',
+        docs: submissionPayload
+      }
+    }));
 
     setVerificationStatus((prev) => ({
       ...prev,
@@ -1118,11 +1344,32 @@ export const AppProvider = ({ children }) => {
       documentsSubmittedAt: nowStr
     }));
 
+    // Update ownerShops & merchants
+    setOwnerShops((prev) =>
+      prev.map((s) => (s.id === targetId ? { ...s, documentStatus: 'pending_review', complianceStatus: 'Documents Submitted - Pending Review' } : s))
+    );
+    setMerchants((prev) =>
+      prev.map((m) => (m.id === targetId ? { ...m, complianceStatus: 'Documents Submitted - Pending Review' } : m))
+    );
+
+    // Persist to backend MongoDB
+    try {
+      await api.uploadShopDocuments(targetId, {
+        docs: submissionPayload,
+        documentStatus: 'pending_review',
+        complianceStatus: 'Documents Submitted - Pending Review',
+        remarks: 'All 5 statutory documents submitted by merchant. Awaiting physical inspection clearance by Inspector.'
+      });
+    } catch (err) {
+      console.warn('[Backend Upload Documents Warning]', err.message);
+    }
+
     showToast('All 5 statutory documents submitted for Inspector verification!', 'success');
   };
 
-  const handleInspectorReviewDocuments = (merchantId, decision, remarks = '') => {
-    const targetId = merchantId || 'merch-1';
+  const handleInspectorReviewDocuments = async (merchantId, decision, remarks = '') => {
+    const currentShop = ownerShops.find((s) => s.id === merchantId) || ownerShops[0] || {};
+    const targetId = merchantId || currentShop.id || 'merch-1';
     const nowStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const inspector = currentInspector?.name || 'Insp. R. Deshmukh';
 
@@ -1147,29 +1394,38 @@ export const AppProvider = ({ children }) => {
       step: decision === 'verified' ? 2 : 2
     }));
 
-    // Update merchant compliance status
+    // Update ownerShops and merchants
+    const nextCompliance = decision === 'verified' ? 'Documents Verified' : 'Flagged as Fraud / Counterfeit';
+    setOwnerShops((prev) =>
+      prev.map((s) => (s.id === targetId ? { ...s, documentStatus: decision, complianceStatus: nextCompliance } : s))
+    );
     setMerchants((prev) =>
-      prev.map((m) => {
-        if (m.id === targetId || m.name === storeInfo.name) {
-          return {
-            ...m,
-            complianceStatus: decision === 'verified' ? 'Documents Verified' : 'Flagged as Fraud / Counterfeit'
-          };
-        }
-        return m;
-      })
+      prev.map((m) => (m.id === targetId || m.name === currentShop.name ? { ...m, complianceStatus: nextCompliance } : m))
     );
 
+    // Persist review to backend MongoDB
+    try {
+      await api.updateDocumentStatus(targetId, {
+        documentStatus: decision,
+        complianceStatus: nextCompliance,
+        remarks: remarks || (decision === 'verified' ? 'All 5 statutory documents verified.' : 'Flagged as Fraud under LM Act 2009.'),
+        reviewedBy: inspector
+      });
+    } catch (err) {
+      console.warn('[Backend Update Doc Status Warning]', err.message);
+    }
+
     if (decision === 'verified') {
-      showToast(`Verification Approved: Documents for ${targetId} marked VERIFIED. Merchant can now schedule inspection visit.`, 'success');
+      showToast(`Verification Approved: Documents for ${currentShop.name || targetId} marked VERIFIED. Merchant can now schedule inspection visit.`, 'success');
     } else {
-      showToast(`ALERT: Application for ${targetId} flagged as FRAUD. Under LM Act Sec 30, visit scheduling is blocked.`, 'error');
+      showToast(`ALERT: Application for ${currentShop.name || targetId} flagged as FRAUD. Under LM Act Sec 30, visit scheduling is blocked.`, 'error');
     }
   };
 
-  const handleConfirmVerification = (slotId) => {
-    const targetId = 'merch-1';
-    const currentDocState = documentSubmissions[targetId]?.status || verificationStatus.documentStatus;
+  const handleConfirmVerification = async (slotId) => {
+    const currentShop = ownerShops[activeShopIndex] || ownerShops[0] || {};
+    const targetId = storeInfo.id || currentShop.id || 'merch-1';
+    const currentDocState = documentSubmissions[targetId]?.status || currentShop.documentStatus || verificationStatus.documentStatus;
 
     if (currentDocState === 'fraud') {
       showToast('Action Blocked: Legal Metrology Officer has flagged submitted documentation as Fraudulent. Visit scheduling is prohibited.', 'error');
@@ -1193,16 +1449,42 @@ export const AppProvider = ({ children }) => {
       timeStr = '10 AM – 1 PM';
     }
 
+    const bookingReference = `SLOT-LM-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Call backend API to persist verification appointment in MongoDB
+    try {
+      await api.createVerification({
+        shopId: targetId,
+        shopName: storeInfo.name || currentShop.name,
+        ownerName: storeInfo.contactPerson || currentShop.ownerName,
+        address: storeInfo.location || currentShop.address,
+        phone: storeInfo.phone || currentShop.phone,
+        instrumentId: instruments[activeInstrumentIndex]?.id || 'inst-1',
+        instrumentName: instruments[activeInstrumentIndex]?.name || 'Electronic Countertop Scale',
+        serialNumber: instruments[activeInstrumentIndex]?.serialNumber || '#KA-BLR-88412',
+        assignedInspector: currentShop.assignedInspector || 'Insp. R. Deshmukh',
+        inspectorBadge: currentShop.inspectorBadge || 'LM-BLR-402',
+        requestedSlot: {
+          date: dateStr,
+          time: timeStr,
+          bookingRef: bookingReference
+        }
+      });
+    } catch (err) {
+      console.warn('[Backend Create Verification Warning]', err.message);
+    }
+
     setVerificationStatus((prev) => ({
       ...prev,
       status: 'scheduled',
       documentStatus: 'verified',
       step: 3,
       slotLabel: dateStr,
-      timeLabel: timeStr
+      timeLabel: timeStr,
+      applicationRef: bookingReference
     }));
 
-    showToast(`Inspection slot booked for ${dateStr}! Track appointment below.`, 'success');
+    showToast(`Inspection slot booked for ${dateStr}! Assigned Officer: ${currentShop.assignedInspector || 'Insp. R. Deshmukh'}.`, 'success');
     navigateTo('track-status');
   };
 
@@ -1709,6 +1991,7 @@ export const AppProvider = ({ children }) => {
         operations,
         ownerShops,
         activeShopIndex,
+        activeShop: ownerShops[activeShopIndex] || ownerShops[0] || {},
         handleSelectOwnerShop,
         handleAddOwnerShop,
         handleViewHistoricalCertificate,

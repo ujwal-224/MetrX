@@ -53,6 +53,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(shopData)
     }),
+  assignInspector: (shopId, inspectorData) =>
+    request(`/shops/${shopId}/assign-inspector`, {
+      method: 'PATCH',
+      body: JSON.stringify(inspectorData)
+    }),
+  uploadShopDocuments: (shopId, docsData) =>
+    request(`/shops/${shopId}/documents`, {
+      method: 'POST',
+      body: JSON.stringify(docsData)
+    }),
   updateDocumentStatus: (shopId, statusData) =>
     request(`/shops/${shopId}/document-status`, {
       method: 'PATCH',

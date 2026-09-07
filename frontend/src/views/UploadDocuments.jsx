@@ -5,6 +5,7 @@ export const UploadDocuments = () => {
   const {
     navigateTo,
     storeInfo,
+    activeShop,
     activeInstrument,
     verificationStatus,
     documentSubmissions,
@@ -12,14 +13,22 @@ export const UploadDocuments = () => {
     showToast
   } = useApp();
 
-  const currentDocData = documentSubmissions['merch-1'] || {};
-  const currentStatus = currentDocData.status || verificationStatus.documentStatus || 'pending_review';
+  const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
+  const currentDocData = documentSubmissions[currentMerchantId] || activeShop?.documentSubmissionData || {};
+  const currentStatus = currentDocData.status || activeShop?.documentStatus || verificationStatus.documentStatus || 'pending_review';
+
+  const assignedInspectorName = activeShop?.assignedInspector || storeInfo?.assignedInspector;
+  const isInspectorAssigned = assignedInspectorName &&
+    assignedInspectorName !== 'Pending Admin Allocation' &&
+    assignedInspectorName !== 'Unassigned (Action Required)' &&
+    assignedInspectorName !== 'PENDING' &&
+    assignedInspectorName !== '';
 
   const [files, setFiles] = useState({
     businessRegistration: {
       title: 'Business Registration',
       subTitle: 'Trade License / GSTIN / Shop & Establishment Act Certificate',
-      fileName: currentDocData.docs?.businessRegistration?.fileName || 'BBMP_Trade_License_2023_9081.pdf',
+      fileName: currentDocData.docs?.businessRegistration?.fileName || `${storeInfo.name?.replace(/\s+/g, '_')}_Trade_License.pdf`,
       fileSize: currentDocData.docs?.businessRegistration?.fileSize || '1.8 MB',
       mandatory: true,
       uploaded: true
@@ -27,7 +36,7 @@ export const UploadDocuments = () => {
     ownerId: {
       title: 'Owner ID Proof',
       subTitle: 'Aadhaar Card / Voter ID / Government Photo ID',
-      fileName: currentDocData.docs?.ownerId?.fileName || 'Shree_Ganesh_Aadhaar_Card.pdf',
+      fileName: currentDocData.docs?.ownerId?.fileName || `${(storeInfo.contactPerson || storeInfo.name)?.replace(/\s+/g, '_')}_Govt_ID.pdf`,
       fileSize: currentDocData.docs?.ownerId?.fileSize || '1.2 MB',
       mandatory: true,
       uploaded: true
@@ -35,7 +44,7 @@ export const UploadDocuments = () => {
     purchaseInvoice: {
       title: 'Purchase Invoice',
       subTitle: 'Original Scale Purchase Bill / Manufacturer Tax Invoice',
-      fileName: currentDocData.docs?.purchaseInvoice?.fileName || 'Contech_CA30_Tax_Invoice_Bill.pdf',
+      fileName: currentDocData.docs?.purchaseInvoice?.fileName || 'Scale_Manufacturer_Tax_Invoice.pdf',
       fileSize: currentDocData.docs?.purchaseInvoice?.fileSize || '2.4 MB',
       mandatory: true,
       uploaded: true
@@ -43,7 +52,7 @@ export const UploadDocuments = () => {
     instrumentPlate: {
       title: 'Instrument Plate Photo',
       subTitle: 'Clear photograph of scale model specification & serial plate',
-      fileName: currentDocData.docs?.instrumentPlate?.fileName || 'Contech_Spec_Nameplate_Photo.jpg',
+      fileName: currentDocData.docs?.instrumentPlate?.fileName || 'Scale_Model_Spec_Nameplate.jpg',
       fileSize: currentDocData.docs?.instrumentPlate?.fileSize || '3.1 MB',
       mandatory: true,
       uploaded: true
@@ -51,7 +60,7 @@ export const UploadDocuments = () => {
     instrumentPhotos: {
       title: 'Instrument Photos',
       subTitle: 'Installed countertop scale photograph (Front & profile view)',
-      fileName: currentDocData.docs?.instrumentPhotos?.fileName || 'Counter_Scale_Front_Installation.jpg',
+      fileName: currentDocData.docs?.instrumentPhotos?.fileName || 'Installed_Counter_Scale_Profile.jpg',
       fileSize: currentDocData.docs?.instrumentPhotos?.fileSize || '4.5 MB',
       mandatory: true,
       uploaded: true
@@ -74,10 +83,14 @@ export const UploadDocuments = () => {
   };
 
   const onSubmit = () => {
+    if (!isInspectorAssigned) {
+      showToast('Action Blocked: Please wait until Department Admin assigns an Inspector to your store.', 'error');
+      return;
+    }
     setIsUploading(true);
     setTimeout(() => {
       setIsUploading(false);
-      handleUploadDocuments('merch-1', {
+      handleUploadDocuments(currentMerchantId, {
         businessRegistration: { ...files.businessRegistration, status: 'Uploaded', uploadedAt: 'Just now' },
         ownerId: { ...files.ownerId, status: 'Uploaded', uploadedAt: 'Just now' },
         purchaseInvoice: { ...files.purchaseInvoice, status: 'Uploaded', uploadedAt: 'Just now' },
@@ -121,7 +134,24 @@ export const UploadDocuments = () => {
         </div>
 
         {/* Current Document Scrutiny Status Banner */}
-        {currentStatus === 'verified' ? (
+        {!isInspectorAssigned ? (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50 border-2 border-amber-400 text-amber-950 flex items-start gap-3 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-[#E0702A] text-white flex items-center justify-center shrink-0 mt-0.5">
+              <span className="material-symbols-outlined text-2xl">person_search</span>
+            </div>
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#023625] block">
+                Stage 1 • Inspector Assignment In Progress
+              </span>
+              <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                Awaiting Enforcement Officer Allocation by Department Admin
+              </h3>
+              <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+                Your store <strong>{storeInfo.name}</strong> has been registered. The Department Admin / Controller will assign a designated Legal Metrology Officer to your jurisdiction. Once assigned, you can submit the 5 statutory documents for officer review.
+              </p>
+            </div>
+          </div>
+        ) : currentStatus === 'verified' ? (
           <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
@@ -135,13 +165,13 @@ export const UploadDocuments = () => {
                   All 5 Statutory Documents Verified &amp; Approved
                 </h3>
                 <p className="text-xs text-emerald-800 mt-0.5">
-                  Verified by <strong>{currentDocData.reviewedBy || 'Insp. R. Deshmukh'}</strong>. You are now authorized to schedule your verification window.
+                  Verified by <strong>{assignedInspectorName || currentDocData.reviewedBy || 'Insp. R. Deshmukh'}</strong>. You are now authorized to schedule your verification window.
                 </p>
               </div>
             </div>
             <button
               onClick={() => navigateTo('request-verification')}
-              className="shrink-0 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              className="shrink-0 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <span>Schedule Inspection Visit</span>
               <span className="material-symbols-outlined text-base">arrow_forward</span>
@@ -171,13 +201,15 @@ export const UploadDocuments = () => {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
-                Pending Inspector Verification
+                Assigned Inspector: {assignedInspectorName || 'Insp. R. Deshmukh'}
               </span>
               <h3 className="text-sm sm:text-base font-bold text-amber-950">
-                Documents Submitted • Under Officer Scrutiny
+                {currentDocData.status === 'pending_review' ? 'Documents Submitted • Under Officer Scrutiny' : 'Action Required: Upload 5 Statutory Documents'}
               </h3>
               <p className="text-xs text-amber-900 mt-1 leading-relaxed">
-                Your 5 statutory documents have been queued for <strong>{currentDocData.reviewedBy || 'Insp. R. Deshmukh'}</strong>. Once verified, the appointment booking window will be unlocked.
+                {currentDocData.status === 'pending_review'
+                  ? `Your 5 statutory documents have been queued for ${assignedInspectorName || 'Insp. R. Deshmukh'}. Once verified, the appointment booking window will be unlocked.`
+                  : `Please attach all 5 mandatory documents below and submit for ${assignedInspectorName || 'assigned officer'} verification.`}
               </p>
             </div>
           </div>
@@ -287,8 +319,12 @@ export const UploadDocuments = () => {
 
             <button
               onClick={onSubmit}
-              disabled={isUploading || !allUploaded}
-              className="px-6 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1c4d39] text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+              disabled={isUploading || !allUploaded || !isInspectorAssigned}
+              className={`px-6 py-2.5 rounded-xl text-white text-xs font-bold shadow-xs transition-all flex items-center gap-2 active:scale-95 ${
+                !isInspectorAssigned
+                  ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                  : 'bg-[#023625] hover:bg-[#1c4d39] cursor-pointer'
+              }`}
               type="button"
             >
               {isUploading ? (
@@ -296,10 +332,15 @@ export const UploadDocuments = () => {
                   <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
                   <span>Submitting to Inspector...</span>
                 </>
+              ) : !isInspectorAssigned ? (
+                <>
+                  <span className="material-symbols-outlined text-base">lock</span>
+                  <span>Awaiting Inspector Allocation</span>
+                </>
               ) : (
                 <>
                   <span className="material-symbols-outlined text-base">send</span>
-                  <span>Submit 5 Documents for Scrutiny</span>
+                  <span>Submit 5 Documents to {assignedInspectorName}</span>
                 </>
               )}
             </button>

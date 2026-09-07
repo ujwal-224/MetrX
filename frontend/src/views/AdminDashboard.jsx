@@ -261,7 +261,7 @@ export const AdminDashboard = () => {
                           defaultValue=""
                           onChange={(e) => {
                             if (e.target.value) {
-                              const targetMerch = merchants.find((m) => m.name === op.shopName || m.merchantUid === op.merchantUid);
+                              const targetMerch = merchants.find((m) => m.id === op.id?.replace('OP-', '') || m.name === op.shopName || m.merchantUid === op.merchantUid);
                               if (targetMerch) {
                                 handleAssignInspectorToMerchant(targetMerch.id, e.target.value);
                               }

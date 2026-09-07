@@ -31,7 +31,7 @@ const shopSchema = new mongoose.Schema(
     },
     tradeLicense: {
       type: String,
-      required: true
+      default: () => `BBMP/TL/2025/${Math.floor(1000 + Math.random() * 9000)}`
     },
     gstin: {
       type: String,
@@ -47,19 +47,23 @@ const shopSchema = new mongoose.Schema(
     },
     address: {
       type: String,
-      required: true
+      default: 'Market Road, Commercial Circle, Bengaluru - 560001'
     },
     phone: {
       type: String,
-      required: true
+      default: '+91 98000 00000'
+    },
+    email: {
+      type: String,
+      default: ''
     },
     assignedInspector: {
       type: String,
-      default: 'Insp. R. Deshmukh'
+      default: 'Pending Admin Allocation'
     },
     inspectorBadge: {
       type: String,
-      default: 'LM-BLR-402'
+      default: 'LM-PENDING'
     },
     status: {
       type: String,
@@ -67,16 +71,28 @@ const shopSchema = new mongoose.Schema(
     },
     complianceStatus: {
       type: String,
-      default: 'Documents Verified'
+      default: 'Pending Inspector Assignment'
     },
     documentStatus: {
       type: String,
-      enum: ['verified', 'pending', 'rejected', 'unverified'],
-      default: 'verified'
+      enum: ['verified', 'pending', 'pending_review', 'not_uploaded', 'rejected', 'fraud', 'unverified'],
+      default: 'not_uploaded'
     },
     registeredScalesCount: {
       type: Number,
-      default: 0
+      default: 1
+    },
+    documentsRemarks: {
+      type: String,
+      default: ''
+    },
+    reviewedBy: {
+      type: String,
+      default: ''
+    },
+    documentSubmissionData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
     },
     documents: [
       {

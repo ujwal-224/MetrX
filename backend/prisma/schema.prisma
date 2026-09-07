@@ -36,9 +36,10 @@ model Shop {
   id                    String   @id @default(uuid())
   ownerId               String?
   owner                 User?    @relation(fields: [ownerId], references: [id])
-  shopCode              String   @unique // e.g., shop-ganesh-1
+  shopCode              String?  @unique // e.g., shop-ganesh-1
   name                  String
   ownerName             String
+  email                 String?
   branchType            String   @default("Main Commercial Branch")
   merchantUid           String   @unique // e.g., #EST-44091
   tradeLicense          String
@@ -47,12 +48,15 @@ model Shop {
   zone                  String   @default("Ward 4 (Commercial Circle)")
   address               String
   phone                 String
-  assignedInspector     String?  @default("Insp. R. Deshmukh")
-  inspectorBadge        String?  @default("LM-BLR-402")
+  assignedInspector     String?  @default("Pending Admin Allocation")
+  inspectorBadge        String?  @default("LM-PENDING")
   status                String   @default("Active Commercial Establishment")
-  complianceStatus      String   @default("Documents Verified")
-  documentStatus        String   @default("verified")
-  registeredScalesCount Int      @default(0)
+  complianceStatus      String   @default("Pending Inspector Assignment")
+  documentStatus        String   @default("not_uploaded")
+  documentsRemarks      String?
+  reviewedBy            String?
+  documentSubmissionData Json?
+  registeredScalesCount Int      @default(1)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -65,7 +69,7 @@ model Instrument {
   id                     String   @id @default(uuid())
   shopId                 String
   shop                   Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  instrumentCode         String   @unique // e.g. inst-1
+  instrumentCode         String?  @unique // e.g. inst-1
   name                   String
   model                  String
   capacity               String
@@ -92,8 +96,14 @@ model Verification {
   requestCode        String   @unique // e.g. VR-88412
   shopId             String
   shop               Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  instrumentId       String
-  instrument         Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  shopName           String?
+  ownerName          String?
+  address            String?
+  phone              String?
+  instrumentId       String?
+  instrument         Instrument? @relation(fields: [instrumentId], references: [id], onDelete: SetNull)
+  instrumentName     String?
+  serialNumber       String?
   assignedInspector  String   @default("Insp. R. Deshmukh")
   inspectorBadge     String   @default("LM-BLR-402")
   step               Int      @default(2) // 1: Requested, 2: Scheduled, 3: Inspected, 4: Stamped, 5: Certified

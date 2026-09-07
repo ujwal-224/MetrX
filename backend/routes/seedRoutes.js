@@ -1,58 +1,73 @@
 import express from 'express';
-import { User } from '../models/User.js';
-import { Shop } from '../models/Shop.js';
-import { Instrument } from '../models/Instrument.js';
-import { Verification } from '../models/Verification.js';
-import { Certificate } from '../models/Certificate.js';
+import bcrypt from 'bcryptjs';
+import prisma from '../config/prisma.js';
 
 const router = express.Router();
 
-// @desc    Seed demo database data
-// @route   POST /api/seed
-router.post('/', async (req, res) => {
-  try {
-    // 1. Clear existing collections
-    await User.deleteMany({});
-    await Shop.deleteMany({});
-    await Instrument.deleteMany({});
-    await Verification.deleteMany({});
-    await Certificate.deleteMany({});
+export const seedDatabase = async () => {
+  // Check if shops already exist
+  const existingShops = await prisma.shop.count();
+  if (existingShops > 0) {
+    return { alreadySeeded: true };
+  }
 
-    // 2. Create Users
-    const merchantUser = await User.create({
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  // 1. Create Users
+  const merchantUser = await prisma.user.upsert({
+    where: { email: 'ganesh@store.com' },
+    update: {},
+    create: {
+      id: 'usr-ganesh-1',
       name: 'Shree S. N. Ganesh',
       email: 'ganesh@store.com',
-      password: 'password123',
-      role: 'shop-owner',
+      password: hashedPassword,
+      role: 'SHOP_OWNER',
       phone: '+91 98450 21980',
       assignedZone: 'Ward 4 (Commercial Circle)'
-    });
+    }
+  });
 
-    const inspectorUser = await User.create({
+  const inspectorUser = await prisma.user.upsert({
+    where: { email: 'deshmukh@metrology.gov.in' },
+    update: {},
+    create: {
+      id: 'usr-deshmukh-1',
       name: 'Insp. R. Deshmukh',
       email: 'deshmukh@metrology.gov.in',
-      password: 'password123',
-      role: 'inspector',
+      password: hashedPassword,
+      role: 'INSPECTOR',
       phone: '+91 94480 33120',
       inspectorBadgeId: 'LM-BLR-402',
       assignedZone: 'Ward 4 (Commercial Circle)'
-    });
+    }
+  });
 
-    const adminUser = await User.create({
-      name: 'State Metrology Director',
+  await prisma.user.upsert({
+    where: { email: 'admin123@metrx.com' },
+    update: {},
+    create: {
+      id: 'usr-admin-1',
+      name: 'Dr. K. V. Sharma (Admin)',
       email: 'admin123@metrx.com',
-      password: 'password123',
-      role: 'admin',
+      password: hashedPassword,
+      role: 'ADMIN',
       phone: '+91 80 2234 5678',
       assignedZone: 'Karnataka Metrology HQ'
-    });
+    }
+  });
 
-    // 3. Create Shop
-    const shop = await Shop.create({
-      owner: merchantUser._id,
+  // 2. Create Initial Shop (Shree Ganesh General Store)
+  const shop = await prisma.shop.upsert({
+    where: { merchantUid: '#EST-44091' },
+    update: {},
+    create: {
       id: 'shop-ganesh-1',
+      shopCode: 'shop-ganesh-1',
+      ownerId: merchantUser.id,
       name: 'Shree Ganesh General Store',
       ownerName: 'Shree S. N. Ganesh',
+      email: 'ganesh@store.com',
       branchType: 'Main Commercial Branch',
       merchantUid: '#EST-44091',
       tradeLicense: 'BBMP/TL/2023/9081',
@@ -67,17 +82,26 @@ router.post('/', async (req, res) => {
       complianceStatus: 'Documents Verified',
       documentStatus: 'verified',
       registeredScalesCount: 2,
-      documents: [
-        { docType: 'Trade License (BBMP)', fileName: 'BBMP_Trade_License_2023.pdf', fileUrl: '/uploads/trade_license.pdf', status: 'Approved' },
-        { docType: 'Shop & Establishment Act', fileName: 'Shop_Act_KA_44091.pdf', fileUrl: '/uploads/shop_act.pdf', status: 'Approved' },
-        { docType: 'GSTIN Certificate', fileName: 'GST_29AABCU9603.pdf', fileUrl: '/uploads/gst.pdf', status: 'Approved' }
-      ]
-    });
+      documentsRemarks: 'All 5 statutory documents verified.',
+      reviewedBy: 'Insp. R. Deshmukh',
+      documentSubmissionData: {
+        businessRegistration: { title: 'Business Registration', fileName: 'BBMP_Trade_License_2023_9081.pdf', fileSize: '1.8 MB', status: 'Approved' },
+        ownerId: { title: 'Owner ID Proof', fileName: 'Shree_Ganesh_Aadhaar_Card.pdf', fileSize: '1.2 MB', status: 'Approved' },
+        purchaseInvoice: { title: 'Purchase Invoice', fileName: 'Contech_CA30_Tax_Invoice_Bill.pdf', fileSize: '2.4 MB', status: 'Approved' },
+        instrumentPlate: { title: 'Instrument Plate Photo', fileName: 'Contech_Spec_Nameplate_Photo.jpg', fileSize: '3.1 MB', status: 'Approved' },
+        instrumentPhotos: { title: 'Instrument Photos', fileName: 'Counter_Scale_Front_Installation.jpg', fileSize: '4.5 MB', status: 'Approved' }
+      }
+    }
+  });
 
-    // 4. Create Instruments
-    const inst1 = await Instrument.create({
-      shopId: 'shop-ganesh-1',
+  // 3. Create Instruments
+  const inst1 = await prisma.instrument.upsert({
+    where: { serialNumber: '#KA-BLR-88412' },
+    update: {},
+    create: {
       id: 'inst-1',
+      shopId: shop.id,
+      instrumentCode: 'inst-1',
       name: 'Electronic Countertop Scale',
       model: 'Contech CA-30',
       capacity: '30kg / 1g precision',
@@ -92,11 +116,16 @@ router.post('/', async (req, res) => {
       complianceRate: '100%',
       type: 'counter_scale',
       class: 'Class III Commercial'
-    });
+    }
+  });
 
-    const inst2 = await Instrument.create({
-      shopId: 'shop-ganesh-1',
+  await prisma.instrument.upsert({
+    where: { serialNumber: '#KA-BLR-99304' },
+    update: {},
+    create: {
       id: 'inst-2',
+      shopId: shop.id,
+      instrumentCode: 'inst-2',
       name: 'Platform Heavy Scale',
       model: 'Contech CP-100',
       capacity: '100kg / 10g precision',
@@ -111,43 +140,19 @@ router.post('/', async (req, res) => {
       complianceRate: '100%',
       type: 'platform_scale',
       class: 'Class III Commercial'
-    });
+    }
+  });
 
-    // 5. Create Verification Request
-    const verification = await Verification.create({
-      id: 'VR-88412',
-      shopId: 'shop-ganesh-1',
-      shopName: 'Shree Ganesh General Store',
-      ownerName: 'Shree S. N. Ganesh',
-      address: '14 Market Road, Commercial Circle, Bengaluru - 560001',
-      phone: '+91 98450 21980',
-      instrumentId: 'inst-1',
-      instrumentName: 'Electronic Countertop Scale (Contech CA-30)',
-      serialNumber: '#KA-BLR-88412',
-      assignedInspector: 'Insp. R. Deshmukh',
-      inspectorBadge: 'LM-BLR-402',
-      step: 2,
-      status: 'Verification Scheduled',
-      requestedSlot: {
-        date: 'Tomorrow, 14 Jan 2025',
-        time: 'Morning (09:30 - 12:30)',
-        bookingRef: 'SLOT-LM-44091'
-      },
-      payment: {
-        isPaid: true,
-        amount: 850,
-        method: 'UPI',
-        reference: 'UPI/2025/METRA/99042'
-      }
-    });
-
-    // 6. Create Certificate
-    const certificate = await Certificate.create({
+  // 4. Create Initial Certificate
+  await prisma.certificate.upsert({
+    where: { certId: 'CERT-KA-2024-9921' },
+    update: {},
+    create: {
+      id: 'cert-1',
       certId: 'CERT-KA-2024-9921',
       ruleForm: 'Form XVII (Rule 14)',
       actYear: 'Legal Metrology Act, 2009',
-      shopId: 'shop-ganesh-1',
-      shopName: 'Shree Ganesh General Store',
+      shopId: shop.id,
       instrumentModel: 'Contech CA-30 (Max 30kg, e=1g)',
       serialNumber: '#KA-BLR-88412',
       verifiedDate: '13 Jan 2024',
@@ -157,32 +162,21 @@ router.post('/', async (req, res) => {
       inspectorBadge: 'LM-BLR-402',
       statusBadge: 'CERTIFIED & COMPLIANT',
       workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
-      remarks: '4-Point MPE tested with Class M1 reference weights. Holographic wire seal applied.',
-      testObservations: [
-        { load: '0.000 kg', indication: '0.000 kg', error: '0.0 g', mpe: '± 1.0 g', pass: true },
-        { load: '5.000 kg', indication: '5.000 kg', error: '0.0 g', mpe: '± 1.0 g', pass: true },
-        { load: '15.000 kg', indication: '15.001 kg', error: '+1.0 g', mpe: '± 2.0 g', pass: true },
-        { load: '30.000 kg', indication: '30.000 kg', error: '0.0 g', mpe: '± 2.0 g', pass: true }
-      ]
-    });
+      remarks: '4-Point MPE tested with Class M1 reference weights. Holographic wire seal applied.'
+    }
+  });
 
-    return res.json({
-      success: true,
-      message: 'MetrX database successfully seeded with initial accounts and records!',
-      data: {
-        users: 3,
-        shops: 1,
-        instruments: 2,
-        verifications: 1,
-        certificates: 1,
-        demoAccounts: [
-          { role: 'shop-owner', email: 'ganesh@store.com', password: 'password123' },
-          { role: 'inspector', email: 'deshmukh@metrology.gov.in', password: 'password123' },
-          { role: 'admin', email: 'admin123@metrx.com', password: 'password123' }
-        ]
-      }
-    });
+  return { success: true, message: 'Seeded demo data into PostgreSQL' };
+};
+
+// @desc    Seed demo database data
+// @route   POST /api/seed
+router.post('/', async (req, res) => {
+  try {
+    const result = await seedDatabase();
+    return res.json({ success: true, ...result });
   } catch (error) {
+    console.error('[Seed Database Error]', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });

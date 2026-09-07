@@ -8,6 +8,7 @@ export const InspectorSchedule = () => {
     currentInspector,
     handleStartInspection,
     documentSubmissions,
+    getDocumentSubmission,
     handleInspectorReviewDocuments,
     handleViewVisitCertificate,
     showToast
@@ -35,12 +36,12 @@ export const InspectorSchedule = () => {
   const inspectorBadge = currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'Badge #LM-BLR-402';
 
   const openDocReview = (visit) => {
-    // Look up documents by merchant id or default to merch-1
-    const matchingDoc = documentSubmissions[visit.id?.replace('visit-dyn-', '')] || documentSubmissions['merch-1'];
+    const merchantId = visit.merchantId || visit.id?.replace('visit-dyn-', '') || 'merch-1';
+    const matchingDoc = documentSubmissions[merchantId] || (getDocumentSubmission ? getDocumentSubmission(merchantId) : null) || {};
     setSelectedShopDocs({
       shopName: visit.shopName,
       regNumber: visit.regNumber,
-      merchantId: visit.id?.replace('visit-dyn-', '') || 'merch-1',
+      merchantId: merchantId,
       model: visit.model,
       instrumentName: visit.instrumentName,
       ...matchingDoc
@@ -49,7 +50,7 @@ export const InspectorSchedule = () => {
 
   const handleDecision = (decision) => {
     if (!selectedShopDocs) return;
-    handleInspectorReviewDocuments(selectedShopDocs.merchantId || 'merch-1', decision, inspectorNotes);
+    handleInspectorReviewDocuments(selectedShopDocs.merchantId, decision, inspectorNotes);
     setSelectedShopDocs(null);
   };
 
@@ -155,8 +156,8 @@ export const InspectorSchedule = () => {
             filteredVisits.map((visit) => {
               const isNext = visit.isNextUp;
               const isCompleted = visit.statusType === 'completed';
-              const merchantId = visit.id?.replace('visit-dyn-', '') || 'merch-1';
-              const docInfo = documentSubmissions[merchantId] || documentSubmissions['merch-1'] || {};
+              const merchantId = visit.merchantId || visit.id?.replace('visit-dyn-', '') || 'merch-1';
+              const docInfo = documentSubmissions[merchantId] || (getDocumentSubmission ? getDocumentSubmission(merchantId) : null) || {};
               const docState = docInfo.status || 'pending_review';
 
               return (
