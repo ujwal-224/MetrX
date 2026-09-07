@@ -11,7 +11,9 @@ export const PublicLanding = () => {
     inspectors,
     merchants,
     handleSearchCertificate,
-    showToast
+    showToast,
+    language,
+    t
   } = useApp();
 
   const [certInput, setCertInput] = useState('');
@@ -105,18 +107,18 @@ export const PublicLanding = () => {
                   account_balance
                 </span>
                 <span className="text-[11px] sm:text-xs uppercase tracking-wide font-bold">
-                  Government of India • Ministry of Consumer Affairs • Legal Metrology
+                  {t('hero.badge', 'Government of India • Ministry of Consumer Affairs • Legal Metrology')}
                 </span>
               </div>
 
               {/* Headline */}
               <h1 className="text-2xl sm:text-4xl md:text-5xl text-[#023625] font-bold tracking-tight text-balance leading-tight mb-3">
-                Digital Metrology
+                {t('hero.title', 'Digital Metrology')}
               </h1>
 
               {/* Subtitle */}
               <p className="text-sm sm:text-base text-gray-600 max-w-2xl mb-6 leading-relaxed">
-                An integrated digital platform for weighing and measuring instrument verification under Legal Metrology regulations. Businesses can register instruments and submit verification requests, authorized officers can conduct and record field inspections, and digital certificates with QR authentication enable transparent verification and complete lifecycle tracking.
+                {t('hero.subtitle', 'An integrated digital platform for weighing and measuring instrument verification under Legal Metrology regulations. Businesses can register instruments and submit verification requests, authorized officers can conduct and record field inspections, and digital certificates with QR authentication enable transparent verification and complete lifecycle tracking.')}
               </p>
 
               {/* Public Certificate Verification Search Widget */}
@@ -124,7 +126,7 @@ export const PublicLanding = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1">
                   <label className="text-xs sm:text-sm text-[#023625] font-bold flex items-center gap-1.5" htmlFor="cert-search-input">
                     <span className="material-symbols-outlined text-[#023625] text-base">fact_check</span>
-                    <span>Verify Shop Calibration Certificate (Public)</span>
+                    <span>{t('hero.searchLabel', 'Verify Shop Calibration Certificate (Public)')}</span>
                   </label>
                   <span className="text-[11px] text-gray-500 font-mono">e.g. KA-2024-LM-9921</span>
                 </div>
@@ -138,7 +140,7 @@ export const PublicLanding = () => {
                       value={certInput}
                       onChange={(e) => setCertInput(e.target.value)}
                       className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl text-gray-900 text-xs sm:text-sm pl-10 pr-3 py-2.5 focus:border-[#023625] outline-none transition-all placeholder:text-gray-400"
-                      placeholder="Enter Certificate ID or Shop Name..."
+                      placeholder={t('hero.searchPlaceholder', 'Enter Certificate ID or Shop Name...')}
                       type="text"
                     />
                   </div>
@@ -147,7 +149,7 @@ export const PublicLanding = () => {
                     type="submit"
                   >
                     <span className="material-symbols-outlined text-base">search</span>
-                    <span>Verify</span>
+                    <span>{t('hero.verifyBtn', 'Verify')}</span>
                   </button>
                 </form>
               </div>
@@ -210,14 +212,14 @@ export const PublicLanding = () => {
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-[#E0702A] animate-pulse"></span>
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                Stakeholder Portals
+                {t('portals.tag', 'Stakeholder Portals')}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-[#023625] tracking-tight">
-              Access Your Stakeholder Portal
+              {t('portals.title', 'Access Your Stakeholder Portal')}
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 mt-1">
-              Choose your role below to log in or create a new store account:
+              {t('portals.subtitle', 'Choose your role below to log in or create a new store account:')}
             </p>
           </div>
 
@@ -232,31 +234,31 @@ export const PublicLanding = () => {
                     </div>
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-                        Merchant Access
+                        {t('portals.merchant.tag', 'Merchant Access')}
                       </span>
                       <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug mt-1">
-                        Shop Owner / Merchant
+                        {t('portals.merchant.title', 'Shop Owner / Merchant')}
                       </h3>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-                  For Kirana stores, supermarkets, jewelers &amp; traders. Self-register your store, book calibration slots &amp; print certificates.
+                  {t('portals.merchant.desc', 'For Kirana stores, supermarkets, jewelers & traders. Self-register your store, book calibration slots & print certificates.')}
                 </p>
 
                 <div className="bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-3 mb-4 space-y-1.5 text-xs text-gray-700">
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#E0702A]">check_circle</span>
-                    <span>Self-registration for new stores</span>
+                    <span>{t('portals.merchant.f1', 'Self-registration for new stores')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#E0702A]">check_circle</span>
-                    <span>Scale expiry countdown (28d due)</span>
+                    <span>{t('portals.merchant.f2', 'Scale expiry countdown (28d due)')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#E0702A]">check_circle</span>
-                    <span>Book on-site inspector visit (₹150 fee)</span>
+                    <span>{t('portals.merchant.f3', 'Book on-site inspector visit (₹150 fee)')}</span>
                   </div>
                 </div>
               </div>
@@ -271,7 +273,7 @@ export const PublicLanding = () => {
                   className="flex-1 py-2.5 px-3 rounded-xl bg-[#E0702A] hover:bg-[#c95f1f] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-sm">login</span>
-                  <span>Sign In</span>
+                  <span>{t('portals.merchant.signIn', 'Sign In')}</span>
                 </button>
                 <button
                   type="button"
@@ -282,7 +284,7 @@ export const PublicLanding = () => {
                   className="py-2.5 px-3 rounded-xl bg-[#FAF8F4] hover:bg-gray-100 border border-[#DADDD3] text-[#023625] font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-sm">person_add</span>
-                  <span>Sign Up</span>
+                  <span>{t('portals.merchant.signUp', 'Sign Up')}</span>
                 </button>
               </div>
             </div>
@@ -297,31 +299,31 @@ export const PublicLanding = () => {
                     </div>
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E7F0E8] text-[#023625] border border-[#c3ecd5]">
-                        Officer Access
+                        {t('portals.inspector.tag', 'Officer Access')}
                       </span>
                       <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug mt-1">
-                        Field Metrology Inspector
+                        {t('portals.inspector.title', 'Field Metrology Inspector')}
                       </h3>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-                  Government Legal Metrology Verification Officers. Access daily inspection routes, calibration checklists &amp; issue certificates.
+                  {t('portals.inspector.desc', 'Government Legal Metrology Verification Officers. Access daily inspection routes, calibration checklists & issue certificates.')}
                 </p>
 
                 <div className="bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-3 mb-4 space-y-1.5 text-xs text-gray-700">
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#023625]">verified_user</span>
-                    <span>Admin-Provisioned credentials only</span>
+                    <span>{t('portals.inspector.f1', 'Admin-Provisioned credentials only')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#023625]">check_circle</span>
-                    <span>Daily inspection route queue</span>
+                    <span>{t('portals.inspector.f2', 'Daily inspection route queue')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#023625]">check_circle</span>
-                    <span>4-point MPE calibration &amp; hologram</span>
+                    <span>{t('portals.inspector.f3', '4-point MPE calibration & hologram')}</span>
                   </div>
                 </div>
               </div>
@@ -332,7 +334,7 @@ export const PublicLanding = () => {
                 className="w-full py-2.5 px-3 rounded-xl bg-[#023625] hover:bg-[#1b4a36] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm">login</span>
-                <span>Inspector Login →</span>
+                <span>{t('portals.inspector.login', 'Inspector Login →')}</span>
               </button>
             </div>
 
@@ -346,31 +348,31 @@ export const PublicLanding = () => {
                     </div>
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E7F0E8] text-[#023625] border border-[#c3ecd5]">
-                        Controller Access
+                        {t('portals.admin.tag', 'Department Control')}
                       </span>
                       <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug mt-1">
-                        Department Admin / Controller
+                        {t('portals.admin.title', 'Department Admin')}
                       </h3>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-                  Command center administration. Provision inspector credentials, monitor live field operations &amp; view synchronized merchant stores.
+                  {t('portals.admin.desc', 'State Controllers & District Legal Metrology Admin. Provision officer badges, audit verification ledger & monitor zone compliance.')}
                 </p>
 
                 <div className="bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-3 mb-4 space-y-1.5 text-xs text-gray-700">
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#023625]">verified_user</span>
-                    <span>State Controller Authentication</span>
+                    <span>{t('portals.admin.f1', 'Provision & manage inspector accounts')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#023625]">check_circle</span>
-                    <span>Provision authorized inspector accounts</span>
+                    <span>{t('portals.admin.f2', 'State-wide verification operations')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-[#023625]">check_circle</span>
-                    <span>Live operations tracking &amp; shop directory</span>
+                    <span>{t('portals.admin.f3', 'Audit trail & compliance reporting')}</span>
                   </div>
                 </div>
               </div>
@@ -381,7 +383,7 @@ export const PublicLanding = () => {
                 className="w-full py-2.5 px-3 rounded-xl bg-[#1f4d3a] hover:bg-[#023625] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-sm text-[#bceed3]">login</span>
-                <span>Admin Login →</span>
+                <span>{t('portals.admin.login', 'Admin Login →')}</span>
               </button>
             </div>
           </div>

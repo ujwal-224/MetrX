@@ -11,21 +11,22 @@ export const Header = () => {
     currentInspector,
     language,
     setLanguage,
+    t,
     showToast
   } = useApp();
 
   // Role-tailored navigation items
   const allNavItemsByRole = {
     'shop-owner': [
-      { id: 'shop-dashboard', label: 'Dashboard', icon: 'dashboard' },
-      { id: 'upload-documents', label: 'Documents', icon: 'description' },
-      { id: 'request-verification', label: 'Schedule Visit', icon: 'calendar_month' },
-      { id: 'track-status', label: 'Track Visit', icon: 'pending_actions' },
-      { id: 'certificate-view', label: 'Certificate', icon: 'verified' },
+      { id: 'shop-dashboard', label: t('nav.dashboard', 'Dashboard'), icon: 'dashboard' },
+      { id: 'upload-documents', label: t('nav.documents', 'Documents'), icon: 'description' },
+      { id: 'request-verification', label: t('nav.scheduleVisit', 'Schedule Visit'), icon: 'calendar_month' },
+      { id: 'track-status', label: t('nav.trackVisit', 'Track Visit'), icon: 'pending_actions' },
+      { id: 'certificate-view', label: t('nav.certificate', 'Certificate'), icon: 'verified' },
     ],
     'inspector': [
-      { id: 'inspector-schedule', label: "Today's Route", icon: 'route' },
-      { id: 'field-inspection', label: 'Conduct Inspection', icon: 'fact_check' },
+      { id: 'inspector-schedule', label: t('nav.todaysRoute', "Today's Route"), icon: 'route' },
+      { id: 'field-inspection', label: t('nav.conductInspection', 'Conduct Inspection'), icon: 'fact_check' },
     ],
     'admin': [],
     'public': []
@@ -34,10 +35,10 @@ export const Header = () => {
   const navItems = allNavItemsByRole[activeRole] || [];
 
   const roleLabels = {
-    'shop-owner': { title: 'Shop Owner', badge: 'Merchant', icon: 'storefront' },
-    'inspector': { title: 'Field Inspector', badge: 'Enforcement', icon: 'badge' },
-    'admin': { title: 'Admin', badge: 'Admin', icon: 'shield_person' },
-    'public': { title: 'Citizen & Consumer', badge: 'Public', icon: 'public' }
+    'shop-owner': { title: t('role.shopOwner', 'Shop Owner'), badge: t('role.merchant', 'Merchant'), icon: 'storefront' },
+    'inspector': { title: t('role.fieldInspector', 'Field Inspector'), badge: t('role.inspector', 'Enforcement'), icon: 'badge' },
+    'admin': { title: t('role.administrator', 'Admin'), badge: t('role.admin', 'Admin'), icon: 'shield_person' },
+    'public': { title: t('role.citizen', 'Citizen & Consumer'), badge: t('role.public', 'Public'), icon: 'public' }
   };
 
   const currentRoleInfo = roleLabels[activeRole] || roleLabels['public'];
@@ -75,11 +76,11 @@ export const Header = () => {
             <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
               <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#023625]">MetrX</span>
               <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Official
+                {t('brand.official', 'Official')}
               </span>
             </div>
             <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium leading-tight mt-0.5 hidden sm:inline">
-              Legal Metrology Portal
+              {t('brand.subtitle', 'Legal Metrology Portal')}
             </span>
           </div>
         </div>
@@ -118,7 +119,7 @@ export const Header = () => {
               className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#E0702A] hover:bg-[#c95f1f] text-white transition-all shadow-xs active:scale-95 font-bold text-[11px] sm:text-xs cursor-pointer whitespace-nowrap"
             >
               <span className="material-symbols-outlined text-sm sm:text-base">login</span>
-              <span>Login to Portal</span>
+              <span>{t('header.login', 'Login to Portal')}</span>
             </button>
           ) : (
             /* Authenticated in Role: Show Role Identity & Logout Button */
@@ -138,7 +139,7 @@ export const Header = () => {
                   </span>
                   <span className="text-[10px] text-gray-500 truncate mt-0.5">
                     {activeRole === 'admin'
-                      ? 'Administrator'
+                      ? t('role.administrator', 'Administrator')
                       : activeRole === 'inspector'
                       ? `Badge #${currentInspector?.badgeNumber || 'LM-402'}`
                       : 'Merchant • Ward 4'}
@@ -153,7 +154,7 @@ export const Header = () => {
                 title="Log out and return to landing page"
               >
                 <span className="material-symbols-outlined text-sm">logout</span>
-                <span className="hidden xs:inline">Logout</span>
+                <span className="hidden xs:inline">{t('header.logout', 'Logout')}</span>
               </button>
             </div>
           )}

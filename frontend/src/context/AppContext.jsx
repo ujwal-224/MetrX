@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { translations } from '../data/translations';
 import {
   initialStoreInfo,
   initialInstruments,
@@ -16,7 +17,9 @@ export const AppProvider = ({ children }) => {
   // Roles: 'shop-owner' | 'inspector' | 'admin' | 'public'
   const [activeRole, setActiveRole] = useState('public');
   const [currentView, setCurrentView] = useState('public-portal');
-  const [language, setLanguage] = useState('EN'); // 'EN' | 'HI'
+  const [language, setLanguageState] = useState(() => {
+    return localStorage.getItem('metrx_lang') || 'EN';
+  });
 
   // Fixed Super-Admin Credentials
   const ADMIN_CREDENTIALS = {
@@ -108,6 +111,24 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => {
       setToastMessage(null);
     }, 4500);
+  };
+
+  const setLanguage = (lang) => {
+    const nextLang = lang === 'HI' ? 'HI' : 'EN';
+    setLanguageState(nextLang);
+    localStorage.setItem('metrx_lang', nextLang);
+    showToast(
+      nextLang === 'HI' ? 'भाषा बदलकर हिंदी कर दी गई' : 'Language changed to English',
+      'info'
+    );
+  };
+
+  const t = (key, fallback = '') => {
+    const activeDict = translations[language] || translations['EN'] || {};
+    if (activeDict[key] !== undefined) return activeDict[key];
+    const fallbackDict = translations['EN'] || {};
+    if (fallbackDict[key] !== undefined) return fallbackDict[key];
+    return fallback || key;
   };
 
   // Sync state from backend PostgreSQL API on mount
@@ -2223,6 +2244,7 @@ export const AppProvider = ({ children }) => {
         adminCredentials: ADMIN_CREDENTIALS,
         language,
         setLanguage,
+        t,
         storeInfo,
         instruments,
         activeInstrument: instruments[activeInstrumentIndex] || instruments[0],
