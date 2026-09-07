@@ -1,4 +1,5 @@
 import { Verification } from '../models/Verification.js';
+import { sendVerificationScheduledEmail } from '../services/mailService.js';
 
 // @desc    Get all verification requests (optionally by shopId)
 // @route   GET /api/verifications
@@ -49,6 +50,15 @@ export const createVerification = async (req, res) => {
         bookingRef: `SLOT-LM-${Math.floor(1000 + Math.random() * 9000)}`
       }
     });
+
+    // Send notification email asynchronously via Nodemailer
+    sendVerificationScheduledEmail(phone ? 'merchant@store.com' : 'merchant@store.com', {
+      shopName: verification.shopName,
+      slotDate: verification.requestedSlot?.date,
+      slotTime: verification.requestedSlot?.time,
+      inspectorName: verification.assignedInspector,
+      bookingRef: verification.requestedSlot?.bookingRef
+    }).catch((err) => console.warn('[Email Notify Failed]', err.message));
 
     return res.status(201).json({ success: true, data: verification });
   } catch (error) {

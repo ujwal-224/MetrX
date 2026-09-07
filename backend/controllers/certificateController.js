@@ -1,7 +1,8 @@
+import { generateCertificateQR } from '../services/qrService.js';
+import { generateCertificatePDF } from '../services/pdfService.js';
 import { Certificate } from '../models/Certificate.js';
-import { Instrument } from '../models/Instrument.js';
 
-// @desc    Get all certificates (or filter by shopId)
+// @desc    Get all certificates
 // @route   GET /api/certificates
 export const getCertificates = async (req, res) => {
   try {
@@ -33,7 +34,36 @@ export const lookupCertificate = async (req, res) => {
   }
 };
 
-// @desc    Issue a new official Form XVII certificate (Inspector Inspection Completion)
+// @desc    Download Form XVII Certificate PDF with embedded QR Code
+// @route   GET /api/certificates/:certId/download-pdf
+export const downloadCertificatePDF = async (req, res) => {
+  try {
+    const { certId } = req.params;
+    const cert = await Certificate.findOne({
+      certId: { $regex: new RegExp(`^${certId.trim()}$`, 'i') }
+    });
+
+    if (!cert) {
+      return res.status(404).json({ success: false, message: 'Certificate record not found' });
+    }
+
+    // Generate high-resolution QR code
+    const qrDataUrl = await generateCertificateQR(cert.certId, {
+      shopName: cert.shopName,
+      serialNumber: cert.serialNumber,
+      validUntil: cert.validUntil
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Certificate_${cert.certId}.pdf`);
+
+    generateCertificatePDF(cert, qrDataUrl, res);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Issue a new official Form XVII certificate with auto QR Code
 // @route   POST /api/certificates/issue
 export const issueCertificate = async (req, res) => {
   try {
@@ -56,6 +86,13 @@ export const issueCertificate = async (req, res) => {
     const validUntil = expiryDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const inspectorSeal = `SEAL-LM-BLR-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    // Generate QR Code data URL
+    const qrDataUrl = await generateCertificateQR(certId, {
+      shopName,
+      serialNumber,
+      validUntil
+    });
+
     const certificate = await Certificate.create({
       certId,
       ruleForm: 'Form XVII (Rule 14)',
@@ -75,21 +112,7 @@ export const issueCertificate = async (req, res) => {
       testObservations: testObservations || []
     });
 
-    // Update the corresponding instrument to 365 days and new seal
-    await Instrument.findOneAndUpdate(
-      { serialNumber },
-      {
-        $set: {
-          daysRemaining: 365,
-          expiresOn: validUntil,
-          sealNumber: inspectorSeal,
-          status: 'Stamping Active',
-          verificationStatusText: 'Holo Seal Valid'
-        }
-      }
-    );
-
-    return res.status(201).json({ success: true, data: certificate });
+    return res.status(201).json({ success: true, data: { ...certificate.toObject(), qrDataUrl } });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

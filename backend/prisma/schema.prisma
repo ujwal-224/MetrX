@@ -1,0 +1,132 @@
+// Prisma Schema for MetrX - Legal Metrology Digital Verification System
+// Smart India Hackathon (SIH 2026) Architecture
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SHOP_OWNER
+  INSPECTOR
+  ADMIN
+  PUBLIC
+}
+
+model User {
+  id               String   @id @default(uuid())
+  name             String
+  email            String   @unique
+  password         String
+  role             Role     @default(SHOP_OWNER)
+  phone            String?
+  inspectorBadgeId String?
+  assignedZone     String?  @default("Ward 4 (Commercial Circle)")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  shops            Shop[]
+}
+
+model Shop {
+  id                    String   @id @default(uuid())
+  ownerId               String?
+  owner                 User?    @relation(fields: [ownerId], references: [id])
+  shopCode              String   @unique // e.g., shop-ganesh-1
+  name                  String
+  ownerName             String
+  branchType            String   @default("Main Commercial Branch")
+  merchantUid           String   @unique // e.g., #EST-44091
+  tradeLicense          String
+  gstin                 String?
+  shopActReg            String?
+  zone                  String   @default("Ward 4 (Commercial Circle)")
+  address               String
+  phone                 String
+  assignedInspector     String?  @default("Insp. R. Deshmukh")
+  inspectorBadge        String?  @default("LM-BLR-402")
+  status                String   @default("Active Commercial Establishment")
+  complianceStatus      String   @default("Documents Verified")
+  documentStatus        String   @default("verified")
+  registeredScalesCount Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  instruments           Instrument[]
+  verifications         Verification[]
+  certificates          Certificate[]
+}
+
+model Instrument {
+  id                     String   @id @default(uuid())
+  shopId                 String
+  shop                   Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  instrumentCode         String   @unique // e.g. inst-1
+  name                   String
+  model                  String
+  capacity               String
+  serialNumber           String   @unique
+  counter                String   @default("Billing Counter 1")
+  status                 String   @default("Stamping Active")
+  verificationStatusText String   @default("Holo Seal Valid")
+  daysRemaining          Int      @default(365)
+  totalDaysCycle         Int      @default(365)
+  expiresOn              String
+  sealNumber             String?
+  complianceRate         String   @default("100%")
+  type                   String   @default("counter_scale")
+  class                  String   @default("Class III Commercial")
+  photoUrl               String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  verifications          Verification[]
+}
+
+model Verification {
+  id                 String   @id @default(uuid())
+  requestCode        String   @unique // e.g. VR-88412
+  shopId             String
+  shop               Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  instrumentId       String
+  instrument         Instrument @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  assignedInspector  String   @default("Insp. R. Deshmukh")
+  inspectorBadge     String   @default("LM-BLR-402")
+  step               Int      @default(2) // 1: Requested, 2: Scheduled, 3: Inspected, 4: Stamped, 5: Certified
+  status             String   @default("Verification Scheduled")
+  slotDate           String?
+  slotTime           String?  @default("Morning (09:30 - 12:30)")
+  bookingRef         String?
+  isPaid             Boolean  @default(true)
+  feeAmount          Float    @default(850.0)
+  paymentMethod      String   @default("UPI")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Certificate {
+  id                  String   @id @default(uuid())
+  certId              String   @unique // e.g. CERT-KA-2024-9921
+  ruleForm            String   @default("Form XVII (Rule 14)")
+  actYear             String   @default("Legal Metrology Act, 2009")
+  shopId              String
+  shop                Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  instrumentModel     String
+  serialNumber        String
+  verifiedDate        String
+  validUntil          String
+  inspectorSeal       String
+  inspectorName       String   @default("Insp. R. Deshmukh")
+  inspectorBadge      String   @default("LM-BLR-402")
+  statusBadge         String   @default("CERTIFIED & COMPLIANT")
+  workingStandardRef  String   @default("STD/KA/2024/0081 (Calibrated at NPL)")
+  remarks             String   @default("4-Point MPE tested with Class M1 reference weights. Holographic wire seal applied.")
+  qrCodeUrl           String?
+  testObservationsRaw String?  // JSON stringified 4-point calibration loads
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
