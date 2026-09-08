@@ -153,7 +153,7 @@ export const AppProvider = ({ children }) => {
           documentsRemarks: bShop.documentsRemarks || '',
           reviewedBy: bShop.reviewedBy || '',
           documentSubmissionData: bShop.documentSubmissionData || null,
-          registeredScalesCount: bShop.registeredScalesCount || (bShop.instruments?.length || 1),
+          registeredScalesCount: bShop.instruments?.length ?? bShop.registeredScalesCount ?? 0,
           instruments: bShop.instruments || [],
           certificationHistory: []
         }));
@@ -175,7 +175,7 @@ export const AppProvider = ({ children }) => {
             zone: bShop.zone,
             address: bShop.address,
             phone: bShop.phone,
-            registeredScales: bShop.registeredScalesCount || (bShop.instruments?.length || 1),
+            registeredScales: bShop.instruments?.length ?? bShop.registeredScalesCount ?? 0,
             complianceStatus: bShop.complianceStatus || (isAssigned ? 'Inspector Assigned' : 'Pending Inspector Assignment'),
             assignedInspector: isAssigned ? bShop.assignedInspector : null,
             assignedInspectorBadge: isAssigned ? bShop.inspectorBadge : null,
@@ -238,7 +238,7 @@ export const AppProvider = ({ children }) => {
             merchantUid: bShop.merchantUid,
             zone: bShop.zone?.split(' ')[0] || 'Ward 4',
             operationType: 'On-Site Stamping & Verification',
-            scaleModel: bShop.instruments?.[0]?.model || 'Commercial Electronic Scale',
+            scaleModel: bShop.instruments?.[0]?.model || 'No Scale Registered',
             slot: isAssigned ? '11:30 AM – 01:00 PM (Assigned Slot)' : 'Awaiting Inspector Assignment',
             liveStatus: isAssigned ? (bShop.complianceStatus === 'Documents Verified' ? 'Docs Verified • Ready for Visit' : 'Inspector Assigned • Pending Docs') : 'New Registration • Pending Allocation',
             statusType: isAssigned ? 'scheduled' : 'scheduled',
@@ -876,13 +876,11 @@ export const AppProvider = ({ children }) => {
         zone: data.zone || 'Ward 4 (Commercial Circle)',
         address: data.address || `${data.zone || 'Ward 4'}, Commercial Circle, Bengaluru`,
         phone: data.phone || '+91 98000 00000',
-        registeredScalesCount: Number(data.registeredScales) || 1,
+        registeredScalesCount: Number(data.registeredScales) || 0,
         assignedInspector: 'Pending Admin Allocation',
         inspectorBadge: 'LM-PENDING',
         complianceStatus: 'Pending Inspector Assignment',
-        documentStatus: 'not_uploaded',
-        scaleModel: data.scaleModel || 'Digital Metrology Model 2025',
-        scaleType: data.scaleType || 'Electronic Counter'
+        documentStatus: 'not_uploaded'
       });
       if (res.success && res.data) {
         backendShop = res.data;
@@ -905,7 +903,7 @@ export const AppProvider = ({ children }) => {
       zone: data.zone || 'Ward 4 (Commercial Circle)',
       address: data.address || `${data.zone || 'Ward 4'}, Commercial Circle, Bengaluru`,
       phone: data.phone || '+91 98000 00000',
-      registeredScales: Number(data.registeredScales) || 1,
+      registeredScales: 0,
       complianceStatus: 'Pending Inspector Assignment',
       assignedInspector: null,
       assignedInspectorBadge: 'LM-PENDING',
@@ -914,25 +912,8 @@ export const AppProvider = ({ children }) => {
 
     setMerchants((prev) => [newMerch, ...prev]);
 
-    // Also add an initial scale for this new shop
-    const newScale = {
-      id: `inst-${Date.now()}`,
-      name: `${data.scaleType || 'Electronic Counter'} Scale`,
-      model: data.scaleModel || 'Digital Metrology Model 2025',
-      capacity: '30kg / 1g precision',
-      serialNumber: `#KA-BLR-${Math.floor(10000 + Math.random() * 90000)}`,
-      counter: 'Counter 1',
-      status: 'Initial Verification Due',
-      verificationStatusText: 'Stamping Pending Inspection',
-      daysRemaining: 30,
-      totalDaysCycle: 365,
-      expiresOn: 'Within 30 Days',
-      sealNumber: 'SEAL-PENDING',
-      complianceRate: '100%',
-      type: 'counter_scale',
-      class: 'Class III Commercial'
-    };
-    setInstruments([newScale]);
+    // Initial state has 0 registered instruments until merchant registers them
+    setInstruments([]);
 
     const assignedEmail = (data.email || newMerch.email).toLowerCase().trim();
     const merchantUser = {
@@ -963,8 +944,8 @@ export const AppProvider = ({ children }) => {
       status: 'Active Commercial Establishment',
       complianceStatus: 'Pending Inspector Assignment',
       documentStatus: 'not_uploaded',
-      registeredScalesCount: Number(data.registeredScales) || 1,
-      instruments: [newScale],
+      registeredScalesCount: 0,
+      instruments: [],
       certificationHistory: []
     };
     setOwnerShops([newOwnerShop]);
@@ -980,7 +961,7 @@ export const AppProvider = ({ children }) => {
       merchantUid: finalUid,
       zone: newMerch.zone.split(' ')[0] || 'Ward 4',
       operationType: 'Initial Shop Verification',
-      scaleModel: newScale.model,
+      scaleModel: 'No Instrument Registered',
       slot: 'Awaiting Inspector Assignment',
       liveStatus: 'New Registration • Pending Allocation',
       statusType: 'scheduled',
@@ -1338,8 +1319,9 @@ export const AppProvider = ({ children }) => {
     );
   };
 
-  const handleRegisterInstrument = (instrumentData) => {
+  const handleRegisterInstrument = async (instrumentData) => {
     const isRepaired = Boolean(instrumentData.isRepairedOrModified);
+    const targetShopId = storeInfo.id || ownerShops[activeShopIndex]?.id;
     const newInst = {
       id: `inst-${Date.now()}`,
       name: instrumentData.name || 'Electronic Counter Scale',
@@ -1395,6 +1377,24 @@ export const AppProvider = ({ children }) => {
         return s;
       })
     );
+
+    // Persist to PostgreSQL backend if shop exists
+    if (targetShopId) {
+      try {
+        await api.registerInstrument({
+          shopId: targetShopId,
+          name: newInst.name,
+          model: newInst.model,
+          capacity: newInst.capacity,
+          serialNumber: newInst.serialNumber,
+          type: newInst.type,
+          class: newInst.class,
+          photoUrl: newInst.photoUrl
+        });
+      } catch (err) {
+        console.warn('[Backend Register Instrument Error]', err.message);
+      }
+    }
 
     showToast(
       isRepaired
@@ -2085,26 +2085,8 @@ export const AppProvider = ({ children }) => {
       status: 'Active Commercial Establishment',
       complianceStatus: 'Pending Inspector Assignment',
       documentStatus: 'pending_upload',
-      registeredScalesCount: 1,
-      instruments: [
-        {
-          id: `inst-${Date.now()}`,
-          name: `${newShopData.scaleType || 'Electronic Counter'} Scale`,
-          model: newShopData.scaleModel || 'Digital Standard Scale',
-          capacity: '30kg / 1g precision',
-          serialNumber: `#KA-BLR-${Math.floor(10000 + Math.random() * 90000)}`,
-          counter: 'Counter 1',
-          status: 'Initial Verification Due',
-          verificationStatusText: 'Awaiting Inspector Stamping',
-          daysRemaining: 30,
-          totalDaysCycle: 365,
-          expiresOn: 'Within 30 Days',
-          sealNumber: 'SEAL-PENDING',
-          complianceRate: '100%',
-          type: 'counter_scale',
-          class: 'Class III Commercial'
-        }
-      ],
+      registeredScalesCount: 0,
+      instruments: [],
       certificationHistory: []
     };
 
@@ -2121,9 +2103,7 @@ export const AppProvider = ({ children }) => {
         gstin: newShop.gstin,
         zone: newShop.zone,
         address: newShop.address,
-        phone: newShop.phone,
-        scaleModel: newShopData.scaleModel,
-        scaleType: newShopData.scaleType
+        phone: newShop.phone
       });
     } catch (err) {
       console.warn('[Backend Add Branch Error]', err.message);

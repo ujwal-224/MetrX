@@ -35,9 +35,7 @@ export const ShopDashboard = () => {
     gstin: '',
     zone: 'Ward 4 (Commercial Circle)',
     address: '',
-    phone: '',
-    scaleType: 'Electronic Countertop',
-    scaleModel: 'Contech CA-30 Series'
+    phone: ''
   });
 
   const activeShop = ownerShops?.[activeShopIndex] || ownerShops?.[0] || {
@@ -946,11 +944,11 @@ export const ShopDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-gray-700 block mb-1">Scale Model</label>
+                  <label className="font-bold text-gray-700 block mb-1">GSTIN / Tax ID (Optional)</label>
                   <input
-                    value={newShopForm.scaleModel}
-                    onChange={(e) => setNewShopForm({ ...newShopForm, scaleModel: e.target.value })}
-                    placeholder="Contech CA-30"
+                    value={newShopForm.gstin}
+                    onChange={(e) => setNewShopForm({ ...newShopForm, gstin: e.target.value })}
+                    placeholder="29AABCU9603R1ZM"
                     className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
                   />
                 </div>

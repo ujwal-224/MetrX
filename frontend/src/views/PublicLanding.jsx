@@ -48,8 +48,7 @@ export const PublicLanding = () => {
     zone: 'Ward 4 (Commercial Circle)',
     phone: '',
     tradeLicense: '',
-    address: '',
-    registeredScales: 1
+    address: ''
   });
 
   const handleSearch = (e) => {
@@ -1052,30 +1051,18 @@ export const PublicLanding = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Jurisdiction Zone</label>
-                    <select
-                      value={newStoreForm.zone}
-                      onChange={(e) => setNewStoreForm({ ...newStoreForm, zone: e.target.value })}
-                      className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
-                    >
-                      <option value="Ward 4 (Commercial Circle)">Ward 4 (Commercial Circle)</option>
-                      <option value="Ward 2 (Commercial Ganj)">Ward 2 (Commercial Ganj)</option>
-                      <option value="Ward 1 (APMC Yard)">Ward 1 (APMC Yard)</option>
-                      <option value="Zone 5 (Outer Ring Road)">Zone 5 (Outer Ring Road)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">No. of Weighing Scales</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={newStoreForm.registeredScales}
-                      onChange={(e) => setNewStoreForm({ ...newStoreForm, registeredScales: e.target.value })}
-                      className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
-                    />
-                  </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Jurisdiction Zone</label>
+                  <select
+                    value={newStoreForm.zone}
+                    onChange={(e) => setNewStoreForm({ ...newStoreForm, zone: e.target.value })}
+                    className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
+                  >
+                    <option value="Ward 4 (Commercial Circle)">Ward 4 (Commercial Circle)</option>
+                    <option value="Ward 2 (Commercial Ganj)">Ward 2 (Commercial Ganj)</option>
+                    <option value="Ward 1 (APMC Yard)">Ward 1 (APMC Yard)</option>
+                    <option value="Zone 5 (Outer Ring Road)">Zone 5 (Outer Ring Road)</option>
+                  </select>
                 </div>
 
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
