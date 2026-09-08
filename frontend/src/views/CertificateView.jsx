@@ -20,26 +20,51 @@ export const CertificateView = () => {
   const isShopOwner = activeRole === 'shop-owner';
   const activeShop = ownerShops?.[activeShopIndex] || ownerShops?.[0];
 
-  // Determine current shop status type: 'verified' | 'in_progress' | 'fraud'
+  // Determine current shop status type: 'verified' | 'in_progress' | 'fraud' | 'not_found'
   const shopCompliance = (activeShop?.complianceStatus || '').toLowerCase();
   const certStatusBadge = (certificateData?.statusBadge || '').toLowerCase();
 
+  const isNotFound = Boolean(
+    certificateData?.isNotFound ||
+    certificateData?.currentStatus === 'NOT_FOUND' ||
+    certStatusBadge.includes('not found')
+  );
+
+  const isExpired = Boolean(
+    certificateData?.isExpired ||
+    certificateData?.currentStatus === 'EXPIRED' ||
+    certStatusBadge.includes('expired')
+  );
+
+  const isExpiringSoon = Boolean(
+    certificateData?.isExpiringSoon ||
+    certificateData?.currentStatus === 'EXPIRING_SOON' ||
+    certStatusBadge.includes('expiring soon')
+  );
+
+  const isRevoked = Boolean(
+    certificateData?.isRevoked ||
+    certificateData?.currentStatus === 'REVOKED' ||
+    certStatusBadge.includes('revoked')
+  );
+
   const isFraud =
-    Boolean(certificateData?.isFraud) ||
+    !isNotFound &&
+    (Boolean(certificateData?.isFraud) ||
     shopCompliance.includes('fraud') ||
     shopCompliance.includes('reject') ||
     shopCompliance.includes('discrepancy') ||
     shopCompliance.includes('tamper') ||
-    shopCompliance.includes('non-compliant');
+    shopCompliance.includes('non-compliant'));
 
-  const hasValidCert = Boolean(
+  const hasValidCert = !isNotFound && Boolean(
     (certificateData?.certId && !certificateData?.inProgress && certificateData?.certId !== 'PENDING') ||
     (activeShop?.certificationHistory && activeShop.certificationHistory.length > 0) ||
     shopCompliance.includes('certified')
   );
 
-  const isInProgress = !isFraud && !hasValidCert;
-  const isVerified = !isFraud && hasValidCert;
+  const isInProgress = !isNotFound && !isFraud && !hasValidCert;
+  const isVerified = !isNotFound && !isFraud && hasValidCert;
 
   const isHistorical =
     Boolean(certificateData?.isHistorical) ||
@@ -52,16 +77,26 @@ export const CertificateView = () => {
   };
 
   const handleDownloadPdf = () => {
-    const certId = certificateData?.certId || 'CERT-IN-PROGRESS';
-    showToast(`Generating signed statutory Form XVII PDF (${certId})...`, 'info');
-    setTimeout(() => {
-      window.print();
-    }, 350);
+    const certId = certificateData?.certId;
+    if (certId && certId !== 'CERT-IN-PROGRESS' && certId !== 'PENDING') {
+      window.open(`http://127.0.0.1:5000/api/certificates/${encodeURIComponent(certId)}/download-pdf`, '_blank');
+      showToast(`Downloading official signed Form XVII PDF (${certId})...`, 'info');
+    } else {
+      showToast(`Generating signed statutory Form XVII PDF...`, 'info');
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    }
   };
 
   const handleCopyVerificationLink = () => {
+    const certId = certificateData?.certId || '';
+    const verifyUrl = `${window.location.origin}/?cert=${encodeURIComponent(certId)}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(verifyUrl);
+    }
     setCopiedLink(true);
-    showToast('Public verification link copied to clipboard!', 'success');
+    showToast(`Verification link copied: ${verifyUrl}`, 'success');
     setTimeout(() => setCopiedLink(false), 3000);
   };
 
@@ -83,8 +118,29 @@ export const CertificateView = () => {
                   : 'Verification Certificate'}
               </h1>
               {isVerified && !isHistorical && (
-                <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  LIVE &amp; VALID
+                <span
+                  className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold border ${
+                    isExpired
+                      ? 'bg-rose-100 text-rose-800 border-rose-300'
+                      : isExpiringSoon
+                      ? 'bg-amber-100 text-amber-900 border-amber-300'
+                      : isRevoked
+                      ? 'bg-red-100 text-red-900 border-red-300'
+                      : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  }`}
+                >
+                  {isExpired
+                    ? '✕ EXPIRED (RE-VERIFY DUE)'
+                    : isExpiringSoon
+                    ? `⚠ EXPIRING SOON (${certificateData?.daysLeft}D)`
+                    : isRevoked
+                    ? '✕ REVOKED'
+                    : '✓ LIVE & VALID'}
+                </span>
+              )}
+              {isNotFound && (
+                <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-300">
+                  ✕ RECORD NOT FOUND
                 </span>
               )}
             </div>
@@ -281,6 +337,99 @@ export const CertificateView = () => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 0. UNVERIFIED / RECORD NOT FOUND STATE (PUBLIC QR / SEARCH)    */}
+      {/* ============================================================== */}
+      {isNotFound && (
+        <div className="w-full max-w-3xl mx-auto mb-12">
+          <div className="bg-white border-2 border-slate-300 rounded-2xl shadow-xl overflow-hidden relative">
+            <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-950 text-white p-6 sm:p-8 relative">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-300 shrink-0 shadow-inner">
+                  <span className="material-symbols-outlined text-3xl font-bold">help</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white tracking-wide uppercase">
+                      Unverified Instrument
+                    </span>
+                    <span className="text-xs font-mono text-slate-300">
+                      Query ID: {certificateData?.certId || 'UNKNOWN'}
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black mt-1 tracking-tight">
+                    Official Certificate Not Found in Register
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                    No verified legal metrological stamping or Form XVII certificate exists matching identifier <strong>"{certificateData?.certId}"</strong> on the State Legal Metrology Register.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8 flex flex-col gap-6">
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                <div className="flex items-start gap-3">
+                  <span className="material-symbols-outlined text-amber-700 text-xl shrink-0 mt-0.5">
+                    warning
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                      Consumer Protection &amp; Compliance Advisory
+                    </h3>
+                    <p className="text-xs text-amber-900 font-medium mt-1 leading-relaxed">
+                      Under Section 24 of The Legal Metrology Act, 2009, no person or commercial establishment shall use any weight or measure in any transaction or for protection unless that weight or measure has been verified and stamped by an authorized legal metrology officer.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase block mb-1">
+                    State Registry Search Result
+                  </span>
+                  <div className="font-bold text-slate-900 text-sm">Status: Unverified / Not Cleared</div>
+                  <div className="text-slate-600 mt-0.5">Database: Government of Karnataka Legal Metrology Ledger</div>
+                  <div className="font-mono text-slate-500 text-[11px] mt-1">
+                    Verification Standard: Unmatched
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase block mb-1">
+                    Statutory Action Available
+                  </span>
+                  <div className="font-bold text-slate-900 text-sm">
+                    Report or Request Verification
+                  </div>
+                  <div className="text-slate-600 mt-0.5">
+                    Merchants must submit instrument for official verification and stamping before trade use.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
+                <p className="text-[11px] text-slate-500 max-w-md">
+                  If this scale is deployed in trade, request the establishment to present their official physical Form XVII verification certificate.
+                </p>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => navigateTo('public-portal')}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#023625] hover:bg-[#1b4a36] text-white font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-base">search</span>
+                    <span>Search Another Certificate</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -577,15 +726,37 @@ export const CertificateView = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 flex-wrap">
                   <div
                     className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black tracking-wide shadow-xs border ${
-                      isHistorical
+                      isExpired
+                        ? 'bg-rose-100 text-rose-900 border-rose-300'
+                        : isExpiringSoon
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : isRevoked
+                        ? 'bg-red-100 text-red-900 border-red-300'
+                        : isHistorical
                         ? 'bg-slate-100 text-slate-800 border-slate-300'
                         : 'bg-emerald-50 text-emerald-800 border-emerald-300'
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm font-black">
-                      {isHistorical ? 'history' : 'verified'}
+                      {isExpired
+                        ? 'error'
+                        : isExpiringSoon
+                        ? 'warning'
+                        : isRevoked
+                        ? 'cancel'
+                        : isHistorical
+                        ? 'history'
+                        : 'verified'}
                     </span>
-                    <span>{certificateData?.statusBadge || 'VERIFIED & COMPLIANT'}</span>
+                    <span>
+                      {isExpired
+                        ? '✕ EXPIRED - RE-VERIFICATION REQUIRED'
+                        : isExpiringSoon
+                        ? `⚠ EXPIRING SOON (${certificateData?.daysLeft ?? 0} DAYS LEFT)`
+                        : isRevoked
+                        ? '✕ STATUTORY SUSPENSION / REVOKED'
+                        : certificateData?.statusBadge || 'VERIFIED & COMPLIANT'}
+                    </span>
                   </div>
 
                   <div className="font-mono text-base sm:text-lg font-black text-[#081C15] tracking-tight bg-slate-100 px-3.5 py-1 rounded-lg border border-slate-300 shadow-inner">
@@ -610,40 +781,48 @@ export const CertificateView = () => {
                 {/* Left: Scannable QR Shield */}
                 <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
                   <div className="p-3 bg-white border-2 border-[#0A3828] rounded-2xl shadow-md relative">
-                    <svg
-                      className="w-28 h-28 sm:w-32 sm:h-32 text-[#0A3828]"
-                      fill="currentColor"
-                      viewBox="0 0 100 100"
-                    >
-                      <path d="M0,0 h30 v10 h-20 v20 h-10 Z M70,0 h30 v30 h-10 v-20 h-20 Z M0,70 h10 v20 h20 v10 h-30 Z" />
-                      <rect fill="#0A3828" height="14" width="14" x="8" y="8" />
-                      <rect fill="#0A3828" height="14" width="14" x="78" y="8" />
-                      <rect fill="#0A3828" height="14" width="14" x="8" y="78" />
-                      <rect height="6" width="6" x="36" y="8" />
-                      <rect height="12" width="6" x="46" y="8" />
-                      <rect height="6" width="6" x="58" y="8" />
-                      <rect height="6" width="12" x="36" y="20" />
-                      <rect height="6" width="6" x="54" y="20" />
-                      <rect height="12" width="6" x="8" y="36" />
-                      <rect height="6" width="12" x="20" y="36" />
-                      <rect height="6" width="28" x="36" y="36" />
-                      <rect height="6" width="12" x="70" y="36" />
-                      <rect height="12" width="6" x="88" y="36" />
-                      <rect height="6" width="12" x="8" y="54" />
-                      <rect height="12" width="6" x="26" y="48" />
-                      <rect height="12" width="12" x="38" y="48" />
-                      <rect height="6" width="12" x="56" y="48" />
-                      <rect height="6" width="18" x="74" y="48" />
-                      <rect height="12" width="6" x="20" y="66" />
-                      <rect height="6" width="12" x="36" y="66" />
-                      <rect height="18" width="6" x="54" y="66" />
-                      <rect height="6" width="12" x="66" y="66" />
-                      <rect height="10" width="10" x="84" y="66" />
-                      <rect height="14" width="12" x="36" y="78" />
-                      <rect height="6" width="10" x="70" y="78" />
-                      <rect height="6" width="26" x="66" y="88" />
-                      <circle cx="50" cy="50" fill="#059669" r="4" />
-                    </svg>
+                    {certificateData?.qrCodeUrl ? (
+                      <img
+                        src={certificateData.qrCodeUrl}
+                        alt={`Authenticity QR for ${certificateData.certId}`}
+                        className="w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                      />
+                    ) : (
+                      <svg
+                        className="w-28 h-28 sm:w-32 sm:h-32 text-[#0A3828]"
+                        fill="currentColor"
+                        viewBox="0 0 100 100"
+                      >
+                        <path d="M0,0 h30 v10 h-20 v20 h-10 Z M70,0 h30 v30 h-10 v-20 h-20 Z M0,70 h10 v20 h20 v10 h-30 Z" />
+                        <rect fill="#0A3828" height="14" width="14" x="8" y="8" />
+                        <rect fill="#0A3828" height="14" width="14" x="78" y="8" />
+                        <rect fill="#0A3828" height="14" width="14" x="8" y="78" />
+                        <rect height="6" width="6" x="36" y="8" />
+                        <rect height="12" width="6" x="46" y="8" />
+                        <rect height="6" width="6" x="58" y="8" />
+                        <rect height="6" width="12" x="36" y="20" />
+                        <rect height="6" width="6" x="54" y="20" />
+                        <rect height="12" width="6" x="8" y="36" />
+                        <rect height="6" width="12" x="20" y="36" />
+                        <rect height="6" width="28" x="36" y="36" />
+                        <rect height="6" width="12" x="70" y="36" />
+                        <rect height="12" width="6" x="88" y="36" />
+                        <rect height="6" width="12" x="8" y="54" />
+                        <rect height="12" width="6" x="26" y="48" />
+                        <rect height="12" width="12" x="38" y="48" />
+                        <rect height="6" width="12" x="56" y="48" />
+                        <rect height="6" width="18" x="74" y="48" />
+                        <rect height="12" width="6" x="20" y="66" />
+                        <rect height="6" width="12" x="36" y="66" />
+                        <rect height="18" width="6" x="54" y="66" />
+                        <rect height="6" width="12" x="66" y="66" />
+                        <rect height="10" width="10" x="84" y="66" />
+                        <rect height="14" width="12" x="36" y="78" />
+                        <rect height="6" width="10" x="70" y="78" />
+                        <rect height="6" width="26" x="66" y="88" />
+                        <circle cx="50" cy="50" fill="#059669" r="4" />
+                      </svg>
+                    )}
                     <div className="absolute -bottom-2 -right-2 bg-[#0A3828] text-white p-1 rounded-full shadow">
                       <span className="material-symbols-outlined text-xs font-black block">qr_code_scanner</span>
                     </div>
@@ -744,21 +923,33 @@ export const CertificateView = () => {
                   <div className="font-extrabold text-sm text-slate-900">
                     {certificateData?.instrumentModel || 'Contech CA-30 (Max 30kg, e=1g)'}
                   </div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Class III Commercial Precision Non-Automatic Weighing Instrument
+                  <div className="text-xs text-[#0A3828] font-semibold mt-0.5">
+                    Standard: {certificateData?.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule'}
                   </div>
                   <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">Scheme / Rule:</span>
+                    <span className="font-bold text-slate-800 truncate max-w-[180px]" title={certificateData?.ruleName || 'Class III Weighing Scheme'}>
+                      {certificateData?.ruleName || 'Class III Weighing Scheme'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] mt-0.5">
                     <span className="text-slate-500">Serial Number:</span>
                     <span className="font-mono font-bold text-slate-900">
                       {certificateData?.serialNumber || activeShop?.instruments?.[0]?.serialNumber || '#KA-BLR-88412'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px] mt-0.5">
-                    <span className="text-slate-500">Capacity / Precision:</span>
+                    <span className="text-slate-500">Verification Mode:</span>
                     <span className="font-bold text-slate-800">
-                      {activeShop?.instruments?.[0]?.capacity || '30kg / 1g precision'}
+                      {certificateData?.verificationMode || (certificateData?.gpsLatitude ? 'Field / In-Situ' : 'At Test Centre')}
                     </span>
                   </div>
+                  {certificateData?.gpsLatitude && certificateData?.gpsLongitude && (
+                    <div className="flex items-center justify-between text-[11px] mt-0.5 text-emerald-800 font-mono">
+                      <span className="text-slate-500">GPS Stamp:</span>
+                      <span>{Number(certificateData.gpsLatitude).toFixed(4)}°N, {Number(certificateData.gpsLongitude).toFixed(4)}°E</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. Verification & Wire Seal */}
@@ -782,9 +973,15 @@ export const CertificateView = () => {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs mt-1.5">
-                    <span className="text-slate-500">Statutory Term Expiry:</span>
-                    <span className="font-bold text-slate-900">
+                    <span className="text-slate-500">Next Re-Verification Due:</span>
+                    <span className={`font-bold ${isExpired ? 'text-rose-700 font-black' : 'text-slate-900'}`}>
                       {certificateData?.validUntil || '12 Jan 2026'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs mt-1.5 pt-1 border-t border-slate-200">
+                    <span className="text-slate-500">Standard Calibration Ref:</span>
+                    <span className="font-mono text-[10px] text-slate-700">
+                      {certificateData?.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)'}
                     </span>
                   </div>
                 </div>

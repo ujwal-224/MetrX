@@ -14,6 +14,7 @@ import { InspectorSchedule } from './views/InspectorSchedule';
 import { FieldInspection } from './views/FieldInspection';
 import { CertificateView } from './views/CertificateView';
 import { AdminDashboard } from './views/AdminDashboard';
+import { VerificationRules } from './views/VerificationRules';
 
 function AppContent() {
   const { currentView } = useApp();
@@ -35,6 +36,7 @@ function AppContent() {
         {currentView === 'field-inspection' && <FieldInspection />}
         {currentView === 'certificate-view' && <CertificateView />}
         {currentView === 'admin-dashboard' && <AdminDashboard />}
+        {currentView === 'verification-rules' && <VerificationRules />}
       </div>
 
       {/* Global Notifications Toast */}

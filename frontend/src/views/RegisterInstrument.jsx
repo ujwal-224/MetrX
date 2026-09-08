@@ -8,6 +8,9 @@ export const RegisterInstrument = () => {
   const [serialNumber, setSerialNumber] = useState('');
   const [capacity, setCapacity] = useState('');
   const [modelName, setModelName] = useState('');
+  const [verificationMode, setVerificationMode] = useState('Field / In-Situ');
+  const [isRepairedOrModified, setIsRepairedOrModified] = useState(false);
+  const [repairDetails, setRepairDetails] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
 
   const handleFileChange = (e) => {
@@ -36,6 +39,9 @@ export const RegisterInstrument = () => {
       model: modelName.trim() || (instrumentType === 'counter_scale' ? 'Digital Scale series' : 'Commercial Series'),
       serialNumber: serialNumber.trim(),
       capacity: capacity.trim() || '30 kg / 1g precision',
+      verificationMode,
+      isRepairedOrModified,
+      repairDetails: isRepairedOrModified ? repairDetails.trim() : null,
       photoUrl: photoPreview
     });
   };
@@ -328,6 +334,105 @@ export const RegisterInstrument = () => {
               <p className="font-body-sm text-body-sm text-outline mt-unit-1">
                 Specify full scale range and smallest division interval as listed on the seal.
               </p>
+            </div>
+
+            {/* Verification Venue / Mode (Rule 8 & 10) */}
+            <div className="pt-2">
+              <label className="block font-label-md text-label-md font-semibold text-on-surface mb-1">
+                Verification Venue / Mode (Rule 8 &amp; 10)
+              </label>
+              <p className="text-xs text-gray-500 mb-2.5">
+                Select where the legal metrology verification stamping should be executed:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setVerificationMode('Field / In-Situ')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all ${
+                    verificationMode === 'Field / In-Situ'
+                      ? 'border-[#023625] bg-[#E7F0E8] ring-1 ring-[#023625]'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-lg mt-0.5 ${
+                    verificationMode === 'Field / In-Situ' ? 'text-[#023625]' : 'text-gray-400'
+                  }`}>
+                    location_on
+                  </span>
+                  <div>
+                    <div className="text-xs font-bold text-gray-900">Field / In-Situ (On-Site)</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                      Officer visits establishment premises to verify fixed or heavy equipment with GPS logging.
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVerificationMode('At Test Centre')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all ${
+                    verificationMode === 'At Test Centre'
+                      ? 'border-[#023625] bg-[#E7F0E8] ring-1 ring-[#023625]'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-lg mt-0.5 ${
+                    verificationMode === 'At Test Centre' ? 'text-[#023625]' : 'text-gray-400'
+                  }`}>
+                    domain
+                  </span>
+                  <div>
+                    <div className="text-xs font-bold text-gray-900">At Test Centre / Lab</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                      Merchant brings portable scale to government testing laboratory or metrology bench.
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Instrument Condition & Repair History (Rule 7) */}
+            <div className="pt-2 border-t border-gray-200/80">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isRepairedOrModified}
+                  onChange={(e) => setIsRepairedOrModified(e.target.checked)}
+                  className="mt-1 rounded border-gray-300 text-[#023625] focus:ring-[#023625] w-4 h-4"
+                />
+                <div>
+                  <span className="text-xs font-bold text-gray-900 block">
+                    Instrument Repaired or Modified (Mandatory Re-Verification under Rule 7)
+                  </span>
+                  <span className="text-[11px] text-gray-500 block mt-0.5">
+                    Check if this scale has had load-cells replaced, wire seals broken, or repairs executed.
+                  </span>
+                </div>
+              </label>
+
+              {isRepairedOrModified && (
+                <div className="mt-3 p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                    <span className="material-symbols-outlined text-sm text-amber-700">info</span>
+                    <span>Statutory Re-Verification Trigger (Legal Metrology Rule 7)</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    Under Rule 7 of Legal Metrology regulations, any weight or measure repaired or altered must undergo full re-verification against working standards prior to commercial trade deployment.
+                  </p>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                      Service / Repair Details:
+                    </label>
+                    <input
+                      type="text"
+                      value={repairDetails}
+                      onChange={(e) => setRepairDetails(e.target.value)}
+                      placeholder="e.g. Load cell replacement, recalibration of zero offset, casing repair"
+                      className="w-full text-xs px-3 py-2 rounded-lg bg-white border border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

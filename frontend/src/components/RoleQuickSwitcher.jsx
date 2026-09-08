@@ -9,19 +9,17 @@ export const RoleQuickSwitcher = () => {
     jumpToTourStep,
     isTourBannerVisible,
     setIsTourBannerVisible,
-    language,
-    setLanguage,
     t
   } = useApp();
 
   const [isExpanded, setIsExpanded] = useState(true);
 
   const steps = [
-    { num: 1, title: language === 'HI' ? '1. कांटा स्थिति' : '1. Scale Status (28d Due)', role: 'shop-owner', icon: 'timelapse' },
-    { num: 2, title: language === 'HI' ? '2. निरीक्षक स्लॉट' : '2. Book Inspector', role: 'shop-owner', icon: 'calendar_month' },
-    { num: 3, title: language === 'HI' ? '3. स्थिति ट्रैक' : '3. Track Appointment', role: 'shop-owner', icon: 'pending_actions' },
-    { num: 4, title: language === 'HI' ? '4. ऑन-साइट मुहर' : '4. Inspector Stamps', role: 'inspector', icon: 'checklist' },
-    { num: 5, title: language === 'HI' ? '5. वैधानिक प्रमाणपत्र' : '5. Legal Certificate', role: 'shop-owner', icon: 'verified' }
+    { num: 1, title: '1. Scale Status (28d Due)', role: 'shop-owner', icon: 'timelapse' },
+    { num: 2, title: '2. Book Inspector', role: 'shop-owner', icon: 'calendar_month' },
+    { num: 3, title: '3. Track Appointment', role: 'shop-owner', icon: 'pending_actions' },
+    { num: 4, title: '4. Inspector Stamps', role: 'inspector', icon: 'checklist' },
+    { num: 5, title: '5. Legal Certificate', role: 'shop-owner', icon: 'verified' }
   ];
 
   return (
@@ -35,7 +33,7 @@ export const RoleQuickSwitcher = () => {
             <span className="text-sm font-semibold tracking-tight">MetrX</span>
             <span className="text-white/40 font-normal hidden sm:inline">•</span>
             <span className="text-xs font-normal text-[#c3ecd5] hidden md:inline">
-              {language === 'HI' ? 'राष्ट्रीय विधिक मापविज्ञान डिजिटल प्रणाली' : 'National Legal Metrology Digital System'}
+              National Legal Metrology Digital System
             </span>
           </div>
 
@@ -81,7 +79,7 @@ export const RoleQuickSwitcher = () => {
           </div>
         </div>
 
-        {/* Right side: Tour Toggle & Language Switcher */}
+        {/* Right side: Tour Toggle */}
         <div className="flex items-center gap-2 ml-auto">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -91,30 +89,9 @@ export const RoleQuickSwitcher = () => {
               {isExpanded ? 'expand_less' : 'route'}
             </span>
             <span className="hidden sm:inline">
-              {isExpanded
-                ? (language === 'HI' ? 'टूर छिपाएं' : 'Hide Guided Tour')
-                : (language === 'HI' ? 'गाइडेड टूर (5 चरण)' : 'Guided Tour (5 Steps)')}
+              {isExpanded ? 'Hide Guided Tour' : 'Guided Tour (5 Steps)'}
             </span>
           </button>
-
-          <div className="flex items-center rounded border border-white/20 p-0.5 bg-black/20">
-            <button
-              onClick={() => setLanguage('EN')}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                language === 'EN' ? 'bg-[#c3ecd5] text-[#023625]' : 'text-white/70 hover:text-white'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setLanguage('HI')}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                language === 'HI' ? 'bg-[#c3ecd5] text-[#023625]' : 'text-white/70 hover:text-white'
-              }`}
-            >
-              हिंदी
-            </button>
-          </div>
         </div>
       </div>
 

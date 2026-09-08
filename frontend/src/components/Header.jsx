@@ -9,8 +9,6 @@ export const Header = () => {
     logout,
     storeInfo,
     currentInspector,
-    language,
-    setLanguage,
     t,
     showToast
   } = useApp();
@@ -28,7 +26,10 @@ export const Header = () => {
       { id: 'inspector-schedule', label: t('nav.todaysRoute', "Today's Route"), icon: 'route' },
       { id: 'field-inspection', label: t('nav.conductInspection', 'Conduct Inspection'), icon: 'fact_check' },
     ],
-    'admin': [],
+    'admin': [
+      { id: 'admin-dashboard', label: 'Admin Overview', icon: 'dashboard' },
+      { id: 'verification-rules', label: 'Verification Rules', icon: 'rule' },
+    ],
     'public': []
   };
 
@@ -159,25 +160,6 @@ export const Header = () => {
             </div>
           )}
 
-          {/* Language Toggle */}
-          <div className="flex items-center rounded-lg border border-gray-200 p-0.5 bg-gray-100/90 shrink-0 shadow-2xs">
-            <button
-              onClick={() => setLanguage('EN')}
-              className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
-                language === 'EN' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setLanguage('HI')}
-              className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
-                language === 'HI' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              हिंदी
-            </button>
-          </div>
         </div>
       </div>
 

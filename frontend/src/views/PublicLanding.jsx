@@ -12,7 +12,6 @@ export const PublicLanding = () => {
     merchants,
     handleSearchCertificate,
     showToast,
-    language,
     t
   } = useApp();
 
@@ -152,6 +151,41 @@ export const PublicLanding = () => {
                     <span>{t('hero.verifyBtn', 'Verify')}</span>
                   </button>
                 </form>
+
+                {/* Quick Test Verification Chips */}
+                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap text-[11px] text-gray-500">
+                  <span className="font-semibold text-gray-600">Quick Test QR / Cert:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCertInput('CERT-KA-2025-9921');
+                      handleSearchCertificate('CERT-KA-2025-9921');
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-colors font-medium"
+                  >
+                    ✓ Valid Scale
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCertInput('CERT-KA-2024-DEMO-EXPIRED');
+                      handleSearchCertificate('CERT-KA-2024-DEMO-EXPIRED');
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 cursor-pointer transition-colors font-medium"
+                  >
+                    ✕ Expired Due
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCertInput('UNVERIFIED-FAKE-123');
+                      handleSearchCertificate('UNVERIFIED-FAKE-123');
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 cursor-pointer transition-colors font-medium"
+                  >
+                    ? Unverified
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1015,7 +1049,7 @@ export const PublicLanding = () => {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-gray-500 text-xs">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-base text-[#023625]">security</span>
-            <span>© 2025 Directorate of Legal Metrology, Government of Karnataka.</span>
+            <span>© 2026 Directorate of Legal Metrology, Government of India.</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => showToast('Privacy Policy: Digital Personal Data Protection Act 2023 Compliant', 'info')} className="hover:underline">

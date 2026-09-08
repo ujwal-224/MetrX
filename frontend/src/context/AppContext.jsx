@@ -17,9 +17,13 @@ export const AppProvider = ({ children }) => {
   // Roles: 'shop-owner' | 'inspector' | 'admin' | 'public'
   const [activeRole, setActiveRole] = useState('public');
   const [currentView, setCurrentView] = useState('public-portal');
-  const [language, setLanguageState] = useState(() => {
-    return localStorage.getItem('metrx_lang') || 'EN';
-  });
+
+  // Clear any legacy language selection
+  try {
+    localStorage.removeItem('metrx_lang');
+  } catch {
+    // Ignore storage access errors
+  }
 
   // Fixed Super-Admin Credentials
   const ADMIN_CREDENTIALS = {
@@ -113,21 +117,9 @@ export const AppProvider = ({ children }) => {
     }, 4500);
   };
 
-  const setLanguage = (lang) => {
-    const nextLang = lang === 'HI' ? 'HI' : 'EN';
-    setLanguageState(nextLang);
-    localStorage.setItem('metrx_lang', nextLang);
-    showToast(
-      nextLang === 'HI' ? 'भाषा बदलकर हिंदी कर दी गई' : 'Language changed to English',
-      'info'
-    );
-  };
-
   const t = (key, fallback = '') => {
-    const activeDict = translations[language] || translations['EN'] || {};
-    if (activeDict[key] !== undefined) return activeDict[key];
-    const fallbackDict = translations['EN'] || {};
-    if (fallbackDict[key] !== undefined) return fallbackDict[key];
+    const dict = translations['EN'] || {};
+    if (dict[key] !== undefined) return dict[key];
     return fallback || key;
   };
 
@@ -370,6 +362,19 @@ export const AppProvider = ({ children }) => {
       }
     };
     fetchBackendData();
+  }, []);
+
+  // URL Query Parameter Detection (e.g., QR Code scan /?cert=CERT-KA-2025-XXXX)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const certParam = params.get('cert');
+      if (certParam) {
+        handleSearchCertificate(certParam);
+      }
+    } catch (e) {
+      console.warn('[URL Search Cert Param Error]', e);
+    }
   }, []);
 
   // Direct login by role (for demo quick-fill)
@@ -1266,6 +1271,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const handleRegisterInstrument = (instrumentData) => {
+    const isRepaired = Boolean(instrumentData.isRepairedOrModified);
     const newInst = {
       id: `inst-${Date.now()}`,
       name: instrumentData.name || 'Electronic Counter Scale',
@@ -1273,21 +1279,29 @@ export const AppProvider = ({ children }) => {
       capacity: instrumentData.capacity || '30 kg / 1g precision',
       serialNumber: instrumentData.serialNumber || `#KA-BLR-${Math.floor(10000 + Math.random() * 90000)}`,
       counter: 'Counter No. 2',
-      status: 'Pending Verification',
-      verificationStatusText: 'Initial Stamping Schedule Pending',
+      status: isRepaired ? 'Re-Verification Required' : 'Pending Verification',
+      verificationStatusText: isRepaired ? 'Mandatory Re-Verification (Rule 7)' : 'Initial Stamping Schedule Pending',
       daysRemaining: 30,
       totalDaysCycle: 365,
       expiresOn: 'Physical Inspection within 30 Days',
       sealNumber: 'SEAL-PENDING',
       complianceRate: '100%',
       type: instrumentData.type || 'counter_scale',
-      class: 'Class III Commercial',
+      class: instrumentData.instrumentClass || 'Class III Commercial',
+      verificationMode: instrumentData.verificationMode || 'in_situ',
+      isRepairedOrModified: isRepaired,
+      repairDetails: instrumentData.repairDetails || null,
       photoUrl: instrumentData.photoUrl || null
     };
 
     setInstruments((prev) => [newInst, ...prev]);
     setActiveInstrumentIndex(0);
-    showToast(`Instrument ${newInst.serialNumber} registered successfully!`, 'success');
+    showToast(
+      isRepaired
+        ? `Instrument ${newInst.serialNumber} registered! Note: Re-verification required before commercial use.`
+        : `Instrument ${newInst.serialNumber} registered successfully!`,
+      'success'
+    );
     navigateTo('shop-dashboard');
   };
 
@@ -1601,50 +1615,70 @@ export const AppProvider = ({ children }) => {
     navigateTo('track-status');
   };
 
-  const handleCompleteInspection = (notes = '') => {
+  const handleCompleteInspection = (notes = '', inspectionResult = null) => {
     const currentShop = ownerShops[activeShopIndex] || ownerShops[0] || {};
     const targetShopId = currentShop.id || storeInfo.id;
     const targetShopName = storeInfo.name || currentShop.name;
     const targetInst = instruments[activeInstrumentIndex] || instruments[0] || {};
 
-    const newCertId = `CERT-KA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const sealNum = `SEAL-LM-BLR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const validUntilDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
+    const issuedCert = inspectionResult?.issuedCertificate;
+    const validityData = inspectionResult?.validity;
+
+    const newCertId = issuedCert?.certId || `CERT-KA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const sealNum = issuedCert?.inspectorSeal || `SEAL-LM-BLR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const validUntilDate = issuedCert?.validUntil || validityData?.validUntilStr || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     });
-    const verifiedDateStr = new Date().toLocaleDateString('en-GB', {
+    const verifiedDateStr = issuedCert?.verifiedDate || validityData?.verifiedDateStr || new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     });
 
+    let testsList = testCalibrationData;
+    if (issuedCert?.testObservationsRaw) {
+      try {
+        testsList = JSON.parse(issuedCert.testObservationsRaw);
+      } catch (e) {}
+    }
+
     const newCertObj = {
       certId: newCertId,
-      ruleForm: 'Form XVII (Rule 14)',
-      actYear: 'Legal Metrology Act, 2009',
-      instrumentModel: `${targetInst.name || 'Electronic Counter Scale'} (${targetInst.model || 'Digital Series'})`,
-      serialNumber: targetInst.serialNumber || '#KA-BLR-53808',
+      ruleForm: issuedCert?.ruleForm || 'Form XVII (Rule 14)',
+      actYear: issuedCert?.actYear || 'Legal Metrology Act, 2009',
+      instrumentModel: issuedCert?.instrumentModel || `${targetInst.name || 'Electronic Counter Scale'} (${targetInst.model || 'Digital Series'})`,
+      serialNumber: issuedCert?.serialNumber || targetInst.serialNumber || '#KA-BLR-53808',
       verifiedDate: verifiedDateStr,
       validUntil: validUntilDate,
       inspectorSeal: sealNum,
-      inspectorName: currentInspector?.name || 'Insp. R. Deshmukh',
-      inspectorBadge: currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'LM-BLR-402',
+      inspectorName: issuedCert?.inspectorName || currentInspector?.name || 'Insp. R. Deshmukh',
+      inspectorBadge: issuedCert?.inspectorBadge || (currentInspector?.badgeNumber ? `Badge #${currentInspector.badgeNumber}` : 'LM-BLR-402'),
       statusBadge: 'CERTIFIED & COMPLIANT',
-      workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
-      remarks: notes || 'Physical 4-Point MPE assessment passed. Tamper-evident holographic stamp affixed.',
-      daysLeft: 365,
+      workingStandardRef: issuedCert?.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)',
+      remarks: issuedCert?.remarks || notes || 'Physical MPE assessment passed under applicable standard. Tamper-evident holographic stamp affixed.',
+      daysLeft: validityData?.daysRemaining ?? 365,
       shopLocation: `${targetShopName}, ${storeInfo.zone || currentShop.zone || 'Ward 4'}`,
       shopName: targetShopName,
       shopAddress: storeInfo.location || currentShop.address,
       merchantUid: storeInfo.merchantUid || currentShop.merchantUid,
       tradeLicense: storeInfo.regNumber || currentShop.tradeLicense,
+      applicableStandard: issuedCert?.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule / IS 9281',
+      ruleName: issuedCert?.ruleName || 'Electronic Weighing Instrument Verification Scheme',
+      verificationMode: issuedCert?.verificationMode || 'Field / In-Situ',
+      currentStatus: 'VALID',
+      isExpired: false,
+      isExpiringSoon: false,
+      isRevoked: false,
+      isNotFound: false,
       digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-      calibrationTests: testCalibrationData,
+      calibrationTests: testsList,
       isHistorical: false,
       inProgress: false
     };
+
+    setCertificateData(newCertObj);
 
     // 1. Advance verification request status (Step 5: Certified)
     setVerificationStatus((prev) => ({
@@ -2147,26 +2181,54 @@ export const AppProvider = ({ children }) => {
       if (res.success && res.data) {
         const cert = res.data;
         showToast(`Official Certificate Verified on Legal Metrology Ledger: ${cert.certId}`, 'success');
+        let parsedTests = testCalibrationData;
+        if (cert.testObservationsRaw) {
+          try {
+            parsedTests = JSON.parse(cert.testObservationsRaw);
+          } catch (e) {}
+        } else if (cert.testObservations?.length) {
+          parsedTests = cert.testObservations;
+        }
+
         setCertificateData({
           certId: cert.certId,
           ruleForm: cert.ruleForm || 'Form XVII (Rule 14)',
-          actYear: cert.actYear || 'Act of 2009',
+          actYear: cert.actYear || 'Legal Metrology Act, 2009',
+          currentStatus: cert.currentStatus || 'VALID',
           statusBadge: cert.statusBadge || 'VERIFIED & COMPLIANT',
-          daysLeft: 365,
+          statusColor: cert.statusColor || 'emerald',
+          statusMessage: cert.statusMessage || 'Valid statutory verification certificate.',
+          daysLeft: cert.daysRemaining !== undefined ? cert.daysRemaining : 365,
           validUntil: cert.validUntil || '12 Jan 2026',
           verifiedDate: cert.verifiedDate || '13 Jan 2025',
           inspectorSeal: cert.inspectorSeal || 'SEAL-LM-BLR-0428',
+          inspectorName: cert.inspectorName || 'Insp. R. Deshmukh',
+          inspectorBadge: cert.inspectorBadge || 'LM-BLR-402',
           instrumentModel: cert.instrumentModel || 'Contech CA-30 (Max 30kg, e=1g)',
-          shopLocation: `${cert.shopName || 'Commercial Establishment'}`,
-          workingStandardRef: cert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+          serialNumber: cert.serialNumber || '#KA-BLR-88412',
+          shopName: cert.shopName || 'Authorized Establishment',
+          shopAddress: cert.shopAddress || 'Commercial Circle, Bengaluru',
+          shopLocation: `${cert.shopName || 'Commercial Establishment'}, ${cert.shopAddress || 'Bengaluru'}`,
+          tradeLicense: cert.tradeLicense || 'BBMP/TL/2023/9081',
+          workingStandardRef: cert.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)',
+          applicableStandard: cert.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule / IS 9281',
+          ruleName: cert.ruleName || 'Standard Commercial Weighing Verification Scheme',
+          verificationMode: cert.verificationMode || 'Field / In-Situ',
+          gpsLatitude: cert.gpsLatitude || null,
+          gpsLongitude: cert.gpsLongitude || null,
+          isExpired: Boolean(cert.isExpired),
+          isExpiringSoon: Boolean(cert.isExpiringSoon),
+          isRevoked: Boolean(cert.isRevoked),
+          isNotFound: false,
           digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-          calibrationTests: cert.testObservations?.length ? cert.testObservations : testCalibrationData
+          calibrationTests: parsedTests,
+          isHistorical: false,
+          inProgress: false
         });
         navigateTo('certificate-view');
         return;
       }
     } catch (err) {
-      // Fallback to local registry matching
       console.warn('[Backend Cert Lookup Fallback]', err.message);
     }
 
@@ -2180,13 +2242,16 @@ export const AppProvider = ({ children }) => {
     );
 
     if (match) {
+      const isCompliant = match.status === 'Compliant';
       showToast(`Verified record found for ${match.shopName}!`, 'success');
       setCertificateData({
         certId: match.certId,
         ruleForm: 'Form XVII (Rule 14)',
-        actYear: 'Act of 2009',
-        statusBadge: match.status === 'Compliant' ? 'VERIFIED & COMPLIANT' : 'RENEWAL DUE / PROVISIONAL',
-        daysLeft: 365,
+        actYear: 'Legal Metrology Act, 2009',
+        currentStatus: isCompliant ? 'VALID' : 'EXPIRED',
+        statusBadge: isCompliant ? 'VERIFIED & COMPLIANT' : '✕ EXPIRED - RE-VERIFICATION REQUIRED',
+        statusColor: isCompliant ? 'emerald' : 'rose',
+        daysLeft: isCompliant ? 180 : 0,
         validUntil: match.expiryDate || '12 Jan 2026',
         verifiedDate: '13 Jan 2025',
         inspectorSeal: match.stampSeal || 'SEAL-LM-BLR-0428',
@@ -2197,7 +2262,15 @@ export const AppProvider = ({ children }) => {
         shopLocation: `${match.shopName}, ${match.zone}`,
         shopName: match.shopName,
         merchantUid: match.merchantUid || '',
+        tradeLicense: 'BBMP/TL/2023/9081',
         workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
+        applicableStandard: 'Legal Metrology (General) Rules, 2011 - Seventh Schedule / IS 9281',
+        ruleName: 'Electronic Non-Automatic Weighing Instruments (Class III)',
+        verificationMode: 'Field / In-Situ',
+        isExpired: !isCompliant,
+        isExpiringSoon: false,
+        isRevoked: false,
+        isNotFound: false,
         digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
         calibrationTests: testCalibrationData,
         isHistorical: false,
@@ -2205,7 +2278,19 @@ export const AppProvider = ({ children }) => {
       });
       navigateTo('certificate-view');
     } else {
-      showToast(`Verification query "${query}" found on National Registry.`, 'success');
+      showToast(`Certificate "${query}" not found in State Legal Metrology Register.`, 'error');
+      setCertificateData({
+        certId: q,
+        isNotFound: true,
+        currentStatus: 'NOT_FOUND',
+        statusBadge: '? RECORD NOT FOUND / UNVERIFIED',
+        statusColor: 'rose',
+        statusMessage: 'Official Metrological Certificate not found in state register.',
+        shopName: 'Unverified Entity / Unknown Establishment',
+        instrumentModel: 'Unregistered Commercial Scale',
+        serialNumber: 'UNVERIFIED',
+        remarks: 'No legal metrological stamping record exists for this certificate identification number in the Government of Karnataka Legal Metrology Registry.'
+      });
       navigateTo('certificate-view');
     }
   };
@@ -2242,8 +2327,6 @@ export const AppProvider = ({ children }) => {
         handleViewRegistryCertificate,
         handleViewVisitCertificate,
         adminCredentials: ADMIN_CREDENTIALS,
-        language,
-        setLanguage,
         t,
         storeInfo,
         instruments,

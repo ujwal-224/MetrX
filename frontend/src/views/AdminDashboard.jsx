@@ -10,7 +10,8 @@ export const AdminDashboard = () => {
     handleToggleInspectorStatus,
     handleDeleteInspector,
     handleAssignInspectorToMerchant,
-    showToast
+    showToast,
+    navigateTo
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('operations'); // 'operations' | 'inspectors' | 'merchants'
@@ -63,8 +64,16 @@ export const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* Action Button to Provision Inspector */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={() => navigateTo('verification-rules')}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#023625] text-[#023625] hover:bg-emerald-50 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-base">rule</span>
+            <span>Verification Rules &amp; Standards</span>
+          </button>
+
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1b4a36] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
