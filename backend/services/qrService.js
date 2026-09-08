@@ -15,7 +15,7 @@ export const generateCertificateQR = async (certId, metadata = {}) => {
       shop: metadata.shopName || 'Commercial Establishment',
       serial: metadata.serialNumber || 'N/A',
       validUntil: metadata.validUntil || '2026',
-      verifyUrl: `http://127.0.0.1:5173/?cert=${encodeURIComponent(certId)}`
+      verifyUrl: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/verify/${encodeURIComponent(certId)}` : `http://localhost:5173/verify/${encodeURIComponent(certId)}`
     });
 
     const qrDataUrl = await QRCode.toDataURL(payload, {

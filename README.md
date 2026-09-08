@@ -19,7 +19,7 @@ MetrX is a digital platform for the Department of Legal Metrology that streamlin
 ```bash
 docker compose up -d
 ```
-Or ensure PostgreSQL is running on `localhost:5432` with database `metrx`.
+Or ensure PostgreSQL is running on `localhost:5433` with database `metrx`.
 
 ### 2. Backend Setup
 ```bash

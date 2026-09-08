@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation';
+import { QRScanner } from '../components/QRScanner';
 
 export const PublicLanding = () => {
   const {
@@ -23,6 +24,9 @@ export const PublicLanding = () => {
 
   // Shop Owner Modal Sub-Tab: 'login' | 'register'
   const [shopTab, setShopTab] = useState('login');
+  
+  // QR Scanner State
+  const [showScanner, setShowScanner] = useState(false);
 
   // Form States (Empty by default)
   const [adminForm, setAdminForm] = useState({
@@ -57,6 +61,30 @@ export const PublicLanding = () => {
       handleSearchCertificate(certInput);
     } else {
       showToast('Please enter a certificate number to search', 'error');
+    }
+  };
+
+  const handleQRScan = (scannedUrl) => {
+    setShowScanner(false);
+    try {
+      // Basic validation to check if it's a valid MetrX verify URL
+      if (scannedUrl && scannedUrl.includes('/verify/')) {
+        const urlObj = new URL(scannedUrl);
+        if (urlObj.pathname.startsWith('/verify/')) {
+          // Direct browser navigation to the verification route
+          window.location.href = urlObj.pathname;
+          return;
+        }
+      }
+      // If it has ?cert= (old format just in case)
+      if (scannedUrl && scannedUrl.includes('?cert=')) {
+         const urlObj = new URL(scannedUrl);
+         window.location.href = `/?cert=${urlObj.searchParams.get('cert')}`;
+         return;
+      }
+      showToast('Invalid MetrX QR Code', 'error');
+    } catch (err) {
+      showToast('Invalid MetrX QR Code', 'error');
     }
   };
 
@@ -200,13 +228,24 @@ export const PublicLanding = () => {
                       type="text"
                     />
                   </div>
-                  <button
-                    className="bg-[#023625] hover:bg-[#1b4a36] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
-                    type="submit"
-                  >
-                    <span className="material-symbols-outlined text-base">search</span>
-                    <span>{t('hero.verifyBtn', 'Verify')}</span>
-                  </button>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      className="bg-[#023625] hover:bg-[#1b4a36] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                      type="submit"
+                    >
+                      <span className="material-symbols-outlined text-base">search</span>
+                      <span>{t('hero.verifyBtn', 'Verify')}</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowScanner(true)}
+                      className="bg-white hover:bg-gray-50 text-[#023625] border border-[#023625] font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-base">qr_code_scanner</span>
+                      <span className="hidden xs:inline">Scan QR</span>
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
@@ -700,6 +739,14 @@ export const PublicLanding = () => {
           </div>
         </section>
       </main>
+
+      {/* QR Scanner Modal */}
+      {showScanner && (
+        <QRScanner 
+          onScanSuccess={handleQRScan} 
+          onClose={() => setShowScanner(false)} 
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* AUTHENTICATION MODALS */}

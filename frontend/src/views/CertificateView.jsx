@@ -91,13 +91,27 @@ export const CertificateView = () => {
 
   const handleCopyVerificationLink = () => {
     const certId = certificateData?.certId || '';
-    const verifyUrl = `${window.location.origin}/?cert=${encodeURIComponent(certId)}`;
+    const verifyUrl = `${window.location.origin}/verify/${encodeURIComponent(certId)}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(verifyUrl);
     }
     setCopiedLink(true);
     showToast(`Verification link copied: ${verifyUrl}`, 'success');
     setTimeout(() => setCopiedLink(false), 3000);
+  };
+
+  const handleDownloadQR = () => {
+    if (certificateData?.qrCodeUrl) {
+      const link = document.createElement('a');
+      link.href = certificateData.qrCodeUrl;
+      link.download = `MetrX_QR_${certificateData.certId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('QR Code downloaded successfully', 'success');
+    } else {
+      showToast('QR Code not available for this certificate', 'error');
+    }
   };
 
   return (
@@ -191,6 +205,15 @@ export const CertificateView = () => {
                   {copiedLink ? 'check' : 'share'}
                 </span>
                 <span>{copiedLink ? 'Copied' : 'Share QR'}</span>
+              </button>
+
+              <button
+                onClick={handleDownloadQR}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition-colors text-xs font-semibold shadow-xs"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-base text-slate-500">qr_code_2</span>
+                <span>Download QR</span>
               </button>
 
               <button

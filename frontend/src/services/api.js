@@ -110,6 +110,8 @@ export const api = {
     request(`/certificates${shopId ? `?shopId=${encodeURIComponent(shopId)}` : ''}`),
   lookupCertificate: (certId) =>
     request(`/certificates/lookup/${encodeURIComponent(certId)}`),
+  verifyCertificate: (certId) =>
+    request(`/certificates/verify/${encodeURIComponent(certId)}`),
   issueCertificate: (certData) =>
     request('/certificates/issue', {
       method: 'POST',
