@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation';
 
 export const PublicLanding = () => {
   const {
@@ -62,6 +63,16 @@ export const PublicLanding = () => {
 
   const submitAdminLogin = (e) => {
     e.preventDefault();
+    const emailCheck = validateEmail(adminForm.email);
+    if (!emailCheck.isValid) {
+      showToast(emailCheck.error, 'error');
+      return;
+    }
+    const passCheck = validatePassword(adminForm.password);
+    if (!passCheck.isValid) {
+      showToast(passCheck.error, 'error');
+      return;
+    }
     if (handleAdminLogin(adminForm.email, adminForm.password)) {
       setActiveModal(null);
     }
@@ -69,6 +80,16 @@ export const PublicLanding = () => {
 
   const submitInspectorLogin = (e) => {
     e.preventDefault();
+    const emailCheck = validateEmail(inspectorForm.email);
+    if (!emailCheck.isValid) {
+      showToast(emailCheck.error, 'error');
+      return;
+    }
+    const passCheck = validatePassword(inspectorForm.password);
+    if (!passCheck.isValid) {
+      showToast(passCheck.error, 'error');
+      return;
+    }
     if (handleInspectorLogin(inspectorForm.email, inspectorForm.password)) {
       setActiveModal(null);
     }
@@ -76,6 +97,16 @@ export const PublicLanding = () => {
 
   const submitMerchantLogin = (e) => {
     e.preventDefault();
+    const emailCheck = validateEmail(merchantLoginForm.email);
+    if (!emailCheck.isValid) {
+      showToast(emailCheck.error, 'error');
+      return;
+    }
+    const passCheck = validatePassword(merchantLoginForm.password);
+    if (!passCheck.isValid) {
+      showToast(passCheck.error, 'error');
+      return;
+    }
     if (handleMerchantLogin(merchantLoginForm.email, merchantLoginForm.password)) {
       setActiveModal(null);
     }
@@ -83,11 +114,34 @@ export const PublicLanding = () => {
 
   const submitMerchantRegistration = (e) => {
     e.preventDefault();
-    if (!newStoreForm.name.trim() || !newStoreForm.ownerName.trim()) {
-      showToast('Please provide store name and merchant owner name', 'error');
+    if (!newStoreForm.name.trim()) {
+      showToast('Please provide store / establishment name', 'error');
       return;
     }
-    handleRegisterMerchant(newStoreForm);
+    const nameCheck = validateName(newStoreForm.ownerName);
+    if (!nameCheck.isValid) {
+      showToast(`Owner Name: ${nameCheck.error}`, 'error');
+      return;
+    }
+    const phoneCheck = validatePhone(newStoreForm.phone);
+    if (!phoneCheck.isValid) {
+      showToast(`Contact Phone: ${phoneCheck.error}`, 'error');
+      return;
+    }
+    const emailCheck = validateEmail(newStoreForm.email);
+    if (!emailCheck.isValid) {
+      showToast(`Email: ${emailCheck.error}`, 'error');
+      return;
+    }
+    const passCheck = validatePassword(newStoreForm.password);
+    if (!passCheck.isValid) {
+      showToast(`Password: ${passCheck.error}`, 'error');
+      return;
+    }
+    handleRegisterMerchant({
+      ...newStoreForm,
+      phone: phoneCheck.formatted || newStoreForm.phone
+    });
     setActiveModal(null);
   };
 
@@ -723,7 +777,9 @@ export const PublicLanding = () => {
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  minLength={8}
+                  maxLength={32}
+                  placeholder="Min 8 to 32 characters"
                   value={adminForm.password}
                   onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
                   className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
@@ -790,7 +846,9 @@ export const PublicLanding = () => {
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  minLength={8}
+                  maxLength={32}
+                  placeholder="Min 8 to 32 characters"
                   value={inspectorForm.password}
                   onChange={(e) => setInspectorForm({ ...inspectorForm, password: e.target.value })}
                   className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
@@ -884,7 +942,9 @@ export const PublicLanding = () => {
                     <input
                       type="password"
                       required
-                      placeholder="••••••••"
+                      minLength={8}
+                      maxLength={32}
+                      placeholder="Min 8 to 32 characters"
                       value={merchantLoginForm.password}
                       onChange={(e) => setMerchantLoginForm({ ...merchantLoginForm, password: e.target.value })}
                       className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
@@ -945,21 +1005,42 @@ export const PublicLanding = () => {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. S. Ramesh"
+                      minLength={2}
+                      maxLength={50}
+                      pattern="^[A-Za-z\s]+$"
+                      title="Name can contain letters and spaces only"
+                      placeholder="e.g. S Ramesh"
                       value={newStoreForm.ownerName}
-                      onChange={(e) => setNewStoreForm({ ...newStoreForm, ownerName: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^[A-Za-z\s]*$/.test(val)) {
+                          setNewStoreForm({ ...newStoreForm, ownerName: val });
+                        }
+                      }}
                       className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Contact Phone</label>
-                    <input
-                      type="text"
-                      placeholder="+91 98450 11223"
-                      value={newStoreForm.phone}
-                      onChange={(e) => setNewStoreForm({ ...newStoreForm, phone: e.target.value })}
-                      className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
-                    />
+                    <label className="block font-bold text-gray-700 mb-1">Contact Phone * (10 Digits)</label>
+                    <div className="flex rounded-xl border border-[#DADDD3] bg-[#FAF8F4] overflow-hidden focus-within:border-[#023625]">
+                      <span className="px-3 py-2.5 bg-gray-100 text-gray-600 font-semibold text-xs border-r border-[#DADDD3] flex items-center select-none">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        pattern="[0-9]{10}"
+                        title="Please enter exactly 10 digits"
+                        placeholder="9845011223"
+                        value={newStoreForm.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setNewStoreForm({ ...newStoreForm, phone: digits });
+                        }}
+                        className="w-full bg-transparent p-2.5 text-xs text-gray-900 focus:outline-none font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -976,11 +1057,13 @@ export const PublicLanding = () => {
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Create Password *</label>
+                    <label className="block font-bold text-gray-700 mb-1">Create Password * (8-32 chars)</label>
                     <input
                       type="password"
                       required
-                      placeholder="••••••••"
+                      minLength={8}
+                      maxLength={32}
+                      placeholder="Min 8 to 32 characters"
                       value={newStoreForm.password}
                       onChange={(e) => setNewStoreForm({ ...newStoreForm, password: e.target.value })}
                       className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
