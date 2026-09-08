@@ -85,10 +85,17 @@ model Instrument {
   type                   String   @default("counter_scale")
   class                  String   @default("Class III Commercial")
   photoUrl               String?
+  verificationRuleId     String?
+  verificationMode       String   @default("Field / In-Situ") // "Field / In-Situ" | "At Test Centre"
+  isRepairedOrModified   Boolean  @default(false)
+  verificationInterval   Int      @default(12) // in months
+  lastVerifiedAt         DateTime?
+  nextDueAt              DateTime?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
   verifications          Verification[]
+  inspections            InspectionRecord[]
 }
 
 model Verification {
@@ -137,6 +144,100 @@ model Certificate {
   remarks             String   @default("4-Point MPE tested with Class M1 reference weights. Holographic wire seal applied.")
   qrCodeUrl           String?
   testObservationsRaw String?  // JSON stringified 4-point calibration loads
+  applicableStandard  String?  @default("Legal Metrology (General) Rules, 2011 - Seventh Schedule")
+  ruleName            String?  @default("Electronic Weighing Instrument Verification Standard")
+  verificationMode    String?  @default("Field / In-Situ")
+  status              String   @default("VALID") // VALID | EXPIRING_SOON | EXPIRED | REVOKED
+  validUntilTimestamp DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+model VerificationRule {
+  id                   String   @id @default(uuid())
+  name                 String
+  instrumentType       String   // e.g. "Electronic Weighing Instrument", "Weighbridge", "Counter Scale", "Fuel Dispenser"
+  instrumentClass      String   @default("Class III Commercial") // Category / Accuracy Class
+  manufacturer         String?
+  capacityMin          Float    @default(0)
+  capacityMax          Float    @default(30)
+  unit                 String   @default("kg")
+  applicableStandard   String   // e.g. "Legal Metrology (General) Rules, 2011 - Seventh Schedule"
+  verificationInterval Int      @default(12) // Months: 6, 12, 24, 36
+  isActive             Boolean  @default(true)
+  description          String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  checks               VerificationRuleCheck[]
+  inspections          InspectionRecord[]
+}
+
+model VerificationRuleCheck {
+  id               String   @id @default(uuid())
+  ruleId           String
+  rule             VerificationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  checkType        String   @default("checklist") // checklist | measurement | physical | evidence | gps
+  isMandatory      Boolean  @default(true)
+  requiresPhoto    Boolean  @default(false)
+  requiresDocument Boolean  @default(false)
+  sortOrder        Int      @default(0)
+
+  criteria         VerificationRuleCriterion[]
+  results          InspectionCheckResult[]
+}
+
+model VerificationRuleCriterion {
+  id              String   @id @default(uuid())
+  checkId         String
+  check           VerificationRuleCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  parameter       String   // e.g. "Accuracy at Nominal Load (10 kg)"
+  referenceValue  Float    // e.g. 10.000
+  tolerance       Float    // e.g. 0.005
+  unit            String   @default("kg")
+  comparisonType  String   @default("within_tolerance") // within_tolerance, greater_than_min, less_than_max, within_range, equal_to
+  isMandatory     Boolean  @default(true)
+}
+
+model InspectionRecord {
+  id                  String   @id @default(uuid())
+  verificationId      String?
+  instrumentId        String?
+  instrument          Instrument? @relation(fields: [instrumentId], references: [id], onDelete: SetNull)
+  shopId              String?
+  ruleId              String?
+  rule                VerificationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  officerName         String   @default("Insp. R. Deshmukh")
+  officerBadge        String   @default("LM-BLR-402")
+  verificationMode    String   @default("Field / In-Situ") // "Field / In-Situ" | "At Test Centre"
+  isRepairedOrModified Boolean @default(false)
+  gpsLocation         String?  // lat, lng
+  overallResult       String   // PASS | FAIL
+  failureReasons      Json?    // Array of failure string reasons
+  observations        String?
+  certificateId       String?
+  evidencePhotos      Json?    // Array of photo objects / names
+  evidenceDocuments   Json?    // Array of doc objects / names
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  checkResults        InspectionCheckResult[]
+}
+
+model InspectionCheckResult {
+  id              String   @id @default(uuid())
+  inspectionId    String
+  inspection      InspectionRecord @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  checkId         String?
+  check           VerificationRuleCheck? @relation(fields: [checkId], references: [id], onDelete: SetNull)
+  checkName       String
+  observedValue   Float?
+  referenceValue  Float?
+  calculatedError Float?
+  toleranceLimit  Float?
+  result          String   // PASS | FAIL | NA
+  remarks         String?
+}
+
