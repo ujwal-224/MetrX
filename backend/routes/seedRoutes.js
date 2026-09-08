@@ -399,72 +399,71 @@ export const seedDatabase = async () => {
     });
   }
 
-  // 3. Seed Demo Certificates (1 Valid, 1 Expired) for Public Verification
+  // 3. Seed Demo Certificates (1 Valid, 1 Expired) for Public Verification if a shop exists
   try {
-    const validCert = await prisma.certificate.findFirst({
-      where: { certId: 'CERT-KA-2025-9921' }
-    });
-    if (!validCert) {
-      const shop = await prisma.shop.findFirst();
-      const shopId = shop ? shop.id : 'shop-demo-1';
-      const futureDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
-      await prisma.certificate.create({
-        data: {
-          id: 'cert-demo-valid-9921',
-          certId: 'CERT-KA-2025-9921',
-          ruleForm: 'Form XVII (Rule 14)',
-          actYear: 'Legal Metrology Act, 2009',
-          shopId,
-          instrumentModel: 'Contech CA-30 (Max 30kg, e=1g)',
-          serialNumber: '#KA-BLR-88412',
-          verifiedDate: '13 Jan 2025',
-          validUntil: futureDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-          validUntilTimestamp: futureDate,
-          inspectorSeal: 'SEAL-LM-BLR-0428',
-          inspectorName: 'Insp. R. Deshmukh',
-          inspectorBadge: 'LM-BLR-402',
-          statusBadge: 'CERTIFIED & COMPLIANT',
-          workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
-          applicableStandard: 'Legal Metrology (General) Rules, 2011 - Seventh Schedule (Non-Automatic Weighing Instruments)',
-          ruleName: 'Electronic Non-Automatic Weighing Instruments (Countertop Scale)',
-          verificationMode: 'Field / In-Situ',
-          status: 'VALID',
-          remarks: 'Physical verification passed. Holographic seal affixed.'
-        }
+    const shop = await prisma.shop.findFirst();
+    if (shop) {
+      const validCert = await prisma.certificate.findFirst({
+        where: { certId: 'CERT-KA-2025-9921' }
       });
-    }
+      if (!validCert) {
+        const futureDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+        await prisma.certificate.create({
+          data: {
+            id: 'cert-demo-valid-9921',
+            certId: 'CERT-KA-2025-9921',
+            ruleForm: 'Form XVII (Rule 14)',
+            actYear: 'Legal Metrology Act, 2009',
+            shopId: shop.id,
+            instrumentModel: 'Contech CA-30 (Max 30kg, e=1g)',
+            serialNumber: '#KA-BLR-88412',
+            verifiedDate: '13 Jan 2025',
+            validUntil: futureDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            validUntilTimestamp: futureDate,
+            inspectorSeal: 'SEAL-LM-BLR-0428',
+            inspectorName: 'Insp. R. Deshmukh',
+            inspectorBadge: 'LM-BLR-402',
+            statusBadge: 'CERTIFIED & COMPLIANT',
+            workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
+            applicableStandard: 'Legal Metrology (General) Rules, 2011 - Seventh Schedule (Non-Automatic Weighing Instruments)',
+            ruleName: 'Electronic Non-Automatic Weighing Instruments (Countertop Scale)',
+            verificationMode: 'Field / In-Situ',
+            status: 'VALID',
+            remarks: 'Physical verification passed. Holographic seal affixed.'
+          }
+        });
+      }
 
-    const expiredCert = await prisma.certificate.findFirst({
-      where: { certId: 'CERT-KA-2024-DEMO-EXPIRED' }
-    });
-    if (!expiredCert) {
-      const shop = await prisma.shop.findFirst();
-      const shopId = shop ? shop.id : 'shop-demo-1';
-      const pastDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
-      await prisma.certificate.create({
-        data: {
-          id: 'cert-demo-expired-2024',
-          certId: 'CERT-KA-2024-DEMO-EXPIRED',
-          ruleForm: 'Form XVII (Rule 14)',
-          actYear: 'Legal Metrology Act, 2009',
-          shopId,
-          instrumentModel: 'Essae DS-252 Counter Scale (Max 15kg)',
-          serialNumber: '#KA-BLR-44102',
-          verifiedDate: '15 Jan 2024',
-          validUntil: pastDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-          validUntilTimestamp: pastDate,
-          inspectorSeal: 'SEAL-LM-BLR-0199',
-          inspectorName: 'Insp. R. Deshmukh',
-          inspectorBadge: 'LM-BLR-402',
-          statusBadge: '✕ EXPIRED',
-          workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
-          applicableStandard: 'Legal Metrology (General) Rules, 2011 - Seventh Schedule',
-          ruleName: 'Electronic Non-Automatic Weighing Instruments (Countertop Scale)',
-          verificationMode: 'Field / In-Situ',
-          status: 'EXPIRED',
-          remarks: 'Annual statutory verification term has concluded. Re-verification required under Section 24.'
-        }
+      const expiredCert = await prisma.certificate.findFirst({
+        where: { certId: 'CERT-KA-2024-DEMO-EXPIRED' }
       });
+      if (!expiredCert) {
+        const pastDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+        await prisma.certificate.create({
+          data: {
+            id: 'cert-demo-expired-2024',
+            certId: 'CERT-KA-2024-DEMO-EXPIRED',
+            ruleForm: 'Form XVII (Rule 14)',
+            actYear: 'Legal Metrology Act, 2009',
+            shopId: shop.id,
+            instrumentModel: 'Essae DS-252 Counter Scale (Max 15kg)',
+            serialNumber: '#KA-BLR-44102',
+            verifiedDate: '15 Jan 2024',
+            validUntil: pastDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+            validUntilTimestamp: pastDate,
+            inspectorSeal: 'SEAL-LM-BLR-0199',
+            inspectorName: 'Insp. R. Deshmukh',
+            inspectorBadge: 'LM-BLR-402',
+            statusBadge: '✕ EXPIRED',
+            workingStandardRef: 'STD/KA/2024/0081 (Calibrated at NPL)',
+            applicableStandard: 'Legal Metrology (General) Rules, 2011 - Seventh Schedule',
+            ruleName: 'Electronic Non-Automatic Weighing Instruments (Countertop Scale)',
+            verificationMode: 'Field / In-Situ',
+            status: 'EXPIRED',
+            remarks: 'Annual statutory verification term has concluded. Re-verification required under Section 24.'
+          }
+        });
+      }
     }
   } catch (err) {
     console.warn('[Seed Demo Certs Error]', err.message);
