@@ -649,14 +649,25 @@ export const AdminDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Phone Number (+91)</label>
-                  <input
-                    type="tel"
-                    placeholder="+91 98450 00000"
-                    value={newInspForm.phone}
-                    onChange={(e) => setNewInspForm({ ...newInspForm, phone: e.target.value })}
-                    className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
-                  />
+                  <label className="block font-bold text-gray-700 mb-1">Phone Number (10 Digits)</label>
+                  <div className="flex rounded-xl border border-[#DADDD3] bg-[#FAF8F4] overflow-hidden focus-within:border-[#023625]">
+                    <span className="px-3 py-2.5 bg-gray-100 text-gray-600 font-semibold text-xs border-r border-[#DADDD3] flex items-center select-none">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      title="Please enter exactly 10 digits"
+                      placeholder="9845000000"
+                      value={newInspForm.phone}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setNewInspForm({ ...newInspForm, phone: digits });
+                      }}
+                      className="w-full bg-transparent p-2.5 text-xs text-gray-900 focus:outline-none font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 

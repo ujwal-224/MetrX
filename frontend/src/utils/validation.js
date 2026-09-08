@@ -25,8 +25,8 @@ export const validateName = (name) => {
 };
 
 /**
- * Validates a mobile number: must start with +91 followed by 10 digits.
- * Supports spaces or hyphens like +91 98450 11223 or +919845011223.
+ * Validates a mobile number: accepts exactly 10 numeric digits (or +91 followed by 10 digits).
+ * Ensures only digits are allowed and exactly 10 numbers.
  * @param {string} phone 
  * @returns {{ isValid: boolean, error?: string, formatted?: string }}
  */
@@ -34,21 +34,33 @@ export const validatePhone = (phone) => {
   if (!phone || !phone.trim()) {
     return { isValid: false, error: 'Mobile number is required' };
   }
-  const clean = phone.trim();
-  if (!clean.startsWith('+91')) {
-    return { isValid: false, error: 'Mobile number must start with country code +91 (e.g. +91 9876543210)' };
+  const raw = phone.trim();
+  
+  // Extract pure digits and remove leading +91 or +
+  let cleanDigits = raw;
+  if (cleanDigits.startsWith('+91')) {
+    cleanDigits = cleanDigits.slice(3);
+  } else if (cleanDigits.startsWith('91') && cleanDigits.length === 12) {
+    cleanDigits = cleanDigits.slice(2);
+  } else if (cleanDigits.startsWith('+')) {
+    cleanDigits = cleanDigits.slice(1);
   }
   
-  // Extract the digits after +91
-  const afterPrefix = clean.slice(3).replace(/[\s-]/g, '');
-  if (!/^\d+$/.test(afterPrefix)) {
-    return { isValid: false, error: 'Mobile number must contain only digits after +91' };
-  }
-  if (afterPrefix.length !== 10) {
-    return { isValid: false, error: `Mobile number must have exactly 10 digits after +91 (got ${afterPrefix.length})` };
+  cleanDigits = cleanDigits.replace(/[\s-]/g, '');
+
+  if (!/^\d+$/.test(cleanDigits)) {
+    return { isValid: false, error: 'Mobile number must contain only numbers (no letters or symbols)' };
   }
   
-  return { isValid: true, formatted: `+91 ${afterPrefix.slice(0, 5)} ${afterPrefix.slice(5)}` };
+  if (cleanDigits.length !== 10) {
+    return { isValid: false, error: `Mobile number must be exactly 10 digits (currently ${cleanDigits.length} digits)` };
+  }
+  
+  return { 
+    isValid: true, 
+    formatted: `+91 ${cleanDigits.slice(0, 5)} ${cleanDigits.slice(5)}`,
+    digits: cleanDigits
+  };
 };
 
 /**
