@@ -245,6 +245,158 @@ export const seedDatabase = async () => {
         }
       }
     });
+
+    // Rule 4: Commercial Beam Scale & Counter Machine
+    await prisma.verificationRule.create({
+      data: {
+        id: 'rule-beam-scale-class4',
+        name: 'Commercial Beam Scale & Counter Machine',
+        instrumentType: 'Mechanical Beam Scale / Counter Machine',
+        instrumentClass: 'Class III / Class IV Commercial General',
+        manufacturer: 'BIS / Directorate Approved Indian Manufacturers',
+        capacityMin: 0,
+        capacityMax: 50,
+        unit: 'kg',
+        applicableStandard: 'Legal Metrology (General) Rules, 2011 - Sixth Schedule (Beam Scales & Counter Machines)',
+        verificationInterval: 12,
+        isActive: true,
+        description: 'Statutory verification specifications for commercial class beam balances, pans, suspension linkages and counter machines.',
+        checks: {
+          create: [
+            {
+              name: 'Knife Edge & Agate Bearing Friction Inspection',
+              description: 'Verify knife edge sharpness, cleanliness of agate bearings, and free oscillation of fulcrum assembly.',
+              checkType: 'physical',
+              isMandatory: true,
+              requiresPhoto: false,
+              requiresDocument: false,
+              sortOrder: 1
+            },
+            {
+              name: 'Beam Balance & Pointer Center Alignment',
+              description: 'Inspect unloaded resting equilibrium and indicator tongue alignment with zero index marking.',
+              checkType: 'checklist',
+              isMandatory: true,
+              requiresPhoto: false,
+              requiresDocument: false,
+              sortOrder: 2
+            },
+            {
+              name: 'Sensibility Reciprocal (SR) Test at 10.0 kg Load',
+              description: 'Verify pointer displacement when adding extra weight equal to maximum permissible SR limit.',
+              checkType: 'measurement',
+              isMandatory: true,
+              requiresPhoto: true,
+              requiresDocument: false,
+              sortOrder: 3,
+              criteria: {
+                create: [
+                  {
+                    parameter: 'Sensibility Reciprocal Load (10.000 kg)',
+                    referenceValue: 10.0,
+                    tolerance: 0.01,
+                    unit: 'kg',
+                    comparisonType: 'within_tolerance',
+                    isMandatory: true
+                  }
+                ]
+              }
+            },
+            {
+              name: 'Lead Stamping Plug & Inspector Punch Mark',
+              description: 'Ensure official inspector stamp punch is clearly indented into lead balancing plug of beam arms.',
+              checkType: 'checklist',
+              isMandatory: true,
+              requiresPhoto: true,
+              requiresDocument: false,
+              sortOrder: 4
+            }
+          ]
+        }
+      }
+    });
+
+    // Rule 5: Automated Liquid Fuel Dispensing Unit
+    await prisma.verificationRule.create({
+      data: {
+        id: 'rule-fuel-dispenser-sch8',
+        name: 'Automated Liquid Fuel Dispensing Unit (Petrol/Diesel)',
+        instrumentType: 'Liquid Fuel Dispenser',
+        instrumentClass: 'Schedule VIII Accuracy Class 0.5',
+        manufacturer: 'Gilbarco Veeder-Root / Tokheim / Midco / Wayne',
+        capacityMin: 0,
+        capacityMax: 100,
+        unit: 'L',
+        applicableStandard: 'Legal Metrology (General) Rules, 2011 - Schedule VIII (Measuring Systems for Liquids)',
+        verificationInterval: 12,
+        isActive: true,
+        description: 'Statutory verification rules and volumetric delivery testing for retail petrol & diesel dispensing stations.',
+        checks: {
+          create: [
+            {
+              name: 'Totalizer Electronic Display & Pulse Interface Check',
+              description: 'Verify electro-mechanical and non-resettable electronic totalizer digits, backlight, and rate calculation.',
+              checkType: 'checklist',
+              isMandatory: true,
+              requiresPhoto: true,
+              requiresDocument: false,
+              sortOrder: 1
+            },
+            {
+              name: '5.000 Liter Standard Volumetric Proving Test',
+              description: 'Dispense 5.000 L into certified conical standard capacity measure and verify delivery level at eye height.',
+              checkType: 'measurement',
+              isMandatory: true,
+              requiresPhoto: true,
+              requiresDocument: false,
+              sortOrder: 2,
+              criteria: {
+                create: [
+                  {
+                    parameter: '5.000 L Delivery Standard Accuracy',
+                    referenceValue: 5.0,
+                    tolerance: 0.025,
+                    unit: 'L',
+                    comparisonType: 'within_tolerance',
+                    isMandatory: true
+                  }
+                ]
+              }
+            },
+            {
+              name: '20.000 Liter Full Flow Volumetric Proving Test',
+              description: 'Perform full flow delivery rate test at 30 L/min using calibrated 20-liter proving measure.',
+              checkType: 'measurement',
+              isMandatory: true,
+              requiresPhoto: true,
+              requiresDocument: false,
+              sortOrder: 3,
+              criteria: {
+                create: [
+                  {
+                    parameter: '20.000 L High Flow Delivery Standard',
+                    referenceValue: 20.0,
+                    tolerance: 0.05,
+                    unit: 'L',
+                    comparisonType: 'within_tolerance',
+                    isMandatory: true
+                  }
+                ]
+              }
+            },
+            {
+              name: 'Meter Calibration Unit Physical Lead Wire Seal',
+              description: 'Inspect physical lead wire seal through piston meter adjustment gear to prevent unauthorized fuel delivery tampering.',
+              checkType: 'checklist',
+              isMandatory: true,
+              requiresPhoto: true,
+              requiresDocument: false,
+              sortOrder: 4
+            }
+          ]
+        }
+      }
+    });
   }
 
   // 3. Seed Demo Certificates (1 Valid, 1 Expired) for Public Verification

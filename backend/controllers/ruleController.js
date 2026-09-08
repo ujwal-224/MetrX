@@ -4,6 +4,7 @@ import {
   calculateValidity
 } from '../services/rulesEngineService.js';
 import { generateCertificateQR } from '../services/qrService.js';
+import { seedDatabase } from '../routes/seedRoutes.js';
 
 // @desc    Get all verification rules
 // @route   GET /api/verification-rules
@@ -12,7 +13,7 @@ export const getRules = async (req, res) => {
     const { activeOnly } = req.query;
     const where = activeOnly === 'true' ? { isActive: true } : {};
 
-    const rules = await prisma.verificationRule.findMany({
+    let rules = await prisma.verificationRule.findMany({
       where,
       include: {
         checks: {
@@ -30,6 +31,33 @@ export const getRules = async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
+
+    // Auto-seed default statutory rules if database is empty
+    if (rules.length === 0) {
+      try {
+        await seedDatabase();
+        rules = await prisma.verificationRule.findMany({
+          where,
+          include: {
+            checks: {
+              include: {
+                criteria: true
+              },
+              orderBy: { sortOrder: 'asc' }
+            },
+            _count: {
+              select: {
+                checks: true,
+                inspections: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+      } catch (seedErr) {
+        console.warn('[Auto-Seed Warning]', seedErr.message);
+      }
+    }
 
     return res.json({
       success: true,

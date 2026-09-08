@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { evaluateDocumentCompliance } from '../utils/documentRulesEngine';
 
 export const InspectorSchedule = () => {
   const {
@@ -20,6 +21,7 @@ export const InspectorSchedule = () => {
   const [previewDoc, setPreviewDoc] = useState(null);
   const [blobUrl, setBlobUrl] = useState(null);
   const [inspectorNotes, setInspectorNotes] = useState('All 5 statutory documents and serial specifications verified with State Registry.');
+  const [directionsModalVisit, setDirectionsModalVisit] = useState(null);
 
   // Convert Base64 / Data URLs to Blob URLs so browsers can render PDFs without iframe sandbox blocking
   React.useEffect(() => {
@@ -230,12 +232,16 @@ export const InspectorSchedule = () => {
               const docMap = docInfo.docs || {};
               const uploadedCount = Object.values(docMap).filter((d) => d && (d.uploaded || d.fileName || (typeof d === 'string' && d.length > 0))).length;
               const docState = docInfo.status || (uploadedCount > 0 ? 'pending_review' : 'not_uploaded');
+              const isFraud = docState === 'fraud';
+              const ruleEval = docInfo.ruleEvaluation;
 
               return (
                 <article
                   key={visit.id}
                   className={`bg-white rounded-2xl p-5 sm:p-6 transition-all shadow-xs relative overflow-hidden ${
-                    isCompleted
+                    isFraud
+                      ? 'border-2 border-red-400 bg-red-50/20'
+                      : isCompleted
                       ? 'border border-emerald-200 bg-emerald-50/20'
                       : isNext
                       ? 'border-2 border-emerald-700 ring-4 ring-emerald-700/10'
@@ -243,8 +249,9 @@ export const InspectorSchedule = () => {
                   }`}
                 >
                   {/* Left Accent Stripe */}
-                  {isNext && <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#E0702A]"></div>}
-                  {isCompleted && <div className="absolute left-0 top-0 bottom-0 w-2 bg-emerald-500"></div>}
+                  {isFraud && <div className="absolute left-0 top-0 bottom-0 w-2 bg-red-600"></div>}
+                  {!isFraud && isNext && <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#E0702A]"></div>}
+                  {!isFraud && isCompleted && <div className="absolute left-0 top-0 bottom-0 w-2 bg-emerald-500"></div>}
 
                   {/* Top Card Row: Time Slot & Status */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100 mb-3">
@@ -254,12 +261,17 @@ export const InspectorSchedule = () => {
                         <span>{visit.timeSlot}</span>
                       </div>
 
-                      {isNext && (
+                      {isFraud ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-red-900 bg-red-100 border border-red-300 px-2 py-0.5 rounded-full">
+                          <span className="material-symbols-outlined text-xs text-red-700">gavel</span>
+                          Rules Non-Compliant (Fraud)
+                        </span>
+                      ) : isNext ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#E0702A]"></span>
                           {visit.timeRelative}
                         </span>
-                      )}
+                      ) : null}
 
                       {isCompleted && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wider text-emerald-900 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
@@ -270,7 +282,12 @@ export const InspectorSchedule = () => {
                     </div>
 
                     {/* Status Badge */}
-                    {isCompleted ? (
+                    {isFraud ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
+                        <span className="material-symbols-outlined text-xs">report</span>
+                        <span>Visit Blocked (Fraud)</span>
+                      </span>
+                    ) : isCompleted ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                         <span className="material-symbols-outlined text-xs">verified</span>
                         <span>{visit.status}</span>
@@ -309,7 +326,9 @@ export const InspectorSchedule = () => {
                     </div>
 
                     {/* Document Scrutiny & Specs Strip */}
-                    <div className="mt-2 p-3 bg-gray-50 rounded-xl border border-gray-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-gray-700">
+                    <div className={`mt-2 p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+                      isFraud ? 'bg-red-50/70 border-red-200 text-red-900' : 'bg-gray-50 border-gray-200/60 text-gray-700'
+                    }`}>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         <div className="flex items-center gap-1.5">
                           <span className="material-symbols-outlined text-base text-emerald-800">scale</span>
@@ -324,21 +343,21 @@ export const InspectorSchedule = () => {
                       </div>
 
                       {/* Document Scrutiny Action & Status Badge */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         {docState === 'verified' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-bold text-[11px] border border-emerald-300">
                             <span className="material-symbols-outlined text-xs text-emerald-700">verified</span>
                             <span>5 Docs Verified</span>
                           </span>
-                        ) : docState === 'fraud' ? (
+                        ) : isFraud ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-100 text-red-900 font-bold text-[11px] border border-red-300">
                             <span className="material-symbols-outlined text-xs text-red-700">report</span>
-                            <span>Flagged Fraud</span>
+                            <span>Rules Failed: FRAUD</span>
                           </span>
                         ) : uploadedCount > 0 ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px] border border-amber-300">
                             <span className="material-symbols-outlined text-xs text-amber-700">pending</span>
-                            <span>{uploadedCount}/5 Docs Uploaded</span>
+                            <span>{ruleEval?.isCompliant ? 'Rules Matched (5/5)' : `${uploadedCount}/5 Uploaded`}</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 font-bold text-[11px] border border-gray-300">
@@ -349,11 +368,15 @@ export const InspectorSchedule = () => {
 
                         <button
                           onClick={() => openDocReview(visit)}
-                          className="px-3 py-1 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-xs font-bold text-[#023625] shadow-xs flex items-center gap-1 transition-colors cursor-pointer"
+                          className={`px-3 py-1 border rounded-lg text-xs font-bold shadow-xs flex items-center gap-1 transition-colors cursor-pointer ${
+                            isFraud
+                              ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
+                              : 'bg-white hover:bg-gray-100 border-gray-300 text-[#023625]'
+                          }`}
                           type="button"
                         >
                           <span className="material-symbols-outlined text-sm">description</span>
-                          <span>{uploadedCount > 0 ? `Review Docs (${uploadedCount}/5)` : 'Inspect Docs (Pending)'}</span>
+                          <span>{isFraud ? 'Review Fraud Violations' : uploadedCount > 0 ? `Review Docs (${uploadedCount}/5)` : 'Inspect Docs (Pending)'}</span>
                         </button>
                       </div>
                     </div>
@@ -367,15 +390,25 @@ export const InspectorSchedule = () => {
 
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <button
-                        onClick={() => showToast(`Navigation route plotted to ${visit.shopName}`, 'info')}
-                        className="flex-1 sm:flex-initial justify-center px-3 py-2 border border-gray-300 hover:bg-gray-50 rounded-lg text-xs font-semibold text-gray-700 flex items-center gap-1.5 transition-colors"
+                        onClick={() => setDirectionsModalVisit(visit)}
+                        className="flex-1 sm:flex-initial justify-center px-3.5 py-2 border border-emerald-600/30 hover:border-emerald-600 bg-emerald-50/50 hover:bg-emerald-100/60 rounded-lg text-xs font-bold text-[#023625] flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95"
                         type="button"
+                        title="View establishment address and navigation route"
                       >
-                        <span className="material-symbols-outlined text-base text-gray-500">near_me</span>
+                        <span className="material-symbols-outlined text-base text-emerald-800">near_me</span>
                         <span>Directions</span>
                       </button>
 
-                      {isCompleted ? (
+                      {isFraud ? (
+                        <button
+                          onClick={() => showToast('Action Prohibited: Establishment failed document inspection rules and is flagged as FRAUD. Field inspector time is protected from unverified applicants.', 'error')}
+                          className="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-red-100 border border-red-300 text-red-800 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-not-allowed opacity-90"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-base text-red-700">block</span>
+                          <span>Blocked (Fraud Flagged)</span>
+                        </button>
+                      ) : isCompleted ? (
                         <button
                           onClick={() => handleViewVisitCertificate(visit)}
                           className="flex-1 sm:flex-initial justify-center px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all"
@@ -446,6 +479,64 @@ export const InspectorSchedule = () => {
                 <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>
+
+            {/* Automated Inspection Rules Pre-Check Panel */}
+            {(() => {
+              const ruleEval = selectedShopDocs.ruleEvaluation || evaluateDocumentCompliance(selectedShopDocs.docs || {}, selectedShopDocs, selectedShopDocs);
+              const isFraud = selectedShopDocs.status === 'fraud' || !ruleEval.isCompliant;
+              const isVerified = selectedShopDocs.status === 'verified';
+              const isPassedRules = ruleEval.isCompliant;
+
+              return (
+                <div className={`p-4 rounded-xl border flex flex-col gap-2.5 ${
+                  isFraud
+                    ? 'bg-red-50 border-red-300 text-red-950'
+                    : isPassedRules || isVerified
+                    ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
+                    : 'bg-amber-50 border-amber-300 text-amber-950'
+                }`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className={`material-symbols-outlined text-xl ${
+                        isFraud ? 'text-red-700' : isPassedRules || isVerified ? 'text-emerald-700' : 'text-amber-700'
+                      }`}>
+                        {isFraud ? 'gavel' : isPassedRules || isVerified ? 'verified_user' : 'rule'}
+                      </span>
+                      <span className="text-xs font-extrabold uppercase tracking-wide">
+                        Automated Inspection Rules: {isFraud ? 'NON-COMPLIANT / FRAUD DETECTED' : isPassedRules || isVerified ? 'ALL CRITERIA MATCHED (PASS)' : 'PRE-SCREENING IN PROGRESS'}
+                      </span>
+                    </div>
+                    <span className={`text-[11px] font-bold font-mono px-2.5 py-0.5 rounded-full ${
+                      isFraud ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'
+                    }`}>
+                      Score: {ruleEval.complianceScore != null ? `${ruleEval.complianceScore}%` : isVerified ? '100%' : '0%'} ({ruleEval.matchedCount || (isVerified ? 5 : 0)}/5 Criteria)
+                    </span>
+                  </div>
+
+                  {/* Summary & Reasons */}
+                  <p className="text-xs leading-relaxed font-medium">
+                    {ruleEval.summaryMessage || selectedShopDocs.remarks || 'Automated verification against Legal Metrology Rules 2011.'}
+                  </p>
+
+                  {/* Violation details if any */}
+                  {((ruleEval.violations && ruleEval.violations.length > 0) || (ruleEval.fraudIndicators && ruleEval.fraudIndicators.length > 0)) && (
+                    <div className="pt-2 border-t border-red-200 flex flex-col gap-1.5">
+                      <span className="text-[11px] font-bold uppercase text-red-800">
+                        Detected Discrepancies & Violations:
+                      </span>
+                      <ul className="text-xs text-red-900 list-disc list-inside space-y-1">
+                        {(ruleEval.fraudIndicators && ruleEval.fraudIndicators.length > 0 ? ruleEval.fraudIndicators : ruleEval.violations).map((r, i) => (
+                          <li key={i} className="leading-snug">{r}</li>
+                        ))}
+                      </ul>
+                      <span className="text-[11px] font-medium text-red-700 italic mt-0.5">
+                        * Under Statutory Inspection Rule 14: Non-matching submissions are flagged as fraud. Field visits are blocked to protect inspector time.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* 5 Uploaded Documents Inspection Grid */}
             <div className="flex flex-col gap-3">
@@ -870,7 +961,208 @@ export const InspectorSchedule = () => {
           </div>
         </div>
       )}
+
+      {/* 4. DIRECTIONS & FIELD NAVIGATION ROUTE MODAL */}
+      {directionsModalVisit && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+          onClick={() => setDirectionsModalVisit(null)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-gray-200 my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-4 bg-gradient-to-r from-[#023625] to-[#1a4b38] text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-9 h-9 rounded-xl bg-white/10 text-white flex items-center justify-center border border-white/20 shrink-0">
+                  <span className="material-symbols-outlined text-xl">near_me</span>
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-extrabold text-base text-white tracking-tight truncate">
+                    Directions &amp; Navigation Route
+                  </h3>
+                  <p className="text-xs text-emerald-200 truncate">
+                    En Route to: {directionsModalVisit.shopName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDirectionsModalVisit(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Close"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 text-xs text-gray-700">
+              {/* Destination Address Card */}
+              <div className="bg-emerald-50/50 border border-emerald-200 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-emerald-900 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md">
+                      <span className="material-symbols-outlined text-xs">storefront</span>
+                      Target Commercial Establishment
+                    </span>
+                    <h4 className="text-base font-bold text-gray-900 mt-1">
+                      {directionsModalVisit.shopName}
+                    </h4>
+                    <div className="flex items-start gap-1.5 text-xs text-gray-700 font-medium mt-1">
+                      <span className="material-symbols-outlined text-base text-[#023625] shrink-0 mt-0.5">location_on</span>
+                      <span className="font-semibold text-gray-900 leading-snug">
+                        {directionsModalVisit.address || `${directionsModalVisit.zone || activeZone}, Bengaluru`}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 pt-1">
+                      <span className="font-mono font-semibold">{directionsModalVisit.regNumber}</span>
+                      <span>•</span>
+                      <span>Jurisdiction: <strong>{directionsModalVisit.zone || activeZone}</strong></span>
+                      {directionsModalVisit.phone && (
+                        <>
+                          <span>•</span>
+                          <span>Contact: <strong>{directionsModalVisit.phone}</strong></span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const fullAddr = `${directionsModalVisit.shopName}, ${directionsModalVisit.address || directionsModalVisit.zone || activeZone}`;
+                      navigator.clipboard.writeText(fullAddr);
+                      showToast('Establishment address copied to clipboard!', 'success');
+                    }}
+                    className="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 rounded-lg font-bold text-xs shadow-2xs flex items-center gap-1 shrink-0 transition-all cursor-pointer"
+                    title="Copy full address to clipboard"
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-sm">content_copy</span>
+                    <span>Copy</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Transit & Distance Summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Est. Distance</span>
+                  <span className="text-base font-extrabold text-[#023625]">2.4 km</span>
+                  <span className="text-[10px] text-gray-500 block">Optimal Route</span>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Est. Time</span>
+                  <span className="text-base font-extrabold text-[#E0702A]">~8 mins</span>
+                  <span className="text-[10px] text-gray-500 block">Current Traffic</span>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Transit Mode</span>
+                  <span className="text-base font-extrabold text-gray-900">Enforcement Unit</span>
+                  <span className="text-[10px] text-gray-500 block">Official Vehicle / Bike</span>
+                </div>
+              </div>
+
+              {/* Turn-by-Turn Path Visualizer */}
+              <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl p-4 text-white relative overflow-hidden shadow-inner border border-gray-700">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-700/60 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                      Turn-by-Turn Field Route Plan
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-400">
+                    Jurisdiction: {directionsModalVisit.zone || activeZone}
+                  </span>
+                </div>
+
+                <div className="space-y-3 pl-1">
+                  <div className="flex items-start gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-emerald-400">
+                        A
+                      </span>
+                      <div className="w-0.5 h-7 bg-emerald-500/50 my-0.5"></div>
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="font-bold text-white text-xs">Origin: Field Inspector Headquarters ({activeZone})</p>
+                      <p className="text-[11px] text-gray-400">Depart from Legal Metrology Division sector post</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold ring-2 ring-amber-300">
+                        <span className="material-symbols-outlined text-xs">turn_right</span>
+                      </span>
+                      <div className="w-0.5 h-7 bg-emerald-500/50 my-0.5"></div>
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="font-bold text-white text-xs">Turn onto Commercial Circle Main Corridor (1.6 km)</p>
+                      <p className="text-[11px] text-gray-400">Proceed past Ward Market Square towards establishment pin</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className="w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-rose-400">
+                        B
+                      </span>
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="font-bold text-emerald-300 text-xs">Destination: {directionsModalVisit.shopName}</p>
+                      <p className="text-[11px] text-gray-300 font-medium">
+                        {directionsModalVisit.address || `${directionsModalVisit.zone || activeZone}, Bengaluru`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2">
+                {directionsModalVisit.phone && (
+                  <a
+                    href={`tel:${directionsModalVisit.phone}`}
+                    className="px-3.5 py-2 bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 rounded-xl text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-base text-[#023625]">call</span>
+                    <span>Call Store</span>
+                  </a>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  onClick={() => setDirectionsModalVisit(null)}
+                  className="px-4 py-2 border border-gray-300 hover:bg-gray-100 rounded-xl text-xs font-semibold text-gray-700 cursor-pointer"
+                  type="button"
+                >
+                  Close
+                </button>
+
+                <button
+                  onClick={() => {
+                    const destinationQuery = encodeURIComponent(`${directionsModalVisit.shopName}, ${directionsModalVisit.address || directionsModalVisit.zone || activeZone}`);
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${destinationQuery}`, '_blank');
+                  }}
+                  className="px-5 py-2 bg-[#023625] hover:bg-[#1a4b38] text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-base">map</span>
+                  <span>Open in Google Maps</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
+
 

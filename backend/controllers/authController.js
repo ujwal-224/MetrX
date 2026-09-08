@@ -254,20 +254,63 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Delete user account (Inspector / User)
+// @desc    Delete user account (Shop Owner / Inspector / User)
 // @route   DELETE /api/auth/users/:id
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.user.deleteMany({
+    const cleanId = (id || '').toLowerCase().trim();
+
+    // 1. Find user by ID or Email
+    const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { id },
-          { email: id }
+          { id: id },
+          { email: cleanId }
         ]
       }
     });
-    return res.json({ success: true, message: 'User deleted successfully' });
+
+    if (user) {
+      // Find all shops belonging to this user
+      const userShops = await prisma.shop.findMany({
+        where: {
+          OR: [
+            { ownerId: user.id },
+            { email: user.email }
+          ]
+        }
+      });
+
+      for (const s of userShops) {
+        await prisma.instrument.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+        await prisma.verification.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+        await prisma.certificate.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+        await prisma.shop.delete({ where: { id: s.id } }).catch(() => {});
+      }
+
+      await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+    }
+
+    // 2. Also check if id refers to a shopId, email, or merchantUid directly
+    const matchingShops = await prisma.shop.findMany({
+      where: {
+        OR: [
+          { id: id },
+          { email: cleanId },
+          { merchantUid: id }
+        ]
+      }
+    });
+
+    for (const s of matchingShops) {
+      await prisma.instrument.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+      await prisma.verification.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+      await prisma.certificate.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+      await prisma.shop.delete({ where: { id: s.id } }).catch(() => {});
+    }
+
+    return res.json({ success: true, message: 'Account and associated commercial establishment records permanently deleted from registry and database.' });
   } catch (error) {
     console.error('[Delete User Error]', error);
     return res.status(500).json({ success: false, message: error.message });

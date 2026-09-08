@@ -18,9 +18,16 @@ export const RequestVerification = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
-  const docData = documentSubmissions[currentMerchantId] || activeShop?.documentSubmissionData || {};
-  const docStatus = docData.status || activeShop?.documentStatus || verificationStatus.documentStatus || 'pending_review';
+  const docData = (documentSubmissions && documentSubmissions[currentMerchantId]) || activeShop?.documentSubmissionData || {};
+  const docStatus = docData.status || activeShop?.documentStatus || verificationStatus?.documentStatus || 'pending_review';
   const assignedInspectorName = activeShop?.assignedInspector || storeInfo?.assignedInspector || 'Insp. R. Deshmukh';
+  const currentStore = storeInfo || activeShop || { name: 'Commercial Store' };
+  const currentInst = activeInstrument || {
+    name: 'Commercial Weighing Instrument',
+    model: 'Contech CA-30 Series',
+    serialNumber: 'CT-2025-8849',
+    capacity: '30 kg'
+  };
   const isVerified = docStatus === 'verified';
   const isFraud = docStatus === 'fraud';
 
@@ -139,7 +146,7 @@ export const RequestVerification = () => {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-base md:text-lg text-gray-900 font-bold">
-                    {activeInstrument.name} ({activeInstrument.model})
+                    {currentInst.name} ({currentInst.model})
                   </span>
                   <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                     <span className="material-symbols-outlined text-xs">schedule</span>
@@ -147,11 +154,11 @@ export const RequestVerification = () => {
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                  <span>Serial: <strong className="text-gray-800 font-mono">{activeInstrument.serialNumber}</strong></span>
+                  <span>Serial: <strong className="text-gray-800 font-mono">{currentInst.serialNumber}</strong></span>
                   <span>•</span>
-                  <span>Capacity: <strong className="text-gray-800">{activeInstrument.capacity}</strong></span>
+                  <span>Capacity: <strong className="text-gray-800">{currentInst.capacity}</strong></span>
                   <span>•</span>
-                  <span>Premises: <strong className="text-gray-800">{storeInfo.name}</strong></span>
+                  <span>Premises: <strong className="text-gray-800">{currentStore.name}</strong></span>
                 </div>
               </div>
             </div>

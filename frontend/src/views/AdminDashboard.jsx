@@ -11,6 +11,7 @@ export const AdminDashboard = () => {
     handleToggleInspectorStatus,
     handleDeleteInspector,
     handleAssignInspectorToMerchant,
+    refreshBackendData,
     showToast,
     navigateTo
   } = useApp();
@@ -93,6 +94,21 @@ export const AdminDashboard = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={async () => {
+              if (refreshBackendData) {
+                await refreshBackendData();
+                showToast('Admin Directory & Live Operations synchronized from State Ledger.', 'success');
+              }
+            }}
+            className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            type="button"
+            title="Refresh from PostgreSQL Database"
+          >
+            <span className="material-symbols-outlined text-base text-gray-500">sync</span>
+            <span>Refresh Live Data</span>
+          </button>
+
           <button
             onClick={() => navigateTo('verification-rules')}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#023625] text-[#023625] hover:bg-emerald-50 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"

@@ -14,9 +14,15 @@ export const TrackStatus = () => {
   } = useApp();
 
   const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
-  const currentStep = verificationStatus.step || 2;
-  const docData = documentSubmissions[currentMerchantId] || activeShop?.documentSubmissionData || {};
-  const docStatus = docData.status || activeShop?.documentStatus || verificationStatus.documentStatus || 'pending_review';
+  const currentStep = verificationStatus?.step || 2;
+  const docData = (documentSubmissions && documentSubmissions[currentMerchantId]) || activeShop?.documentSubmissionData || {};
+  const docStatus = docData.status || activeShop?.documentStatus || verificationStatus?.documentStatus || 'pending_review';
+  const currentInst = activeInstrument || {
+    name: 'Commercial Weighing Instrument',
+    model: 'Contech CA-30 Series',
+    serialNumber: 'CT-2025-8849',
+    capacity: '30 kg'
+  };
 
   return (
     <main className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
@@ -38,7 +44,7 @@ export const TrackStatus = () => {
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-            Application Status • Ref #{verificationStatus.applicationRef}
+            Application Status • Ref #{verificationStatus?.applicationRef || 'METRX-LMIS-PENDING'}
           </span>
         </div>
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
@@ -59,10 +65,10 @@ export const TrackStatus = () => {
             </div>
             <div>
               <div className="text-sm sm:text-base font-bold text-gray-900">
-                {activeInstrument.name} ({activeInstrument.model})
+                {currentInst.name} ({currentInst.model})
               </div>
               <span className="text-[11px] sm:text-xs text-gray-500 font-mono">
-                Serial: {activeInstrument.serialNumber} • Capacity: {activeInstrument.capacity}
+                Serial: {currentInst.serialNumber} • Capacity: {currentInst.capacity}
               </span>
             </div>
           </div>

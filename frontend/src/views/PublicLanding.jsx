@@ -118,6 +118,10 @@ export const PublicLanding = () => {
       showToast('Please provide store / establishment name', 'error');
       return;
     }
+    if (!newStoreForm.address.trim()) {
+      showToast('Please provide store / establishment address & landmark', 'error');
+      return;
+    }
     const nameCheck = validateName(newStoreForm.ownerName);
     if (!nameCheck.isValid) {
       showToast(`Owner Name: ${nameCheck.error}`, 'error');
@@ -205,41 +209,6 @@ export const PublicLanding = () => {
                     <span>{t('hero.verifyBtn', 'Verify')}</span>
                   </button>
                 </form>
-
-                {/* Quick Test Verification Chips */}
-                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap text-[11px] text-gray-500">
-                  <span className="font-semibold text-gray-600">Quick Test QR / Cert:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCertInput('CERT-KA-2025-9921');
-                      handleSearchCertificate('CERT-KA-2025-9921');
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-colors font-medium"
-                  >
-                    ✓ Valid Scale
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCertInput('CERT-KA-2024-DEMO-EXPIRED');
-                      handleSearchCertificate('CERT-KA-2024-DEMO-EXPIRED');
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 cursor-pointer transition-colors font-medium"
-                  >
-                    ✕ Expired Due
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCertInput('UNVERIFIED-FAKE-123');
-                      handleSearchCertificate('UNVERIFIED-FAKE-123');
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 cursor-pointer transition-colors font-medium"
-                  >
-                    ? Unverified
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -995,6 +964,18 @@ export const PublicLanding = () => {
                     placeholder="e.g. Mahalakshmi Provision Store"
                     value={newStoreForm.name}
                     onChange={(e) => setNewStoreForm({ ...newStoreForm, name: e.target.value })}
+                    className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Establishment Full Address &amp; Landmark *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Shop #12, 1st Cross, Gandhi Bazaar Main Road, Near Post Office"
+                    value={newStoreForm.address}
+                    onChange={(e) => setNewStoreForm({ ...newStoreForm, address: e.target.value })}
                     className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
                   />
                 </div>

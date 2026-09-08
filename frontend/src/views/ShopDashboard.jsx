@@ -15,12 +15,19 @@ export const ShopDashboard = () => {
     activeShopIndex,
     handleSelectOwnerShop,
     handleAddOwnerShop,
+    handleDeleteOwnerShop,
+    handleDeleteShopOwnerAccount,
     handleViewHistoricalCertificate,
     handleViewActiveCertificate,
     showToast
   } = useApp();
 
   const [showAddShopModal, setShowAddShopModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [showDeleteShopModal, setShowDeleteShopModal] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [newShopForm, setNewShopForm] = useState({
     name: '',
     branchType: 'Retail Branch',
@@ -56,6 +63,13 @@ export const ShopDashboard = () => {
   const isDocVerified = currentDocStatus === 'verified';
   const isDocFraud = currentDocStatus === 'fraud';
 
+  const shopInstruments = (activeShop?.instruments && activeShop.instruments.length > 0)
+    ? activeShop.instruments
+    : (instruments && instruments.length > 0)
+    ? instruments
+    : [];
+  const hasRegisteredScales = Boolean(shopInstruments && shopInstruments.length > 0 && shopInstruments[0]?.serialNumber);
+
   const isCertified =
     activeShop.complianceStatus === 'Certified & Compliant' ||
     activeShop.status === 'Verified & Compliant' ||
@@ -63,10 +77,9 @@ export const ShopDashboard = () => {
     verificationStatus.status === 'certified';
 
   const isVisitScheduled =
-    !isCertified &&
-    (activeShop.complianceStatus === 'Scheduled for Verification' ||
-     verificationStatus.status === 'scheduled' ||
-     Boolean(activeShop.scheduledSlot));
+    activeShop.complianceStatus === 'Scheduled for Verification' ||
+    activeShop.complianceStatus?.includes('Scheduled') ||
+    verificationStatus.status === 'scheduled';
 
   const daysLeft = isCertified ? (activeInstrument?.daysRemaining || 365) : (activeInstrument?.daysRemaining ?? 28);
   const circumference = 590.6;
@@ -145,14 +158,29 @@ export const ShopDashboard = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowAddShopModal(true)}
-            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shrink-0"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-base">add_business</span>
-            <span>+ Register New Shop / Branch</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto shrink-0">
+            <button
+              onClick={() => setShowAddShopModal(true)}
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-base">add_business</span>
+              <span>+ Register New Shop</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setDeleteConfirmText('');
+                setShowDeleteAccountModal(true);
+              }}
+              className="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 hover:border-red-300 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer"
+              title="Permanently delete merchant account"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-base text-red-600">delete_forever</span>
+              <span className="hidden sm:inline">Delete Account</span>
+            </button>
+          </div>
         </div>
 
         {/* Multi-Shop Establishment Tabs */}
@@ -165,31 +193,44 @@ export const ShopDashboard = () => {
               <div className="sm:col-span-2 lg:col-span-3 p-6 text-center bg-gray-50 border border-dashed border-gray-300 rounded-xl text-xs text-gray-500">
                 <span className="material-symbols-outlined text-3xl text-gray-400 mb-1 block">storefront</span>
                 <span className="font-semibold text-gray-700 block">No store registered under this account yet</span>
-                <span>Click &quot;+ Register New Shop / Branch&quot; above to register your first commercial establishment.</span>
+                <span>Click &quot;+ Register New Shop&quot; above to register your first commercial establishment.</span>
               </div>
             ) : (
               ownerShops.map((shop, idx) => {
                 const isSelected = activeShopIndex === idx;
                 return (
-                  <button
-                    key={shop.id}
+                  <div
+                    key={shop.id || idx}
                     onClick={() => handleSelectOwnerShop(idx)}
-                    className={`p-3 sm:p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 ${
+                    className={`p-3 sm:p-3.5 rounded-xl text-left border transition-all relative flex flex-col justify-between gap-2 cursor-pointer ${
                       isSelected
                         ? 'bg-[#023625]/5 border-[#023625] ring-2 ring-[#023625]/20 shadow-xs'
                         : 'bg-gray-50 hover:bg-white border-gray-200 hover:border-gray-300'
                     }`}
-                    type="button"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`material-symbols-outlined text-lg ${isSelected ? 'text-[#023625]' : 'text-gray-400'}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`material-symbols-outlined text-lg shrink-0 ${isSelected ? 'text-[#023625]' : 'text-gray-400'}`}>
                           storefront
                         </span>
-                        <span className="text-xs font-bold text-gray-900 truncate max-w-[180px]">
+                        <span className="text-xs font-bold text-gray-900 truncate">
                           {shop.name}
                         </span>
                       </div>
+
+                      {ownerShops.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDeleteShopModal(shop);
+                          }}
+                          className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                          title={`Delete branch ${shop.name}`}
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-200/50">
@@ -202,13 +243,48 @@ export const ShopDashboard = () => {
                         {shop.documentStatus === 'verified' ? 'Verified' : 'Review Due'}
                       </span>
                     </div>
-                  </button>
+                  </div>
                 );
               })
             )}
           </div>
         </div>
       </div>
+
+      {/* CONDITIONAL BANNER: Step 1 Action Required - Register Weighing Scale */}
+      {!hasRegisteredScales && (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-2xl p-4 sm:p-5 border-2 border-amber-400 text-amber-950 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+              <span className="material-symbols-outlined text-3xl animate-bounce">scale</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-200 text-amber-950 px-2.5 py-0.5 rounded-full border border-amber-300">
+                  Step 1 Action Required Before Document Upload
+                </span>
+                <span className="text-[10px] font-bold text-amber-800">
+                  Legal Metrology Rule 14
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+                Register Your Weighing Scale First
+              </h2>
+              <p className="text-xs text-gray-700 mt-0.5 max-w-xl leading-relaxed">
+                Before uploading statutory verification documents (scale tax invoice, serial nameplate photograph, and counter installation view), you must register your shop's weighing scale so files can be matched to your scale serial number.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigateTo('register-instrument')}
+            className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0 cursor-pointer"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-base">add_circle</span>
+            <span>+ Add Scale Instrument (Step 1)</span>
+          </button>
+        </div>
+      )}
 
       {/* CONDITIONAL BANNER 1: Official Verification Completed & Form XVII Certificate Issued */}
       {isCertified && (
@@ -301,20 +377,45 @@ export const ShopDashboard = () => {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-            <button
-              onClick={() => navigateTo('upload-documents')}
-              className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-base text-gray-500">upload_file</span>
-              <span>Upload Documents (5)</span>
-            </button>
-            <button
-              onClick={() => navigateTo('register-instrument')}
-              className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-base text-gray-500">add</span>
-              <span>Register Scale</span>
-            </button>
+            {!hasRegisteredScales ? (
+              <>
+                <button
+                  onClick={() => navigateTo('register-instrument')}
+                  className="flex-1 sm:flex-initial justify-center px-4 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-base">add_circle</span>
+                  <span>+ Add Scale (Step 1)</span>
+                </button>
+                <button
+                  onClick={() => navigateTo('upload-documents')}
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-500 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-base text-gray-400">lock</span>
+                  <span>Upload Documents (Step 2)</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigateTo('upload-documents')}
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-base text-[#023625]">upload_file</span>
+                  <span>Upload Documents (5)</span>
+                </button>
+                <button
+                  onClick={() => navigateTo('register-instrument')}
+                  className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-base text-gray-500">add</span>
+                  <span>Add Another Scale</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -478,16 +579,31 @@ export const ShopDashboard = () => {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <p className="text-xs text-gray-500">
-            Rule 14 mandates electronic submission and officer verification of all 5 documents before physical testing.
+            {!hasRegisteredScales
+              ? 'Step 1 Incomplete: Under Rule 14, evidentiary documents must reference a registered scale before officer review.'
+              : 'Rule 14 mandates electronic submission and officer verification of all 5 documents before physical testing.'}
           </p>
-          <button
-            onClick={() => navigateTo('upload-documents')}
-            className="w-full sm:w-auto px-4 py-2 bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-sm">open_in_new</span>
-            <span>Manage &amp; Upload 5 Documents</span>
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            {!hasRegisteredScales ? (
+              <button
+                onClick={() => navigateTo('register-instrument')}
+                className="w-full sm:w-auto px-4 py-2 bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-sm">scale</span>
+                <span>Register Scale First (Step 1)</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigateTo('upload-documents')}
+                className="w-full sm:w-auto px-4 py-2 bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-sm">open_in_new</span>
+                <span>Manage &amp; Upload 5 Documents</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -850,12 +966,168 @@ export const ShopDashboard = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-xs shadow-xs"
+                  className="px-5 py-2 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-xs shadow-xs cursor-pointer"
                 >
                   Register Branch
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Branch Modal */}
+      {showDeleteShopModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md border border-gray-200 shadow-2xl p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-2xl">store</span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">De-Register Establishment</h3>
+                <span className="text-xs text-gray-500 font-mono">{showDeleteShopModal.merchantUid}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Are you sure you want to delete and de-register <strong>{showDeleteShopModal.name}</strong>? All registered weighing scales, calibration records, and certificates associated with this branch will be removed.
+            </p>
+
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteShopModal(null)}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs cursor-pointer"
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleDeleteOwnerShop(showDeleteShopModal.id);
+                  setShowDeleteShopModal(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-sm">delete</span>
+                <span>Delete Branch</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg border border-red-200 shadow-2xl p-6 flex flex-col gap-5">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-2xl">delete_forever</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-red-100 text-red-800">
+                      Permanent Deletion
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mt-0.5">
+                    Delete Merchant Account
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowDeleteAccountModal(false);
+                  setDeleteConfirmText('');
+                }}
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center cursor-pointer"
+                type="button"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            {/* Warning Box */}
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-red-900 text-xs font-bold">
+                <span className="material-symbols-outlined text-base text-red-700">warning</span>
+                <span>Statutory &amp; Data Loss Warning</span>
+              </div>
+              <p className="text-xs text-red-800 leading-relaxed">
+                This action is <strong>irreversible</strong>. Deleting your account will permanently erase:
+              </p>
+              <ul className="text-xs text-red-900 list-disc list-inside space-y-1">
+                <li>All <strong>{ownerShops.length} registered commercial establishments</strong></li>
+                <li>All <strong>weighing instrument verification records &amp; serial numbers</strong></li>
+                <li>All <strong>official Form XVII certificates &amp; hologram stamping data</strong></li>
+                <li>All <strong>submitted statutory documents &amp; trade licenses</strong></li>
+              </ul>
+              <p className="text-[11px] text-red-700 font-medium italic mt-1">
+                * Under Legal Metrology Act 2009, conducting commercial weighing without an active state registration is prohibited.
+              </p>
+            </div>
+
+            {/* Confirmation Input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-700">
+                To confirm deletion, please type <span className="font-mono text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">DELETE</span> below:
+              </label>
+              <input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="w-full p-2.5 rounded-xl border border-gray-300 text-xs font-mono uppercase tracking-wider focus:ring-2 focus:ring-red-500 focus:outline-none"
+                type="text"
+                autoFocus
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowDeleteAccountModal(false);
+                  setDeleteConfirmText('');
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold text-xs hover:bg-gray-50 transition-colors cursor-pointer"
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+                    showToast('Please type DELETE to confirm account removal', 'error');
+                    return;
+                  }
+                  setIsDeleting(true);
+                  try {
+                    await handleDeleteShopOwnerAccount();
+                  } finally {
+                    setIsDeleting(false);
+                    setShowDeleteAccountModal(false);
+                  }
+                }}
+                disabled={deleteConfirmText.trim().toUpperCase() !== 'DELETE' || isDeleting}
+                className={`px-5 py-2 rounded-xl font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 ${
+                  deleteConfirmText.trim().toUpperCase() === 'DELETE' && !isDeleting
+                    ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer active:scale-95'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-base">
+                  {isDeleting ? 'progress_activity' : 'delete_forever'}
+                </span>
+                <span>{isDeleting ? 'Deleting Account...' : 'Permanently Delete Account'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -4,6 +4,93 @@
  * dynamic validity periods, and public verification status according to configured rules.
  */
 
+const IRRELEVANT_OR_SUSPICIOUS_KEYWORDS = [
+  'sem', 'paper', 'exam', 'assignment', 'homework', 'syllabus', 'college', 'school',
+  'notes', 'meme', 'wallpaper', 'download', 'untitled', 'new_doc', 'temp', 'dummy',
+  'fake', 'test', 'sample', 'counterfeit', 'tampered', 'mismatch', 'fraud', 'cheat',
+  'unapproved', 'corrupt', 'blank', 'random', 'null'
+];
+
+export const evaluateDocumentCompliance = (docs = {}, shopInfo = {}, instrumentInfo = {}) => {
+  const criteria = [
+    { id: 'crit-reg', name: 'Statutory Business Registration', key: 'businessRegistration', allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'webp'] },
+    { id: 'crit-id', name: 'Proprietor Identity Proof', key: 'ownerId', allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'webp'] },
+    { id: 'crit-invoice', name: 'Scale Manufacturer Purchase Invoice', key: 'purchaseInvoice', allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'webp'] },
+    { id: 'crit-plate', name: "Maker's Serial Specification Nameplate", key: 'instrumentPlate', allowedTypes: ['jpg', 'jpeg', 'png', 'webp'] },
+    { id: 'crit-photo', name: 'Installed Commercial Countertop Scale Evidence', key: 'instrumentPhotos', allowedTypes: ['jpg', 'jpeg', 'png', 'webp'] }
+  ];
+
+  let passedCount = 0;
+  const fraudIndicators = [];
+  const violations = [];
+  const seenFileNames = new Map();
+
+  // Duplicate Check
+  for (const crit of criteria) {
+    const doc = docs[crit.key];
+    const fileName = (doc?.fileName || '').trim().toLowerCase();
+    if (fileName && fileName !== '') {
+      if (seenFileNames.has(fileName)) {
+        const prevKey = seenFileNames.get(fileName);
+        const dupViolation = `Severe Fraud: Duplicate identical file "${doc.fileName}" uploaded for both "${prevKey}" and "${crit.name}".`;
+        fraudIndicators.push(dupViolation);
+        violations.push(dupViolation);
+      } else {
+        seenFileNames.set(fileName, crit.name);
+      }
+    }
+  }
+
+  for (const crit of criteria) {
+    const doc = docs[crit.key];
+    const isUploaded = Boolean(doc && (doc.uploaded || doc.fileName));
+    const fileName = (doc?.fileName || '').trim().toLowerCase();
+    const ext = fileName.split('.').pop() || '';
+
+    if (!isUploaded || !fileName) {
+      violations.push(`Missing mandatory document: ${crit.name}`);
+      continue;
+    }
+
+    const matchedSuspicious = IRRELEVANT_OR_SUSPICIOUS_KEYWORDS.find((kw) => fileName.includes(kw));
+    if (matchedSuspicious || doc?.isFraudulent === true) {
+      const msg = `Fraudulent/Ineligible document in "${crit.name}" (${doc.fileName}). Academic or generic file "${matchedSuspicious}".`;
+      violations.push(msg);
+      fraudIndicators.push(msg);
+      continue;
+    }
+
+    const isAllowedExt = crit.allowedTypes.includes(ext);
+    if (!isAllowedExt) {
+      const extMsg = `Format Violation in "${crit.name}": Expected [${crit.allowedTypes.join(', ')}] file, received .${ext}`;
+      violations.push(extMsg);
+      fraudIndicators.push(extMsg);
+      continue;
+    }
+
+    passedCount += 1;
+  }
+
+  const isAllMatched = passedCount === criteria.length && fraudIndicators.length === 0 && violations.length === 0;
+  const isFraud = !isAllMatched;
+
+  return {
+    isCompliant: isAllMatched,
+    isFraud,
+    passedCount,
+    totalCount: criteria.length,
+    status: isAllMatched ? 'pending_review' : 'fraud',
+    fraudIndicators,
+    violations,
+    decision: isAllMatched ? 'matched_rules' : 'fraud_rejected',
+    summaryMessage: isAllMatched
+      ? 'All 5 statutory criteria matched inspection rules.'
+      : fraudIndicators.length > 0
+        ? `Application flagged as FRAUD: ${fraudIndicators[0]}`
+        : 'Incomplete or non-compliant document submission.'
+  };
+};
+
 /**
  * Evaluate an individual measurement test criterion
  * @param {object} criterion - Criterion configuration { comparisonType, referenceValue, tolerance, unit }
