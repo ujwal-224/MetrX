@@ -8,6 +8,7 @@ import {
   testCalibrationData,
   stateComplianceRegistry
 } from '../data/mockData';
+import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation';
 
 const AppContext = createContext();
 
@@ -776,17 +777,41 @@ export const AppProvider = ({ children }) => {
 
   // Shop Owner Self-Registration (Creates account and becomes immediately visible in Admin)
   const handleRegisterMerchant = async (data) => {
+    const ownerName = data.ownerName ? data.ownerName.trim() : 'Merchant Owner';
+    const nameCheck = validateName(ownerName);
+    if (!nameCheck.isValid) {
+      showToast(`Owner Name: ${nameCheck.error}`, 'error');
+      return;
+    }
+
+    if (data.phone) {
+      const phoneCheck = validatePhone(data.phone);
+      if (!phoneCheck.isValid) {
+        showToast(`Contact Phone: ${phoneCheck.error}`, 'error');
+        return;
+      }
+    }
+
+    if (data.password) {
+      const passCheck = validatePassword(data.password);
+      if (!passCheck.isValid) {
+        showToast(`Password: ${passCheck.error}`, 'error');
+        return;
+      }
+    }
+
     const uid = `#EST-${Math.floor(10000 + Math.random() * 90000)}`;
     const generatedShopId = `shop-${Date.now().toString(36)}`;
+    const formattedPhone = data.phone ? (validatePhone(data.phone).formatted || data.phone) : '+91 98000 00000';
 
     // 1. Register user account on backend
     try {
       await api.register({
-        name: data.ownerName || 'Merchant Owner',
+        name: ownerName,
         email: data.email || `store${Math.floor(100 + Math.random() * 900)}@metrx.com`,
         password: data.password || '12345678',
         role: 'shop-owner',
-        phone: data.phone || '+91 98000 00000'
+        phone: formattedPhone
       });
     } catch (err) {
       console.warn('[Backend User Register Warning]', err.message);
@@ -1083,15 +1108,38 @@ export const AppProvider = ({ children }) => {
 
   // Admin Provisions a New Inspector Account
   const handleCreateInspector = async (data) => {
+    const inspName = (data.name || '').trim();
+    const nameCheck = validateName(inspName);
+    if (!nameCheck.isValid) {
+      showToast(`Inspector Name: ${nameCheck.error}`, 'error');
+      return;
+    }
+
+    if (data.phone) {
+      const phoneCheck = validatePhone(data.phone);
+      if (!phoneCheck.isValid) {
+        showToast(`Phone Number: ${phoneCheck.error}`, 'error');
+        return;
+      }
+    }
+
+    if (data.password) {
+      const passCheck = validatePassword(data.password);
+      if (!passCheck.isValid) {
+        showToast(`Password: ${passCheck.error}`, 'error');
+        return;
+      }
+    }
+
     const badgeNum = data.badgeNumber || `LM-BLR-${Math.floor(100 + Math.random() * 900)}`;
-    const email = data.email || `${data.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@metrx.com`;
+    const email = data.email || `${inspName.toLowerCase().replace(/[^a-z0-9]/g, '')}@metrx.com`;
     const password = data.password || '12345678';
     const zone = data.zone || 'Ward 4 (Commercial Circle)';
-    const phone = data.phone || '+91 98000 11223';
+    const phone = data.phone ? (validatePhone(data.phone).formatted || data.phone) : '+91 98000 11223';
 
     const newInsp = {
       id: `insp-${Date.now()}`,
-      name: data.name,
+      name: inspName,
       badgeNumber: badgeNum,
       email,
       password,

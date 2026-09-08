@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { validateName, validatePhone, validateEmail } from '../utils/validation.js';
 
 // @desc    Get all shops (or filter by merchant email / ownerId)
 // @route   GET /api/shops
@@ -79,6 +80,27 @@ export const createShop = async (req, res) => {
       scaleModel,
       scaleType
     } = req.body;
+
+    if (ownerName) {
+      const nameCheck = validateName(ownerName);
+      if (!nameCheck.isValid) {
+        return res.status(400).json({ success: false, message: `Owner Name: ${nameCheck.error}` });
+      }
+    }
+
+    if (email) {
+      const emailCheck = validateEmail(email);
+      if (!emailCheck.isValid) {
+        return res.status(400).json({ success: false, message: `Email: ${emailCheck.error}` });
+      }
+    }
+
+    if (phone) {
+      const phoneCheck = validatePhone(phone);
+      if (!phoneCheck.isValid) {
+        return res.status(400).json({ success: false, message: `Phone: ${phoneCheck.error}` });
+      }
+    }
 
     const id = customId || `shop-${Date.now().toString(36)}`;
     const uid = merchantUid || `#EST-${Math.floor(10000 + Math.random() * 90000)}`;

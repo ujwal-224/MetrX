@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation';
 
 export const AdminDashboard = () => {
   const {
@@ -28,10 +29,36 @@ export const AdminDashboard = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    if (!newInspForm.name.trim()) {
-      showToast('Please enter inspector name', 'error');
+    const nameCheck = validateName(newInspForm.name);
+    if (!nameCheck.isValid) {
+      showToast(`Inspector Name: ${nameCheck.error}`, 'error');
       return;
     }
+
+    if (newInspForm.phone) {
+      const phoneCheck = validatePhone(newInspForm.phone);
+      if (!phoneCheck.isValid) {
+        showToast(`Phone Number: ${phoneCheck.error}`, 'error');
+        return;
+      }
+    }
+
+    if (newInspForm.email) {
+      const emailCheck = validateEmail(newInspForm.email);
+      if (!emailCheck.isValid) {
+        showToast(`Email: ${emailCheck.error}`, 'error');
+        return;
+      }
+    }
+
+    if (newInspForm.password) {
+      const passCheck = validatePassword(newInspForm.password);
+      if (!passCheck.isValid) {
+        showToast(`Password: ${passCheck.error}`, 'error');
+        return;
+      }
+    }
+
     handleCreateInspector(newInspForm);
     setNewInspForm({
       name: '',
@@ -589,13 +616,22 @@ export const AdminDashboard = () => {
 
             <form onSubmit={handleFormSubmit} className="pt-4 space-y-3.5 sm:space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 mb-1">Inspector Full Name *</label>
+                <label className="block font-bold text-gray-700 mb-1">Inspector Full Name * (Letters only)</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Insp. M. Patil"
+                  minLength={2}
+                  maxLength={50}
+                  pattern="^[A-Za-z\s]+$"
+                  title="Name can contain letters and spaces only"
+                  placeholder="e.g. Ramesh Patil"
                   value={newInspForm.name}
-                  onChange={(e) => setNewInspForm({ ...newInspForm, name: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[A-Za-z\s]*$/.test(val)) {
+                      setNewInspForm({ ...newInspForm, name: val });
+                    }
+                  }}
                   className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
                 />
               </div>
@@ -605,6 +641,7 @@ export const AdminDashboard = () => {
                   <label className="block font-bold text-gray-700 mb-1">Badge Number *</label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g. LM-BLR-518"
                     value={newInspForm.badgeNumber}
                     onChange={(e) => setNewInspForm({ ...newInspForm, badgeNumber: e.target.value })}
@@ -612,9 +649,9 @@ export const AdminDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Phone Number</label>
+                  <label className="block font-bold text-gray-700 mb-1">Phone Number (+91)</label>
                   <input
-                    type="text"
+                    type="tel"
                     placeholder="+91 98450 00000"
                     value={newInspForm.phone}
                     onChange={(e) => setNewInspForm({ ...newInspForm, phone: e.target.value })}
@@ -643,6 +680,7 @@ export const AdminDashboard = () => {
                   <label className="block font-bold text-gray-700 mb-1">Login Email *</label>
                   <input
                     type="email"
+                    required
                     placeholder="officer@metrx.com"
                     value={newInspForm.email}
                     onChange={(e) => setNewInspForm({ ...newInspForm, email: e.target.value })}
@@ -650,10 +688,13 @@ export const AdminDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Assigned Password *</label>
+                  <label className="block font-bold text-gray-700 mb-1">Assigned Password * (8-32 chars)</label>
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    required
+                    minLength={8}
+                    maxLength={32}
+                    placeholder="Min 8 to 32 characters"
                     value={newInspForm.password}
                     onChange={(e) => setNewInspForm({ ...newInspForm, password: e.target.value })}
                     className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"

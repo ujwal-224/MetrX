@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma.js';
 
+import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation.js';
+
 // Helper to generate simple JWT
 const generateToken = (id, role) => {
   return jwt.sign(
@@ -38,6 +40,30 @@ export const registerUser = async (req, res) => {
 
     if (!name || !email) {
       return res.status(400).json({ success: false, message: 'Please provide name and email' });
+    }
+
+    const nameCheck = validateName(name);
+    if (!nameCheck.isValid) {
+      return res.status(400).json({ success: false, message: nameCheck.error });
+    }
+
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, message: emailCheck.error });
+    }
+
+    if (password) {
+      const passCheck = validatePassword(password);
+      if (!passCheck.isValid) {
+        return res.status(400).json({ success: false, message: passCheck.error });
+      }
+    }
+
+    if (phone) {
+      const phoneCheck = validatePhone(phone);
+      if (!phoneCheck.isValid) {
+        return res.status(400).json({ success: false, message: phoneCheck.error });
+      }
     }
 
     const cleanEmail = email.toLowerCase().trim();
@@ -161,6 +187,16 @@ export const loginUser = async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
+    }
+
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, message: emailCheck.error });
+    }
+
+    const passCheck = validatePassword(password);
+    if (!passCheck.isValid) {
+      return res.status(400).json({ success: false, message: passCheck.error });
     }
 
     const cleanEmail = email.toLowerCase().trim();

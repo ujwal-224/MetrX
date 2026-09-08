@@ -1,0 +1,86 @@
+// MetrX Form & Field Validation Utilities
+
+/**
+ * Validates a person's name (letters and spaces only, min 2 chars, max 50 chars).
+ * @param {string} name 
+ * @returns {{ isValid: boolean, error?: string }}
+ */
+export const validateName = (name) => {
+  if (!name || !name.trim()) {
+    return { isValid: false, error: 'Name is required' };
+  }
+  const clean = name.trim();
+  if (clean.length < 2) {
+    return { isValid: false, error: 'Name must be at least 2 characters long' };
+  }
+  if (clean.length > 50) {
+    return { isValid: false, error: 'Name cannot exceed 50 characters' };
+  }
+  // Allow letters and spaces only
+  const nameRegex = /^[A-Za-z\s]+$/;
+  if (!nameRegex.test(clean)) {
+    return { isValid: false, error: 'Name must contain only letters and spaces (no numbers or special characters)' };
+  }
+  return { isValid: true };
+};
+
+/**
+ * Validates a mobile number: must start with +91 followed by 10 digits.
+ * Supports spaces or hyphens like +91 98450 11223 or +919845011223.
+ * @param {string} phone 
+ * @returns {{ isValid: boolean, error?: string, formatted?: string }}
+ */
+export const validatePhone = (phone) => {
+  if (!phone || !phone.trim()) {
+    return { isValid: false, error: 'Mobile number is required' };
+  }
+  const clean = phone.trim();
+  if (!clean.startsWith('+91')) {
+    return { isValid: false, error: 'Mobile number must start with country code +91 (e.g. +91 9876543210)' };
+  }
+  
+  // Extract the digits after +91
+  const afterPrefix = clean.slice(3).replace(/[\s-]/g, '');
+  if (!/^\d+$/.test(afterPrefix)) {
+    return { isValid: false, error: 'Mobile number must contain only digits after +91' };
+  }
+  if (afterPrefix.length !== 10) {
+    return { isValid: false, error: `Mobile number must have exactly 10 digits after +91 (got ${afterPrefix.length})` };
+  }
+  
+  return { isValid: true, formatted: `+91 ${afterPrefix.slice(0, 5)} ${afterPrefix.slice(5)}` };
+};
+
+/**
+ * Validates password: min 8 and max 32 characters.
+ * @param {string} password 
+ * @returns {{ isValid: boolean, error?: string }}
+ */
+export const validatePassword = (password) => {
+  if (!password) {
+    return { isValid: false, error: 'Password is required' };
+  }
+  if (password.length < 8) {
+    return { isValid: false, error: 'Password must be at least 8 characters long' };
+  }
+  if (password.length > 32) {
+    return { isValid: false, error: 'Password cannot exceed 32 characters' };
+  }
+  return { isValid: true };
+};
+
+/**
+ * Validates email format.
+ * @param {string} email 
+ * @returns {{ isValid: boolean, error?: string }}
+ */
+export const validateEmail = (email) => {
+  if (!email || !email.trim()) {
+    return { isValid: false, error: 'Email address is required' };
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return { isValid: false, error: 'Please enter a valid email address (e.g. name@example.com)' };
+  }
+  return { isValid: true };
+};
