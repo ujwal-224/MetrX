@@ -8,6 +8,9 @@ export const RegisterInstrument = () => {
   const [serialNumber, setSerialNumber] = useState('');
   const [capacity, setCapacity] = useState('');
   const [modelName, setModelName] = useState('');
+  const [verificationMode, setVerificationMode] = useState('Field / In-Situ');
+  const [isRepairedOrModified, setIsRepairedOrModified] = useState(false);
+  const [repairDetails, setRepairDetails] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
 
   const handleFileChange = (e) => {
@@ -36,6 +39,9 @@ export const RegisterInstrument = () => {
       model: modelName.trim() || (instrumentType === 'counter_scale' ? 'Digital Scale series' : 'Commercial Series'),
       serialNumber: serialNumber.trim(),
       capacity: capacity.trim() || '30 kg / 1g precision',
+      verificationMode,
+      isRepairedOrModified,
+      repairDetails: isRepairedOrModified ? repairDetails.trim() : null,
       photoUrl: photoPreview
     });
   };
@@ -44,29 +50,105 @@ export const RegisterInstrument = () => {
     <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       <div className="w-full max-w-2xl mx-auto flex flex-col">
         {/* Back / Breadcrumb Navigation */}
-        <div className="mb-3 sm:mb-4">
+        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2 flex-wrap">
           <button
             onClick={() => navigateTo('shop-dashboard')}
-            className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 text-xs sm:text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-900 text-xs sm:text-sm font-medium transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-base">arrow_back</span>
             <span>Back to {storeInfo.name}</span>
           </button>
+
+          <span className="text-[11px] font-bold text-[#023625] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+            <span className="material-symbols-outlined text-xs">looks_one</span>
+            <span>Step 1 of 2: Scale Registration</span>
+          </span>
+        </div>
+
+        {/* WORKFLOW STEPPER BAR */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 shadow-xs mb-5 sm:mb-6">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] uppercase font-bold tracking-wider text-gray-500">
+              Establishment Certification Workflow
+            </span>
+            <span className="text-xs font-bold font-mono text-[#023625]">
+              Step 1 Active
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Step 1: Add Scale (ACTIVE) */}
+            <div className="p-3 rounded-xl border-2 border-[#023625] bg-[#023625]/5 text-[#023625] flex items-center gap-3 ring-2 ring-[#023625]/20 shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-[#023625] text-white flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-base">scale</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
+                  Step 1 • Current
+                </span>
+                <span className="text-xs font-extrabold block truncate">
+                  Register Scale
+                </span>
+              </div>
+            </div>
+
+            {/* Step 2: Upload Documents */}
+            <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 flex items-center gap-3 opacity-75">
+              <div className="w-8 h-8 rounded-lg bg-gray-200 text-gray-500 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-base">lock</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
+                  Step 2 • Next
+                </span>
+                <span className="text-xs font-extrabold block truncate">
+                  Upload Documents
+                </span>
+              </div>
+            </div>
+
+            {/* Step 3: Verification Visit */}
+            <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 flex items-center gap-3 opacity-75">
+              <div className="w-8 h-8 rounded-lg bg-gray-200 text-gray-500 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-base">lock</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
+                  Step 3 • Final
+                </span>
+                <span className="text-xs font-extrabold block truncate">
+                  Inspector Stamping
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* PREREQUISITE INFO NOTICE */}
+        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 text-amber-950 flex items-start gap-3 shadow-xs mb-5 sm:mb-6">
+          <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+            <span className="material-symbols-outlined text-2xl">scale</span>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900 block">
+              Prerequisite For Statutory Document Verification (Rule 14)
+            </span>
+            <h3 className="text-sm font-bold text-amber-950 mt-0.5">
+              Register Physical Commercial Weighing Scale
+            </h3>
+            <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+              Under Legal Metrology regulations, statutory compliance documents (purchase bill, serial nameplate photograph, and counter view) are verified against your registered scale details. Once you save this scale, you will automatically proceed to <strong>Step 2 (Upload Documents)</strong>.
+            </p>
+          </div>
         </div>
 
         {/* Page Header */}
-        <div className="border-b border-gray-200 pb-4 sm:pb-6 mb-5 sm:mb-8">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-200">
-              <span className="material-symbols-outlined text-xs">edit_document</span>
-              Standard Verification Scheme
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-            Register New Instrument
+        <div className="border-b border-gray-200 pb-4 sm:pb-5 mb-5 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+            Register Weighing &amp; Measuring Instrument
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            Add your shop weighing or measuring device for government calibration certification.
+            Provide the physical scale specification matching the government-approved maker plate.
           </p>
         </div>
 
@@ -329,6 +411,105 @@ export const RegisterInstrument = () => {
                 Specify full scale range and smallest division interval as listed on the seal.
               </p>
             </div>
+
+            {/* Verification Venue / Mode (Rule 8 & 10) */}
+            <div className="pt-2">
+              <label className="block font-label-md text-label-md font-semibold text-on-surface mb-1">
+                Verification Venue / Mode (Rule 8 &amp; 10)
+              </label>
+              <p className="text-xs text-gray-500 mb-2.5">
+                Select where the legal metrology verification stamping should be executed:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setVerificationMode('Field / In-Situ')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all ${
+                    verificationMode === 'Field / In-Situ'
+                      ? 'border-[#023625] bg-[#E7F0E8] ring-1 ring-[#023625]'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-lg mt-0.5 ${
+                    verificationMode === 'Field / In-Situ' ? 'text-[#023625]' : 'text-gray-400'
+                  }`}>
+                    location_on
+                  </span>
+                  <div>
+                    <div className="text-xs font-bold text-gray-900">Field / In-Situ (On-Site)</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                      Officer visits establishment premises to verify fixed or heavy equipment with GPS logging.
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setVerificationMode('At Test Centre')}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all ${
+                    verificationMode === 'At Test Centre'
+                      ? 'border-[#023625] bg-[#E7F0E8] ring-1 ring-[#023625]'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-lg mt-0.5 ${
+                    verificationMode === 'At Test Centre' ? 'text-[#023625]' : 'text-gray-400'
+                  }`}>
+                    domain
+                  </span>
+                  <div>
+                    <div className="text-xs font-bold text-gray-900">At Test Centre / Lab</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                      Merchant brings portable scale to government testing laboratory or metrology bench.
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Instrument Condition & Repair History (Rule 7) */}
+            <div className="pt-2 border-t border-gray-200/80">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isRepairedOrModified}
+                  onChange={(e) => setIsRepairedOrModified(e.target.checked)}
+                  className="mt-1 rounded border-gray-300 text-[#023625] focus:ring-[#023625] w-4 h-4"
+                />
+                <div>
+                  <span className="text-xs font-bold text-gray-900 block">
+                    Instrument Repaired or Modified (Mandatory Re-Verification under Rule 7)
+                  </span>
+                  <span className="text-[11px] text-gray-500 block mt-0.5">
+                    Check if this scale has had load-cells replaced, wire seals broken, or repairs executed.
+                  </span>
+                </div>
+              </label>
+
+              {isRepairedOrModified && (
+                <div className="mt-3 p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                    <span className="material-symbols-outlined text-sm text-amber-700">info</span>
+                    <span>Statutory Re-Verification Trigger (Legal Metrology Rule 7)</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    Under Rule 7 of Legal Metrology regulations, any weight or measure repaired or altered must undergo full re-verification against working standards prior to commercial trade deployment.
+                  </p>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                      Service / Repair Details:
+                    </label>
+                    <input
+                      type="text"
+                      value={repairDetails}
+                      onChange={(e) => setRepairDetails(e.target.value)}
+                      placeholder="e.g. Load cell replacement, recalibration of zero offset, casing repair"
+                      className="w-full text-xs px-3 py-2 rounded-lg bg-white border border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Legal Disclaimer & Note */}
@@ -340,20 +521,21 @@ export const RegisterInstrument = () => {
           </div>
 
           {/* Element 4: Actions */}
-          <div className="pt-4 border-t border-outline-variant/40 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="pt-4 border-t border-gray-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <button
               onClick={() => navigateTo('shop-dashboard')}
               type="button"
-              className="text-center py-2.5 px-4 text-outline hover:text-on-surface transition-colors font-medium text-xs sm:text-sm"
+              className="text-center py-2.5 px-4 text-gray-500 hover:text-gray-900 transition-colors font-medium text-xs sm:text-sm cursor-pointer"
             >
               Cancel
             </button>
             <button
-              className="bg-[#E0702A] hover:bg-[#c96222] active:translate-y-0.5 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all duration-150"
+              className="bg-[#023625] hover:bg-[#1a4b38] active:translate-y-0.5 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
               type="submit"
             >
               <span className="material-symbols-outlined text-lg">save</span>
-              <span>Save Instrument</span>
+              <span>Save Scale &amp; Proceed to Upload Documents (Step 2)</span>
+              <span className="material-symbols-outlined text-base">arrow_forward</span>
             </button>
           </div>
         </form>

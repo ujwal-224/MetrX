@@ -13,6 +13,7 @@ export const Header = () => {
     currentInspector,
     language,
     setLanguage,
+    t,
     showToast
   } = useApp();
 
@@ -41,7 +42,10 @@ export const Header = () => {
       { id: 'inspector-schedule', label: navLabels['inspector-schedule'], icon: 'route' },
       { id: 'field-inspection', label: navLabels['field-inspection'], icon: 'fact_check' },
     ],
-    'admin': [],
+    'admin': [
+      { id: 'admin-dashboard', label: 'Admin Overview', icon: 'dashboard' },
+      { id: 'verification-rules', label: 'Verification Rules', icon: 'rule' },
+    ],
     'public': []
   };
 

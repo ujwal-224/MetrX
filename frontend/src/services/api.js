@@ -110,10 +110,50 @@ export const api = {
     request(`/certificates${shopId ? `?shopId=${encodeURIComponent(shopId)}` : ''}`),
   lookupCertificate: (certId) =>
     request(`/certificates/lookup/${encodeURIComponent(certId)}`),
+  verifyCertificate: (certId) =>
+    request(`/certificates/verify/${encodeURIComponent(certId)}`),
   issueCertificate: (certData) =>
     request('/certificates/issue', {
       method: 'POST',
       body: JSON.stringify(certData)
+    }),
+
+  // Verification Rules & Standards Engine
+  getVerificationRules: (activeOnly) =>
+    request(`/verification-rules${activeOnly ? '?activeOnly=true' : ''}`),
+  getVerificationRuleById: (id) =>
+    request(`/verification-rules/${id}`),
+  createVerificationRule: (ruleData) =>
+    request('/verification-rules', {
+      method: 'POST',
+      body: JSON.stringify(ruleData)
+    }),
+  updateVerificationRule: (id, ruleData) =>
+    request(`/verification-rules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(ruleData)
+    }),
+  toggleVerificationRuleStatus: (id) =>
+    request(`/verification-rules/${id}/status`, {
+      method: 'PATCH'
+    }),
+  deleteVerificationRule: (id) =>
+    request(`/verification-rules/${id}`, {
+      method: 'DELETE'
+    }),
+  matchVerificationRule: (params = {}) =>
+    request(
+      `/verification-rules/match?type=${encodeURIComponent(params.type || '')}&capacity=${encodeURIComponent(params.capacity || '')}&instrumentClass=${encodeURIComponent(params.class || '')}`
+    ),
+  evaluateInspection: (ruleId, inspectionInput) =>
+    request('/verification-rules/evaluate', {
+      method: 'POST',
+      body: JSON.stringify({ ruleId, inspectionInput })
+    }),
+  submitInspection: (inspectionPayload) =>
+    request('/verification-rules/submit-inspection', {
+      method: 'POST',
+      body: JSON.stringify(inspectionPayload)
     }),
 
   // Database Seeding

@@ -14,6 +14,8 @@ import { InspectorSchedule } from './views/InspectorSchedule';
 import { FieldInspection } from './views/FieldInspection';
 import { CertificateView } from './views/CertificateView';
 import { AdminDashboard } from './views/AdminDashboard';
+import { VerificationRules } from './views/VerificationRules';
+import { PublicCertificateVerification } from './views/PublicCertificateVerification';
 
 function AppContent() {
   const { currentView } = useApp();
@@ -25,16 +27,23 @@ function AppContent() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {currentView === 'public-portal' && <PublicLanding />}
-        {currentView === 'shop-dashboard' && <ShopDashboard />}
-        {currentView === 'register-instrument' && <RegisterInstrument />}
-        {currentView === 'upload-documents' && <UploadDocuments />}
-        {currentView === 'request-verification' && <RequestVerification />}
-        {currentView === 'track-status' && <TrackStatus />}
-        {currentView === 'inspector-schedule' && <InspectorSchedule />}
-        {currentView === 'field-inspection' && <FieldInspection />}
-        {currentView === 'certificate-view' && <CertificateView />}
-        {currentView === 'admin-dashboard' && <AdminDashboard />}
+        {window.location.pathname.startsWith('/verify/') ? (
+          <PublicCertificateVerification certificateId={window.location.pathname.split('/verify/')[1]} />
+        ) : (
+          <>
+            {currentView === 'public-portal' && <PublicLanding />}
+            {currentView === 'shop-dashboard' && <ShopDashboard />}
+            {currentView === 'register-instrument' && <RegisterInstrument />}
+            {currentView === 'upload-documents' && <UploadDocuments />}
+            {currentView === 'request-verification' && <RequestVerification />}
+            {currentView === 'track-status' && <TrackStatus />}
+            {currentView === 'inspector-schedule' && <InspectorSchedule />}
+            {currentView === 'field-inspection' && <FieldInspection />}
+            {currentView === 'certificate-view' && <CertificateView />}
+            {currentView === 'admin-dashboard' && <AdminDashboard />}
+            {currentView === 'verification-rules' && <VerificationRules />}
+          </>
+        )}
       </div>
 
       {/* Global Notifications Toast */}

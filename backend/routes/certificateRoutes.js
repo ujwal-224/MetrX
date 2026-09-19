@@ -10,6 +10,7 @@ const router = express.Router();
 
 router.get('/', getCertificates);
 router.get('/lookup/:certId', lookupCertificate);
+router.get('/verify/:certId', lookupCertificate);
 router.get('/:certId/download-pdf', downloadCertificatePDF);
 router.post('/issue', issueCertificate);
 

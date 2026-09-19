@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useApp } from '../context/AppContext';
+import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation';
 
 export const AdminDashboard = () => {
-  const { t } = useTranslation();
   const {
     inspectors,
     merchants,
@@ -12,7 +11,9 @@ export const AdminDashboard = () => {
     handleToggleInspectorStatus,
     handleDeleteInspector,
     handleAssignInspectorToMerchant,
-    showToast
+    refreshBackendData,
+    showToast,
+    navigateTo
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('operations'); // 'operations' | 'inspectors' | 'merchants'
@@ -30,10 +31,36 @@ export const AdminDashboard = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    if (!newInspForm.name.trim()) {
-      showToast(t('toast.enterInspectorName', 'Please enter inspector name'), 'error');
+    const nameCheck = validateName(newInspForm.name);
+    if (!nameCheck.isValid) {
+      showToast(`Inspector Name: ${nameCheck.error}`, 'error');
       return;
     }
+
+    if (newInspForm.phone) {
+      const phoneCheck = validatePhone(newInspForm.phone);
+      if (!phoneCheck.isValid) {
+        showToast(`Phone Number: ${phoneCheck.error}`, 'error');
+        return;
+      }
+    }
+
+    if (newInspForm.email) {
+      const emailCheck = validateEmail(newInspForm.email);
+      if (!emailCheck.isValid) {
+        showToast(`Email: ${emailCheck.error}`, 'error');
+        return;
+      }
+    }
+
+    if (newInspForm.password) {
+      const passCheck = validatePassword(newInspForm.password);
+      if (!passCheck.isValid) {
+        showToast(`Password: ${passCheck.error}`, 'error');
+        return;
+      }
+    }
+
     handleCreateInspector(newInspForm);
     setNewInspForm({
       name: '',
@@ -54,25 +81,48 @@ export const AdminDashboard = () => {
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E0702A] animate-pulse"></span>
             <span className="text-xs font-bold uppercase tracking-wider text-[#023625]">
-              {t('admin.deptSubtitle', 'Directorate of Legal Metrology • Administration')}
+              Directorate of Legal Metrology • Administration
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#023625] tracking-tight">
-            {t('admin.title', 'Department Admin Dashboard')}
+            Department Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-gray-600 mt-1">
-            {t('admin.loggedIn', 'Logged In')}: <strong className="text-gray-900">Admin</strong>
+            Logged In: <strong className="text-gray-900">Admin</strong>
           </p>
         </div>
 
-        {/* Action Button to Provision Inspector */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={async () => {
+              if (refreshBackendData) {
+                await refreshBackendData();
+                showToast('Admin Directory & Live Operations synchronized from State Ledger.', 'success');
+              }
+            }}
+            className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            type="button"
+            title="Refresh from PostgreSQL Database"
+          >
+            <span className="material-symbols-outlined text-base text-gray-500">sync</span>
+            <span>Refresh Live Data</span>
+          </button>
+
+          <button
+            onClick={() => navigateTo('verification-rules')}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#023625] text-[#023625] hover:bg-emerald-50 text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-base">rule</span>
+            <span>Verification Rules &amp; Standards</span>
+          </button>
+
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1b4a36] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
           >
             <span className="material-symbols-outlined text-base">person_add</span>
-            <span>{t('admin.provisionInspector', 'Provision New Inspector')}</span>
+            <span>Provision New Inspector</span>
           </button>
         </div>
       </div>
@@ -81,29 +131,29 @@ export const AdminDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 my-5 sm:my-6">
         <div className="bg-white border-2 border-[#DADDD3] hover:border-[#023625] rounded-2xl p-4 sm:p-5 shadow-xs transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-gray-500">{t('admin.liveOperations', 'Live Operations')}</span>
+            <span className="text-xs font-bold uppercase text-gray-500">Live Operations</span>
             <span className="w-8 h-8 rounded-lg bg-[#E7F0E8] text-[#023625] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">sync_saved_locally</span>
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{operations.length} {t('admin.activeAudits', 'Active Audits')}</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{operations.length} Active Audits</div>
           <span className="text-xs text-[#E0702A] font-semibold flex items-center gap-1 mt-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#E0702A] animate-ping"></span>
-            {t('admin.realtimeTracking', 'Real-time tracking of inspectors & shops')}
+            Real-time tracking of inspectors &amp; shops
           </span>
         </div>
 
         <div className="bg-white border-2 border-[#DADDD3] hover:border-[#023625] rounded-2xl p-4 sm:p-5 shadow-xs transition-all">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-gray-500">{t('admin.authorizedInspectors', 'Authorized Inspectors')}</span>
+            <span className="text-xs font-bold uppercase text-gray-500">Authorized Inspectors</span>
             <span className="w-8 h-8 rounded-lg bg-[#E7F0E8] text-[#023625] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">badge</span>
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{inspectors.length} {t('admin.fieldOfficers', 'Field Officers')}</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{inspectors.length} Field Officers</div>
           <span className="text-xs text-[#2E7D32] font-semibold mt-1 flex items-center gap-1">
             <span className="material-symbols-outlined text-xs">verified</span>
-            {t('admin.adminCredentialsOnly', 'Admin-Provisioned Credentials Only')}
+            Admin-Provisioned Credentials Only
           </span>
         </div>
 
@@ -112,20 +162,20 @@ export const AdminDashboard = () => {
           className="bg-white border-2 border-[#DADDD3] hover:border-[#E0702A] rounded-2xl p-4 sm:p-5 shadow-xs transition-all sm:col-span-2 lg:col-span-1 cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-gray-500 group-hover:text-[#E0702A]">{t('admin.registeredShopOwnersClick', 'Registered Shop Owners (Click to view)')}</span>
+            <span className="text-xs font-bold uppercase text-gray-500 group-hover:text-[#E0702A]">Registered Shop Owners (Click to view)</span>
             <span className="w-8 h-8 rounded-lg bg-[#FAF8F4] border border-amber-200 text-[#E0702A] flex items-center justify-center">
               <span className="material-symbols-outlined text-lg">storefront</span>
             </span>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{merchants.length} {t('admin.storesSynced', 'Stores Synced')}</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#023625]">{merchants.length} Stores Synced</div>
           {merchants.some((m) => !m.assignedInspector) ? (
             <span className="text-xs text-[#E0702A] font-bold mt-1 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[#E0702A] animate-ping"></span>
-              <span>{merchants.filter((m) => !m.assignedInspector).length} {t('admin.pendingAssignment', 'Pending Inspector Assignment')}</span>
+              <span>{merchants.filter((m) => !m.assignedInspector).length} Pending Inspector Assignment</span>
             </span>
           ) : (
             <span className="text-xs text-gray-600 font-medium mt-1 block">
-              {t('admin.allStoresAllocated', 'All stores allocated to officers')}
+              All stores allocated to officers
             </span>
           )}
         </div>
@@ -142,7 +192,7 @@ export const AdminDashboard = () => {
           }`}
         >
           <span className="material-symbols-outlined text-base">route</span>
-          <span>{t('admin.tabLiveOps', '1. Live Field Operations')} ({operations.length})</span>
+          <span>1. Live Field Operations ({operations.length})</span>
         </button>
 
         <button
@@ -154,7 +204,7 @@ export const AdminDashboard = () => {
           }`}
         >
           <span className="material-symbols-outlined text-base">badge</span>
-          <span>{t('admin.tabInspectors', '2. Inspector Accounts')} ({inspectors.length})</span>
+          <span>2. Inspector Accounts ({inspectors.length})</span>
         </button>
 
         <button
@@ -166,10 +216,10 @@ export const AdminDashboard = () => {
           }`}
         >
           <span className="material-symbols-outlined text-base">storefront</span>
-          <span>{t('admin.tabMerchants', '3. Registered Shop Owners')} ({merchants.length})</span>
+          <span>3. Registered Shop Owners ({merchants.length})</span>
           {merchants.some((m) => !m.assignedInspector) && (
             <span className="px-2 py-0.5 rounded-full bg-[#E0702A] text-white text-[10px] font-bold animate-pulse">
-              {merchants.filter((m) => !m.assignedInspector).length} {t('admin.unassigned', 'Unassigned')}
+              {merchants.filter((m) => !m.assignedInspector).length} Unassigned
             </span>
           )}
         </button>
@@ -181,15 +231,15 @@ export const AdminDashboard = () => {
           <div className="p-4 sm:p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-[#023625]">
-                {t('admin.realtimeOpsTitle', 'Real-Time Metrological Operations by Field Officers')}
+                Real-Time Metrological Operations by Field Officers
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
-                {t('admin.realtimeOpsDesc', 'Monitoring which inspector is conducting which calibration & stamping operation on which shop owner:')}
+                Monitoring which inspector is conducting which calibration &amp; stamping operation on which shop owner:
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E7F0E8] text-[#023625] text-xs font-bold self-start sm:self-auto border border-[#c3ecd5]">
               <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-              {t('admin.liveDispatchFeed', 'Live Dispatch Feed')}
+              Live Dispatch Feed
             </span>
           </div>
 
@@ -197,13 +247,13 @@ export const AdminDashboard = () => {
             <table className="w-full text-left text-xs min-w-[750px]">
               <thead>
                 <tr className="bg-[#F6F2E9] border-b border-[#DADDD3] text-[#023625] font-bold uppercase text-[10px] tracking-wider">
-                  <th className="py-3.5 px-4">{t('admin.thFieldInspector', 'Field Inspector')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thTargetShop', 'Target Shop & UID')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thOperationTask', 'Operation / Task')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thInstrument', 'Weighing Instrument')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thSlot', 'Scheduled Slot')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thLiveStatus', 'Live Status')}</th>
-                  <th className="py-3.5 px-4 text-right">{t('admin.thAdminAction', 'Admin Action')}</th>
+                  <th className="py-3.5 px-4">Field Inspector</th>
+                  <th className="py-3.5 px-4">Target Shop &amp; UID</th>
+                  <th className="py-3.5 px-4">Operation / Task</th>
+                  <th className="py-3.5 px-4">Weighing Instrument</th>
+                  <th className="py-3.5 px-4">Scheduled Slot</th>
+                  <th className="py-3.5 px-4">Live Status</th>
+                  <th className="py-3.5 px-4 text-right">Admin Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7F0E8]">
@@ -212,8 +262,8 @@ export const AdminDashboard = () => {
                     <td colSpan={7} className="py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-4xl text-gray-300">radar</span>
-                        <span className="font-semibold text-sm text-gray-700">{t('empty.adminOpsTitle', 'No Active Field Operations')}</span>
-                        <span className="text-xs text-gray-400">{t('empty.adminOpsDesc', 'Scheduled shop visits and active audits will stream here in real time.')}</span>
+                        <span className="font-semibold text-sm text-gray-700">No Active Field Operations</span>
+                        <span className="text-xs text-gray-400">Scheduled shop visits and active audits will stream here in real time.</span>
                       </div>
                     </td>
                   </tr>
@@ -237,18 +287,8 @@ export const AdminDashboard = () => {
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className="font-semibold text-gray-800 block">
-                        {op.operationType === 'On-Site Stamping & Verification'
-                          ? t('admin.onSiteStamping', 'On-Site Stamping & Verification')
-                          : op.operationType}
-                      </span>
-                      <span className="text-[11px] text-gray-500">
-                        {op.remarks?.startsWith('Assigned to ')
-                          ? `${t('admin.assignedTo', 'Assigned to')} ${op.remarks.replace('Assigned to ', '')}`
-                          : op.remarks === 'Requires Inspector Assignment by Controller'
-                          ? t('admin.requiresInspectorAssignment', 'Requires Inspector Assignment by Controller')
-                          : op.remarks}
-                      </span>
+                      <span className="font-semibold text-gray-800 block">{op.operationType}</span>
+                      <span className="text-[11px] text-gray-500">{op.remarks}</span>
                     </td>
 
                     <td className="py-4 px-4">
@@ -260,11 +300,7 @@ export const AdminDashboard = () => {
                     <td className="py-4 px-4 text-gray-700 font-medium">
                       <span className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-xs text-gray-400">schedule</span>
-                        {op.slot?.includes('(Assigned Slot)')
-                          ? op.slot.replace('(Assigned Slot)', `(${t('admin.assignedSlot', 'Assigned Slot')})`)
-                          : op.slot === 'Awaiting Inspector Assignment'
-                          ? t('admin.awaitingInspectorAssignment', 'Awaiting Inspector Assignment')
-                          : op.slot}
+                        {op.slot}
                       </span>
                     </td>
 
@@ -279,15 +315,7 @@ export const AdminDashboard = () => {
                         <span className={`w-1.5 h-1.5 rounded-full ${
                           op.statusType === 'completed' ? 'bg-emerald-600' : 'bg-[#E0702A] animate-ping'
                         }`}></span>
-                        <span>
-                          {op.liveStatus === 'Inspector Assigned • Pending Docs'
-                            ? t('admin.inspectorAssignedPendingDocs', 'Inspector Assigned • Pending Docs')
-                            : op.liveStatus === 'Docs Verified • Ready for Visit'
-                            ? t('admin.docsVerifiedReady', 'Docs Verified • Ready for Visit')
-                            : op.liveStatus === 'New Registration • Pending Allocation'
-                            ? t('admin.newRegPendingAllocation', 'New Registration • Pending Allocation')
-                            : op.liveStatus}
-                        </span>
+                        <span>{op.liveStatus}</span>
                       </span>
                     </td>
 
@@ -318,7 +346,7 @@ export const AdminDashboard = () => {
                           }`}
                         >
                           <option value="" disabled className="text-gray-700 bg-white">
-                            {op.badgeNumber === 'LM-PENDING' ? t('admin.assignInspector', 'Assign Inspector...') : t('admin.reassignInspector', 'Reassign Inspector...')}
+                            {op.badgeNumber === 'LM-PENDING' ? 'Assign Inspector...' : 'Reassign Inspector...'}
                           </option>
                           {inspectors
                             .filter((insp) => insp.status === 'Active')
@@ -334,7 +362,7 @@ export const AdminDashboard = () => {
                             onClick={() => showToast(`Auditing live field telemetry for ${op.inspectorName} at ${op.shopName}`, 'info')}
                             className="px-2.5 py-1 text-xs bg-white hover:bg-gray-100 border border-[#DADDD3] text-[#023625] font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap"
                           >
-                            {t('admin.dossier', 'Dossier')}
+                            Dossier
                           </button>
                         )}
                       </div>
@@ -353,10 +381,10 @@ export const AdminDashboard = () => {
           <div className="p-4 sm:p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-[#023625]">
-                {t('admin.inspectorLedgerTitle', 'Authorized Inspector Accounts Ledger')}
+                Authorized Inspector Accounts Ledger
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
-                {t('admin.inspectorLedgerDesc', 'Inspectors can ONLY log in with credentials created below. Outside signups are strictly prohibited:')}
+                Inspectors can ONLY log in with credentials created below. Outside signups are strictly prohibited:
               </p>
             </div>
             <button
@@ -364,7 +392,7 @@ export const AdminDashboard = () => {
               className="px-3.5 py-2 rounded-xl bg-[#023625] hover:bg-[#1b4a36] text-white text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-auto"
             >
               <span className="material-symbols-outlined text-sm">add</span>
-              <span>{t('admin.createInspectorAccount', 'Create Inspector Account')}</span>
+              <span>Create Inspector Account</span>
             </button>
           </div>
 
@@ -372,12 +400,12 @@ export const AdminDashboard = () => {
             <table className="w-full text-left text-xs min-w-[700px]">
               <thead>
                 <tr className="bg-[#F6F2E9] border-b border-[#DADDD3] text-[#023625] font-bold uppercase text-[10px] tracking-wider">
-                  <th className="py-3.5 px-4">{t('admin.thBadgeNumber', 'Badge Number')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thInspectorName', 'Inspector Name')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thJurisdictionZone', 'Jurisdiction Zone')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thAuthorizedEmail', 'Authorized Login Email')}</th>
-                  <th className="py-3.5 px-4">{t('common.status', 'Status')}</th>
-                  <th className="py-3.5 px-4 text-right">{t('admin.thAccessControl', 'Access Control')}</th>
+                  <th className="py-3.5 px-4">Badge Number</th>
+                  <th className="py-3.5 px-4">Inspector Name</th>
+                  <th className="py-3.5 px-4">Jurisdiction Zone</th>
+                  <th className="py-3.5 px-4">Authorized Login Email</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4 text-right">Access Control</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7F0E8]">
@@ -386,8 +414,8 @@ export const AdminDashboard = () => {
                     <td colSpan={6} className="py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-4xl text-gray-300">badge</span>
-                        <span className="font-semibold text-sm text-gray-700">{t('empty.adminInspectorsTitle', 'No Inspector Accounts Provisioned')}</span>
-                        <span className="text-xs text-gray-400">{t('empty.adminInspectorsDesc', 'Click "Create Inspector Account" above to provision new official inspector credentials.')}</span>
+                        <span className="font-semibold text-sm text-gray-700">No Inspector Accounts Provisioned</span>
+                        <span className="text-xs text-gray-400">Click &quot;Create Inspector Account&quot; above to provision new official inspector credentials.</span>
                       </div>
                     </td>
                   </tr>
@@ -434,9 +462,9 @@ export const AdminDashboard = () => {
                                 ? 'bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800'
                                 : 'bg-[#E7F0E8] hover:bg-[#c3ecd5] border border-[#c3ecd5] text-[#023625]'
                             }`}
-                            title={insp.status === 'Active' ? t('admin.suspendAccess', 'Suspend Access') : t('admin.reactivate', 'Reactivate')}
+                            title={insp.status === 'Active' ? 'Suspend Access' : 'Reactivate'}
                           >
-                            {insp.status === 'Active' ? t('admin.suspendAccess', 'Suspend Access') : t('admin.reactivate', 'Reactivate')}
+                            {insp.status === 'Active' ? 'Suspend Access' : 'Reactivate'}
                           </button>
 
                           <button
@@ -446,11 +474,10 @@ export const AdminDashboard = () => {
                               }
                             }}
                             className="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 transition-all flex items-center gap-1 cursor-pointer"
-                            title={t('aria.deleteInspector', 'Permanently Delete Inspector Account')}
-                            aria-label={t('aria.deleteInspector', 'Permanently Delete Inspector Account')}
+                            title="Permanently Delete Inspector Account"
                           >
                             <span className="material-symbols-outlined text-sm">delete</span>
-                            <span>{t('admin.delete', 'Delete')}</span>
+                            <span>Delete</span>
                           </button>
                         </div>
                       </td>
@@ -469,14 +496,14 @@ export const AdminDashboard = () => {
           <div className="p-4 sm:p-5 border-b border-[#DADDD3] bg-[#FAF8F4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-sm sm:text-base font-bold text-[#023625]">
-                {t('admin.merchantsDirTitle', 'Registered Shop Owners & Merchants Directory')}
+                Registered Shop Owners &amp; Merchants Directory
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
-                {t('admin.merchantsDirDesc', 'Stores created by merchants via portal self-registration are dynamically synchronized here:')}
+                Stores created by merchants via portal self-registration are dynamically synchronized here:
               </p>
             </div>
             <span className="text-xs font-bold text-[#E0702A] bg-[#FAF8F4] px-3 py-1 rounded-full border border-amber-200">
-              {merchants.length} {t('admin.totalMerchants', 'Total Merchants')}
+              {merchants.length} Total Merchants
             </span>
           </div>
 
@@ -484,13 +511,13 @@ export const AdminDashboard = () => {
             <table className="w-full text-left text-xs min-w-[780px]">
               <thead>
                 <tr className="bg-[#F6F2E9] border-b border-[#DADDD3] text-[#023625] font-bold uppercase text-[10px] tracking-wider">
-                  <th className="py-3.5 px-4">UID</th>
-                  <th className="py-3.5 px-4">{t('admin.thShopName', 'Establishment Name')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thOwnerContact', 'Owner Name & Contact')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thZoneWard', 'Zone / Ward')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thRegisteredScales', 'Registered Scales')}</th>
-                  <th className="py-3.5 px-4">{t('admin.thAssignedInspector', 'Assigned Inspector')}</th>
-                  <th className="py-3.5 px-4 text-right">{t('admin.thAssignOfficer', 'Assign / Reassign Officer')}</th>
+                  <th className="py-3.5 px-4">Merchant UID</th>
+                  <th className="py-3.5 px-4">Establishment Name</th>
+                  <th className="py-3.5 px-4">Owner Name &amp; Contact</th>
+                  <th className="py-3.5 px-4">Zone / Ward</th>
+                  <th className="py-3.5 px-4">Registered Scales</th>
+                  <th className="py-3.5 px-4">Assigned Inspector</th>
+                  <th className="py-3.5 px-4 text-right">Assign / Reassign Officer</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7F0E8]">
@@ -499,8 +526,8 @@ export const AdminDashboard = () => {
                     <td colSpan={7} className="py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <span className="material-symbols-outlined text-4xl text-gray-300">storefront</span>
-                        <span className="font-semibold text-sm text-gray-700">{t('empty.adminMerchantsTitle', 'No Registered Establishments Yet')}</span>
-                        <span className="text-xs text-gray-400">{t('empty.adminMerchantsDesc', 'Stores registered by merchants will appear here for inspector allocation.')}</span>
+                        <span className="font-semibold text-sm text-gray-700">No Registered Establishments Yet</span>
+                        <span className="text-xs text-gray-400">Stores registered by merchants will appear here for inspector allocation.</span>
                       </div>
                     </td>
                   </tr>
@@ -547,7 +574,7 @@ export const AdminDashboard = () => {
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300 animate-pulse">
                             <span className="material-symbols-outlined text-xs">pending</span>
-                            <span>{t('admin.pendingAllocation', 'Pending Allocation')}</span>
+                            <span>Pending Allocation</span>
                           </span>
                         )}
                       </td>
@@ -569,7 +596,7 @@ export const AdminDashboard = () => {
                             }`}
                           >
                             <option value="" disabled className="text-gray-700 bg-white">
-                              {m.assignedInspector ? t('admin.reassignInspector', 'Reassign Officer...') : t('admin.assignInspector', 'Assign Inspector Now...')}
+                              {m.assignedInspector ? 'Reassign Officer...' : 'Assign Inspector Now...'}
                             </option>
                             {inspectors
                               .filter((insp) => insp.status === 'Active')
@@ -600,8 +627,8 @@ export const AdminDashboard = () => {
                   <span className="material-symbols-outlined text-lg">person_add</span>
                 </span>
                 <div>
-                  <h3 className="text-sm sm:text-base font-bold text-[#023625]">{t('admin.modalTitle', 'Provision New Field Inspector')}</h3>
-                  <p className="text-[10px] sm:text-[11px] text-gray-500">{t('admin.modalSubtitle', 'Government Legal Metrology Enforcement Officer')}</p>
+                  <h3 className="text-sm sm:text-base font-bold text-[#023625]">Provision New Field Inspector</h3>
+                  <p className="text-[10px] sm:text-[11px] text-gray-500">Government Legal Metrology Enforcement Officer</p>
                 </div>
               </div>
               <button
@@ -614,42 +641,63 @@ export const AdminDashboard = () => {
 
             <form onSubmit={handleFormSubmit} className="pt-4 space-y-3.5 sm:space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 mb-1">{t('admin.labelFullName', 'Inspector Full Name')} *</label>
+                <label className="block font-bold text-gray-700 mb-1">Inspector Full Name * (Letters only)</label>
                 <input
                   type="text"
                   required
-                  placeholder={t('form.officerNamePlaceholder', 'e.g. Insp. M. Patil')}
+                  minLength={2}
+                  maxLength={50}
+                  pattern="^[A-Za-z\s]+$"
+                  title="Name can contain letters and spaces only"
+                  placeholder="e.g. Ramesh Patil"
                   value={newInspForm.name}
-                  onChange={(e) => setNewInspForm({ ...newInspForm, name: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[A-Za-z\s]*$/.test(val)) {
+                      setNewInspForm({ ...newInspForm, name: val });
+                    }
+                  }}
                   className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">{t('admin.labelBadgeNumber', 'Badge Number')} *</label>
+                  <label className="block font-bold text-gray-700 mb-1">Badge Number *</label>
                   <input
                     type="text"
-                    placeholder={t('form.badgeNumberPlaceholder', 'e.g. LM-BLR-518')}
+                    required
+                    placeholder="e.g. LM-BLR-518"
                     value={newInspForm.badgeNumber}
                     onChange={(e) => setNewInspForm({ ...newInspForm, badgeNumber: e.target.value })}
                     className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">{t('admin.labelPhone', 'Phone Number')}</label>
-                  <input
-                    type="text"
-                    placeholder={t('form.phonePlaceholder', '+91 98450 00000')}
-                    value={newInspForm.phone}
-                    onChange={(e) => setNewInspForm({ ...newInspForm, phone: e.target.value })}
-                    className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs text-gray-900 focus:outline-none focus:border-[#023625]"
-                  />
+                  <label className="block font-bold text-gray-700 mb-1">Phone Number (10 Digits)</label>
+                  <div className="flex rounded-xl border border-[#DADDD3] bg-[#FAF8F4] overflow-hidden focus-within:border-[#023625]">
+                    <span className="px-3 py-2.5 bg-gray-100 text-gray-600 font-semibold text-xs border-r border-[#DADDD3] flex items-center select-none">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      title="Please enter exactly 10 digits"
+                      placeholder="9845000000"
+                      value={newInspForm.phone}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setNewInspForm({ ...newInspForm, phone: digits });
+                      }}
+                      className="w-full bg-transparent p-2.5 text-xs text-gray-900 focus:outline-none font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1">{t('admin.labelAssignedZone', 'Assigned Zone / Ward')}</label>
+                <label className="block font-bold text-gray-700 mb-1">Assigned Zone / Ward</label>
                 <select
                   value={newInspForm.zone}
                   onChange={(e) => setNewInspForm({ ...newInspForm, zone: e.target.value })}
@@ -665,20 +713,24 @@ export const AdminDashboard = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">{t('admin.labelLoginEmail', 'Login Email')} *</label>
+                  <label className="block font-bold text-gray-700 mb-1">Login Email *</label>
                   <input
                     type="email"
-                    placeholder={t('form.emailPlaceholder', 'officer@metrx.com')}
+                    required
+                    placeholder="officer@metrx.com"
                     value={newInspForm.email}
                     onChange={(e) => setNewInspForm({ ...newInspForm, email: e.target.value })}
                     className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">{t('admin.labelPassword', 'Assigned Password')} *</label>
+                  <label className="block font-bold text-gray-700 mb-1">Assigned Password * (8-32 chars)</label>
                   <input
                     type="password"
-                    placeholder={t('form.passwordPlaceholder', '••••••••')}
+                    required
+                    minLength={8}
+                    maxLength={32}
+                    placeholder="Min 8 to 32 characters"
                     value={newInspForm.password}
                     onChange={(e) => setNewInspForm({ ...newInspForm, password: e.target.value })}
                     className="w-full bg-[#FAF8F4] border border-[#DADDD3] rounded-xl p-2.5 text-xs font-mono text-gray-900 focus:outline-none focus:border-[#023625]"
@@ -692,13 +744,13 @@ export const AdminDashboard = () => {
                   onClick={() => setIsCreateModalOpen(false)}
                   className="px-4 py-2 border border-[#DADDD3] rounded-xl text-gray-700 font-semibold hover:bg-gray-100"
                 >
-                  {t('common.cancel', 'Cancel')}
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-[#023625] hover:bg-[#1b4a36] text-white font-bold rounded-xl shadow-xs transition-all"
                 >
-                  {t('admin.btnCreateAccount', 'Create & Issue Credentials')}
+                  Create &amp; Issue Credentials
                 </button>
               </div>
             </form>

@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma.js';
 
+import { validateName, validatePhone, validatePassword, validateEmail } from '../utils/validation.js';
+
 // Helper to generate simple JWT
 const generateToken = (id, role) => {
   return jwt.sign(
@@ -38,6 +40,30 @@ export const registerUser = async (req, res) => {
 
     if (!name || !email) {
       return res.status(400).json({ success: false, message: 'Please provide name and email' });
+    }
+
+    const nameCheck = validateName(name);
+    if (!nameCheck.isValid) {
+      return res.status(400).json({ success: false, message: nameCheck.error });
+    }
+
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, message: emailCheck.error });
+    }
+
+    if (password) {
+      const passCheck = validatePassword(password);
+      if (!passCheck.isValid) {
+        return res.status(400).json({ success: false, message: passCheck.error });
+      }
+    }
+
+    if (phone) {
+      const phoneCheck = validatePhone(phone);
+      if (!phoneCheck.isValid) {
+        return res.status(400).json({ success: false, message: phoneCheck.error });
+      }
     }
 
     const cleanEmail = email.toLowerCase().trim();
@@ -163,6 +189,16 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, message: emailCheck.error });
+    }
+
+    const passCheck = validatePassword(password);
+    if (!passCheck.isValid) {
+      return res.status(400).json({ success: false, message: passCheck.error });
+    }
+
     const cleanEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail }
@@ -218,20 +254,63 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Delete user account (Inspector / User)
+// @desc    Delete user account (Shop Owner / Inspector / User)
 // @route   DELETE /api/auth/users/:id
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.user.deleteMany({
+    const cleanId = (id || '').toLowerCase().trim();
+
+    // 1. Find user by ID or Email
+    const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { id },
-          { email: id }
+          { id: id },
+          { email: cleanId }
         ]
       }
     });
-    return res.json({ success: true, message: 'User deleted successfully' });
+
+    if (user) {
+      // Find all shops belonging to this user
+      const userShops = await prisma.shop.findMany({
+        where: {
+          OR: [
+            { ownerId: user.id },
+            { email: user.email }
+          ]
+        }
+      });
+
+      for (const s of userShops) {
+        await prisma.instrument.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+        await prisma.verification.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+        await prisma.certificate.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+        await prisma.shop.delete({ where: { id: s.id } }).catch(() => {});
+      }
+
+      await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+    }
+
+    // 2. Also check if id refers to a shopId, email, or merchantUid directly
+    const matchingShops = await prisma.shop.findMany({
+      where: {
+        OR: [
+          { id: id },
+          { email: cleanId },
+          { merchantUid: id }
+        ]
+      }
+    });
+
+    for (const s of matchingShops) {
+      await prisma.instrument.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+      await prisma.verification.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+      await prisma.certificate.deleteMany({ where: { shopId: s.id } }).catch(() => {});
+      await prisma.shop.delete({ where: { id: s.id } }).catch(() => {});
+    }
+
+    return res.json({ success: true, message: 'Account and associated commercial establishment records permanently deleted from registry and database.' });
   } catch (error) {
     console.error('[Delete User Error]', error);
     return res.status(500).json({ success: false, message: error.message });

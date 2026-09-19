@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { generateCertificateQR } from '../services/qrService.js';
 import { generateCertificatePDF } from '../services/pdfService.js';
+import { evaluateCertificateStatus } from '../services/rulesEngineService.js';
 
 // @desc    Get all certificates
 // @route   GET /api/certificates
@@ -37,16 +38,38 @@ export const lookupCertificate = async (req, res) => {
     });
 
     if (!certificate) {
-      return res.status(404).json({ success: false, message: 'Official Metrological Certificate not found in state register' });
+      return res.status(404).json({
+        success: false,
+        status: 'NOT_FOUND',
+        statusBadge: '? NOT FOUND',
+        message: 'Official Metrological Certificate not found in state register'
+      });
     }
+
+    // Determine real-time validity status based on certificate expiry
+    const isExplicitlyRevoked = certificate.status === 'REVOKED';
+    const statusEvaluation = evaluateCertificateStatus(
+      certificate.validUntilTimestamp || certificate.validUntil,
+      isExplicitlyRevoked
+    );
 
     return res.json({
       success: true,
       data: {
         ...certificate,
+        currentStatus: statusEvaluation.status,
+        statusBadge: statusEvaluation.badge,
+        statusColor: statusEvaluation.color,
+        statusMessage: statusEvaluation.message,
+        daysRemaining: statusEvaluation.daysLeft,
+        isExpired: statusEvaluation.status === 'EXPIRED',
+        isExpiringSoon: statusEvaluation.status === 'EXPIRING_SOON',
+        isRevoked: statusEvaluation.status === 'REVOKED',
         shopName: certificate.shop?.name || 'Authorized Establishment',
-        shopAddress: certificate.shop?.address || 'Bengaluru',
-        tradeLicense: certificate.shop?.tradeLicense || 'BBMP/TL/2023/9081'
+        shopAddress: certificate.shop?.address || 'Commercial Circle, Bengaluru',
+        tradeLicense: certificate.shop?.tradeLicense || 'BBMP/TL/2023/9081',
+        applicableStandard: certificate.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule',
+        ruleName: certificate.ruleName || 'Electronic Weighing Instrument Verification Scheme'
       }
     });
   } catch (error) {

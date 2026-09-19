@@ -11,6 +11,7 @@ import instrumentRoutes from './routes/instrumentRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
 import seedRoutes from './routes/seedRoutes.js';
+import ruleRoutes from './routes/ruleRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,7 @@ app.use('/api/shops', shopRoutes);
 app.use('/api/instruments', instrumentRoutes);
 app.use('/api/verifications', verificationRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/verification-rules', ruleRoutes);
 app.use('/api/seed', seedRoutes);
 
 // Error Handling Middleware

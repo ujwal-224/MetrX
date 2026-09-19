@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { validateName, validatePhone, validateEmail } from '../utils/validation.js';
 
 // @desc    Get all shops (or filter by merchant email / ownerId)
 // @route   GET /api/shops
@@ -80,6 +81,27 @@ export const createShop = async (req, res) => {
       scaleType
     } = req.body;
 
+    if (ownerName) {
+      const nameCheck = validateName(ownerName);
+      if (!nameCheck.isValid) {
+        return res.status(400).json({ success: false, message: `Owner Name: ${nameCheck.error}` });
+      }
+    }
+
+    if (email) {
+      const emailCheck = validateEmail(email);
+      if (!emailCheck.isValid) {
+        return res.status(400).json({ success: false, message: `Email: ${emailCheck.error}` });
+      }
+    }
+
+    if (phone) {
+      const phoneCheck = validatePhone(phone);
+      if (!phoneCheck.isValid) {
+        return res.status(400).json({ success: false, message: `Phone: ${phoneCheck.error}` });
+      }
+    }
+
     const id = customId || `shop-${Date.now().toString(36)}`;
     const uid = merchantUid || `#EST-${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -112,33 +134,9 @@ export const createShop = async (req, res) => {
         status: 'Active Commercial Establishment',
         complianceStatus: complianceStatus || 'Pending Inspector Assignment',
         documentStatus: documentStatus || 'not_uploaded',
-        registeredScalesCount: Number(registeredScalesCount) || 1
+        registeredScalesCount: Number(registeredScalesCount) || 0
       }
     });
-
-    // Automatically provision initial instrument scale in PostgreSQL
-    const instId = `inst-${Date.now()}`;
-    await prisma.instrument.create({
-      data: {
-        id: instId,
-        shopId: shop.id,
-        instrumentCode: instId,
-        name: `${scaleType || 'Electronic Counter'} Scale`,
-        model: scaleModel || 'Digital Metrology Model 2025',
-        capacity: '30kg / 1g precision',
-        serialNumber: `#KA-BLR-${Math.floor(10000 + Math.random() * 90000)}`,
-        counter: 'Counter 1',
-        status: 'Initial Verification Due',
-        verificationStatusText: 'Stamping Pending Inspection',
-        daysRemaining: 30,
-        totalDaysCycle: 365,
-        expiresOn: 'Within 30 Days',
-        sealNumber: 'SEAL-PENDING',
-        complianceRate: '100%',
-        type: 'counter_scale',
-        class: 'Class III Commercial'
-      }
-    }).catch((err) => console.warn('[Prisma Instrument Init Error]', err.message));
 
     return res.status(201).json({ success: true, data: shop });
   } catch (error) {

@@ -63,6 +63,16 @@ export const registerInstrument = async (req, res) => {
       }
     });
 
+    // Increment shop registeredScalesCount
+    await prisma.shop.update({
+      where: { id: shopId },
+      data: {
+        registeredScalesCount: {
+          increment: 1
+        }
+      }
+    }).catch(() => null);
+
     return res.status(201).json({ success: true, data: instrument });
   } catch (error) {
     console.error('[Register Instrument Error]', error);
