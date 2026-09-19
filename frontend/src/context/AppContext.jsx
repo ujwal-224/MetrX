@@ -140,7 +140,20 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   }, [storeInfo]);
 
-  const [instruments, setInstruments] = useState([]);
+  const [instruments, setInstruments] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_instruments') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_instruments', JSON.stringify(instruments));
+    } catch (e) {}
+  }, [instruments]);
+
   const [activeInstrumentIndex, setActiveInstrumentIndex] = useState(0);
   const [visits, setVisits] = useState([]);
   const [checklist, setChecklist] = useState(defaultInspectionChecklist);
@@ -166,7 +179,19 @@ export const AppProvider = ({ children }) => {
   }, [inspectors]);
 
   // Shop Owner / Merchant Accounts (Self-Created by Shop Owners)
-  const [merchants, setMerchants] = useState([]);
+  const [merchants, setMerchants] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_merchants') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_merchants', JSON.stringify(merchants));
+    } catch (e) {}
+  }, [merchants]);
 
   // Pending Inspector Allocation Requests from Merchants to Admin
   const [allocationRequests, setAllocationRequests] = useState(() => {
@@ -186,31 +211,95 @@ export const AppProvider = ({ children }) => {
   }, [allocationRequests]);
 
   // Live Inspector Operations on Shop Owners (Real-Time Tracking for Admin)
-  const [operations, setOperations] = useState([]);
+  const [operations, setOperations] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_operations') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_operations', JSON.stringify(operations));
+    } catch (e) {}
+  }, [operations]);
 
   // Verification Request flow state (5-Step Model)
   const [selectedSlot, setSelectedSlot] = useState('slot_1');
-  const [verificationStatus, setVerificationStatus] = useState({
-    status: 'not_uploaded',
-    documentStatus: 'not_uploaded',
-    step: 1,
-    applicationRef: 'METRX-LMIS-PENDING',
-    slotLabel: 'Select Visit Slot',
-    timeLabel: 'Morning / Afternoon',
-    inspectorName: 'Pending Admin Allocation',
-    inspectorBadge: 'LM-PENDING',
-    zone: 'Ward 4 (Commercial Circle)',
-    requestedAt: 'Pending',
-    documentsSubmittedAt: null,
-    fee: 150,
-    feeStatus: 'Payable on-site / UPI'
+  const [verificationStatus, setVerificationStatus] = useState(() => {
+    try {
+      const saved = localStorage.getItem('metrx_verification_status');
+      return saved ? JSON.parse(saved) : {
+        status: 'not_uploaded',
+        documentStatus: 'not_uploaded',
+        step: 1,
+        applicationRef: 'METRX-LMIS-PENDING',
+        slotLabel: 'Select Visit Slot',
+        timeLabel: 'Morning / Afternoon',
+        inspectorName: 'Pending Admin Allocation',
+        inspectorBadge: 'LM-PENDING',
+        zone: 'Ward 4 (Commercial Circle)',
+        requestedAt: 'Pending',
+        documentsSubmittedAt: null,
+        fee: 150,
+        feeStatus: 'Payable on-site / UPI'
+      };
+    } catch {
+      return {
+        status: 'not_uploaded',
+        documentStatus: 'not_uploaded',
+        step: 1,
+        applicationRef: 'METRX-LMIS-PENDING',
+        slotLabel: 'Select Visit Slot',
+        timeLabel: 'Morning / Afternoon',
+        inspectorName: 'Pending Admin Allocation',
+        inspectorBadge: 'LM-PENDING',
+        zone: 'Ward 4 (Commercial Circle)',
+        requestedAt: 'Pending',
+        documentsSubmittedAt: null,
+        fee: 150,
+        feeStatus: 'Payable on-site / UPI'
+      };
+    }
   });
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_verification_status', JSON.stringify(verificationStatus));
+    } catch (e) {}
+  }, [verificationStatus]);
+
   // Statutory Documents Submissions (5 Required Documents per shop)
-  const [documentSubmissions, setDocumentSubmissions] = useState({});
+  const [documentSubmissions, setDocumentSubmissions] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_submissions') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_submissions', JSON.stringify(documentSubmissions));
+    } catch (e) {}
+  }, [documentSubmissions]);
 
   // Certificate State
-  const [certificateData, setCertificateData] = useState(null);
+  const [certificateData, setCertificateData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('metrx_certificate_data');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (certificateData) localStorage.setItem('metrx_certificate_data', JSON.stringify(certificateData));
+    } catch (e) {}
+  }, [certificateData]);
 
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -336,7 +425,9 @@ export const AppProvider = ({ children }) => {
           };
         });
 
-        setAllShops(formattedShops);
+        if (formattedShops.length > 0) {
+          setAllShops(formattedShops);
+        }
 
         // Populate merchants ledger for Admin Command Center
         const formattedMerchants = formattedShops.map((bShop) => {
@@ -361,7 +452,9 @@ export const AppProvider = ({ children }) => {
             createdAt: bShop.createdAt ? new Date(bShop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'
           };
         });
-        setMerchants(formattedMerchants);
+        if (formattedMerchants.length > 0) {
+          setMerchants(formattedMerchants);
+        }
 
         // Scope ownerShops strictly to the logged-in merchant's account
         let userShops = [];
@@ -371,10 +464,10 @@ export const AppProvider = ({ children }) => {
           );
         }
 
-        setOwnerShops(userShops);
-
-        // Active shop profile setup for the authenticated shop owner
         if (userShops.length > 0) {
+          setOwnerShops(userShops);
+
+          // Active shop profile setup for the authenticated shop owner
           const active = userShops[0];
           const isCertified = active.complianceStatus === 'Certified & Compliant' || (active.certificationHistory && active.certificationHistory.length > 0);
           setStoreInfo({
@@ -393,7 +486,9 @@ export const AppProvider = ({ children }) => {
             complianceStatus: active.complianceStatus,
             certificateId: active.certificationHistory?.[0]?.certId || active.certificateId || 'PENDING'
           });
-          setInstruments(active.instruments || []);
+          if (active.instruments && active.instruments.length > 0) {
+            setInstruments(active.instruments);
+          }
 
           setVerificationStatus((prev) => ({
             ...prev,
@@ -428,7 +523,9 @@ export const AppProvider = ({ children }) => {
             remarks: isAssigned ? `Assigned to ${bShop.assignedInspector}` : 'Requires Inspector Assignment by Controller'
           });
         });
-        setOperations(ops);
+        if (ops.length > 0) {
+          setOperations(ops);
+        }
 
         // Build Document Submissions strictly from real shop submissions while preserving cached fileData
         let cachedDocs = {};
