@@ -1,136 +1,136 @@
 export const translations = {
   EN: {
-    // Header & Brand
-    'brand.title': 'MetrX',
-    'brand.official': 'Official',
-    'brand.subtitle': 'Legal Metrology Portal',
-    'header.login': 'Login to Portal',
-    'header.logout': 'Logout',
-    
-    // Roles & Titles
-    'role.merchant': 'Merchant',
-    'role.inspector': 'Enforcement',
-    'role.admin': 'Admin',
-    'role.public': 'Public',
-    'role.shopOwner': 'Shop Owner',
-    'role.fieldInspector': 'Field Inspector',
-    'role.administrator': 'Administrator',
-    'role.citizen': 'Citizen & Consumer',
-    
-    // Navigation
-    'nav.dashboard': 'Dashboard',
-    'nav.documents': 'Documents',
-    'nav.scheduleVisit': 'Schedule Visit',
-    'nav.trackVisit': 'Track Visit',
-    'nav.certificate': 'Certificate',
-    'nav.todaysRoute': "Today's Route",
-    'nav.conductInspection': 'Conduct Inspection',
-
-    // Role switcher
-    'switcher.quickSwitcher': 'Quick Role Switcher',
-    'switcher.previewRole': 'Preview as',
-    'switcher.workflow': 'Interactive Workflow Journey:',
-    'switcher.step1': '1. Register',
-    'switcher.step2': '2. Admin Assign',
-    'switcher.step3': '3. Upload Docs',
-    'switcher.step4': '4. Officer Verify',
-    'switcher.step5': '5. Book Slot',
-    'switcher.step6': '6. Field Audit',
-    'switcher.step7': '7. Certificate',
-
-    // Landing Hero
-    'hero.badge': 'Government of India • Ministry of Consumer Affairs • Legal Metrology',
-    'hero.title': 'Digital Metrology',
-    'hero.subtitle': 'An integrated digital platform for weighing and measuring instrument verification under Legal Metrology regulations. Businesses can register instruments and submit verification requests, authorized officers can conduct and record field inspections, and digital certificates with QR authentication enable transparent verification and complete lifecycle tracking.',
-    'hero.searchLabel': 'Verify Shop Calibration Certificate (Public)',
-    'hero.searchPlaceholder': 'Enter Certificate ID or Shop Name...',
-    'hero.verifyBtn': 'Verify',
-    'hero.stateSeal': 'STATE SEAL',
-    'hero.benchmark': 'Directorate Benchmark',
-
-    // Stakeholder Cards
-    'portals.tag': 'Stakeholder Portals',
-    'portals.title': 'Access Your Stakeholder Portal',
-    'portals.subtitle': 'Choose your role below to log in or create a new store account:',
-    'portals.merchant.tag': 'Merchant Access',
-    'portals.merchant.title': 'Shop Owner / Merchant',
-    'portals.merchant.desc': 'For Kirana stores, supermarkets, jewelers & traders. Self-register your store, book calibration slots & print certificates.',
-    'portals.merchant.f1': 'Self-registration for new stores',
-    'portals.merchant.f2': 'Scale expiry countdown (28d due)',
-    'portals.merchant.f3': 'Book on-site inspector visit (₹150 fee)',
-    'portals.merchant.signIn': 'Sign In',
-    'portals.merchant.signUp': 'Sign Up',
-
-    'portals.inspector.tag': 'Officer Access',
-    'portals.inspector.title': 'Field Metrology Inspector',
-    'portals.inspector.desc': 'Government Legal Metrology Verification Officers. Access daily inspection routes, calibration checklists & issue certificates.',
-    'portals.inspector.f1': 'Admin-Provisioned credentials only',
-    'portals.inspector.f2': 'Daily inspection route queue',
-    'portals.inspector.f3': 'Issue stamped Form XVII certificates',
-    'portals.inspector.login': 'Inspector Login',
-
-    'portals.admin.tag': 'Department Control',
-    'portals.admin.title': 'Department Admin',
-    'portals.admin.desc': 'State Controllers & District Legal Metrology Admin. Provision officer badges, audit verification ledger & monitor zone compliance.',
-    'portals.admin.f1': 'Provision & manage inspector accounts',
-    'portals.admin.f2': 'State-wide verification operations',
-    'portals.admin.f3': 'Audit trail & compliance reporting',
-    'portals.admin.login': 'Admin Center',
-
-    // Dashboard
-    'dash.title': 'Enterprise Commercial Establishments',
-    'dash.subtitle': 'Manage multi-branch shop licenses, mandatory statutory document filings, counter scale verification, and departmental certification history.',
-    'dash.registerNewShop': '+ Register New Shop / Branch',
-    'dash.yourEstablishments': 'Your Establishments',
-    'dash.registeredShops': 'Registered Shops',
-    'dash.verified': 'Verified',
-    'dash.reviewDue': 'Review Due',
-    'dash.tradeLicense': 'Trade License Number',
-    'dash.gstin': 'GSTIN / Tax ID',
-    'dash.shopAct': 'Shop & Establishment Act Reg',
-    'dash.premisesAddress': 'Premises Physical Address',
-    'dash.assignedInspector': 'Assigned Field Inspector',
-    'dash.registeredScales': 'Registered Scales at Branch',
-    'dash.mandatoryDocs': 'Mandatory Statutory Documents (5/5 Files Required)',
-    'dash.verifiedByInspector': 'Verified by Inspector',
-    'dash.flaggedFraud': 'Flagged as Fraud / Blocked',
-    'dash.underScrutiny': 'Under Inspector Scrutiny',
-    'dash.manageUploadDocs': 'Manage & Upload 5 Documents',
-    'dash.calibrationTerm': 'Calibration Term',
-    'dash.daysRemaining': 'Days Remaining',
-    'dash.expiresOn': 'Expires on',
-    'dash.statutoryFee': 'Statutory Fee ₹150 • Rule 14 Legal Metrology',
-    'dash.statutoryCert': 'Statutory Certificate Form XVII • Rule 14 Legal Metrology',
-    'dash.viewActiveCert': 'View Active Certificate (Form XVII)',
-    'dash.trackScheduledVisit': 'Track Scheduled Inspection Visit',
-    'dash.scheduleVisit': 'Schedule Inspector Visit',
-    'dash.uploadDocsAndBook': 'Upload Docs & Book Visit',
-    'dash.viewAssignmentStatus': 'View Assignment Status',
-    'dash.prevCertified': 'Previously Certified Scales & Stamping Archive',
-    'dash.viewCert': 'View Certificate',
-    'dash.certIssued': 'Official Verification Complete • Form XVII Certificate Issued',
-    'dash.visitBooked': 'Inspector Verification Visit Booked',
-
-    // Inspector
-    'insp.officialRoute': 'Official Field Route',
-    'insp.scheduleTitle': 'Assigned Verification Schedule',
-    'insp.startInspection': 'Start Inspection',
-    'insp.inspectShop': 'Inspect Shop',
-    'insp.review5Docs': 'Review 5 Docs',
-    'insp.directions': 'Directions',
-    'insp.filters': 'Filters',
-    'insp.searchPlaceholder': 'Search assigned shop name, license, or address...',
-    'insp.auditCompleted': 'Audit Completed',
-    'insp.successfulBtn': 'Inspection Successful • Issue Form XVII Certificate',
-    'insp.flagDiscrepancy': 'Flag Calibration Discrepancy / Reject',
-
-    // Common
-    'common.cancel': 'Cancel',
-    'common.submit': 'Submit',
-    'common.close': 'Close',
-    'common.back': 'Back',
-    'common.save': 'Save',
-    'common.loading': 'Loading...'
+    brand: {
+      name: 'MetrX',
+      subtitle: 'Government of India',
+      dept: 'Department of Legal Metrology',
+      tagline: 'Legal Metrology Compliance & Inspection System'
+    },
+    nav: {
+      publicPortal: 'Public Portal',
+      shopOwner: 'Merchant Portal',
+      inspector: 'Inspector Portal',
+      admin: 'Admin Console',
+      dashboard: 'Dashboard',
+      instruments: 'My Instruments',
+      verification: 'Verification',
+      schedule: 'Schedule Visit',
+      certificates: 'Certificates',
+      inspections: 'Field Inspections',
+      registry: 'Public Registry',
+      complaint: 'File Complaint',
+      reports: 'Reports & Analytics',
+      merchants: 'Merchants & Establishments',
+      officers: 'Inspectors'
+    },
+    roles: {
+      public: 'Citizen / Consumer',
+      shopOwner: 'Merchant / Shop Owner',
+      inspector: 'Legal Metrology Officer',
+      admin: 'Super Administrator'
+    },
+    header: {
+      logout: 'Logout',
+      nationalPortal: 'National Legal Metrology Digital Grid',
+      activeStatus: 'Official Production Portal',
+      switchRole: 'Active Role'
+    },
+    hero: {
+      title: 'National Legal Metrology Digital Infrastructure',
+      subtitle: 'Standardized weights, measures verification, scheduled inspections, and tamper-proof digital certification under the Legal Metrology Act, 2009.',
+      searchPlaceholder: 'Search Certificate ID, Shop Name, or Registration No...',
+      verifyButton: 'Verify Certificate',
+      quickVerify: 'Quick Public Verification'
+    },
+    status: {
+      verified: 'Verified & Certified',
+      pending: 'Pending Verification',
+      scheduled: 'Visit Scheduled',
+      inReview: 'Documents In Review',
+      rejected: 'Compliance Rejected',
+      expired: 'Expired / Renewal Due'
+    },
+    common: {
+      submit: 'Submit',
+      save: 'Save Changes',
+      cancel: 'Cancel',
+      search: 'Search',
+      filter: 'Filter',
+      loading: 'Loading...',
+      actions: 'Actions',
+      viewCertificate: 'View Certificate',
+      downloadPdf: 'Download PDF',
+      status: 'Status',
+      date: 'Date',
+      details: 'View Details',
+      confirm: 'Confirm'
+    }
+  },
+  HI: {
+    brand: {
+      name: 'मेट्रिक्स (MetrX)',
+      subtitle: 'भारत सरकार',
+      dept: 'विधिक मापविज्ञान विभाग',
+      tagline: 'विधिक मापविज्ञान अनुपालन एवं निरीक्षण प्रणाली'
+    },
+    nav: {
+      publicPortal: 'सार्वजनिक पोर्टल',
+      shopOwner: 'व्यापारी पोर्टल',
+      inspector: 'निरीक्षक पोर्टल',
+      admin: 'प्रशासक कंसोल',
+      dashboard: 'डैशबोर्ड',
+      instruments: 'उपकरण सूची',
+      verification: 'सत्यापन',
+      schedule: 'निरीक्षण समय-निर्धारण',
+      certificates: 'प्रमाणपत्र',
+      inspections: 'क्षेत्र निरीक्षण',
+      registry: 'सार्वजनिक रजिस्ट्री',
+      complaint: 'शिकायत दर्ज करें',
+      reports: 'रिपोर्ट एवं विश्लेषिकी',
+      merchants: 'व्यापारी एवं प्रतिष्ठान',
+      officers: 'निरीक्षक अधिकारी'
+    },
+    roles: {
+      public: 'नागरिक / उपभोक्ता',
+      shopOwner: 'व्यापारी / दुकान स्वामी',
+      inspector: 'विधिक मापविज्ञान अधिकारी',
+      admin: 'मुख्य व्यवस्थापक'
+    },
+    header: {
+      logout: 'लॉगआउट',
+      nationalPortal: 'राष्ट्रीय विधिक मापविज्ञान डिजिटल ग्रिड',
+      activeStatus: 'आधिकारिक पोर्टल',
+      switchRole: 'सक्रिय भूमिका'
+    },
+    hero: {
+      title: 'राष्ट्रीय विधिक मापविज्ञान डिजिटल अवसंरचना',
+      subtitle: 'विधिक मापविज्ञान अधिनियम, 2009 के तहत मानकीकृत बाट, माप सत्यापन, निर्धारित निरीक्षण और डिजिटल प्रमाणन।',
+      searchPlaceholder: 'प्रमाणपत्र संख्या, दुकान का नाम या पंजीकरण संख्या खोजें...',
+      verifyButton: 'प्रमाणपत्र सत्यापित करें',
+      quickVerify: 'त्वरित सार्वजनिक सत्यापन'
+    },
+    status: {
+      verified: 'सत्यापित एवं प्रमाणित',
+      pending: 'सत्यापन लंबित',
+      scheduled: 'निरीक्षण निर्धारित',
+      inReview: 'दस्तावेज़ समीक्षाधीन',
+      rejected: 'अस्वीकृत / सुधार आवश्यक',
+      expired: 'समाप्त / नवीनीकरण आवश्यक'
+    },
+    common: {
+      submit: 'जमा करें',
+      save: 'परिवर्तन सहेजें',
+      cancel: 'रद्द करें',
+      search: 'खोजें',
+      filter: 'फ़िल्टर',
+      loading: 'लोड हो रहा है...',
+      actions: 'कार्रवाई',
+      viewCertificate: 'प्रमाणपत्र देखें',
+      downloadPdf: 'पीडीएफ डाउनलोड करें',
+      status: 'स्थिति',
+      date: 'दिनांक',
+      details: 'विवरण देखें',
+      confirm: 'पुष्टि करें'
+    }
   }
 };
-

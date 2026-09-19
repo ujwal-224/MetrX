@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../context/AppContext';
 
 export const Header = () => {
+  const { i18n, t } = useTranslation();
   const {
     currentView,
     navigateTo,
@@ -9,22 +11,36 @@ export const Header = () => {
     logout,
     storeInfo,
     currentInspector,
+    language,
+    setLanguage,
     t,
     showToast
   } = useApp();
 
-  // Role-tailored navigation items
+  // Role-tailored navigation items (multilingual)
+  const isHi = (i18n.language || language).toLowerCase().startsWith('hi');
+
+  const navLabels = {
+    'shop-dashboard': isHi ? 'डैशबोर्ड' : 'Dashboard',
+    'upload-documents': isHi ? 'दस्तावेज़' : 'Documents',
+    'request-verification': isHi ? 'निरीक्षण समय-निर्धारण' : 'Schedule Visit',
+    'track-status': isHi ? 'निरीक्षण स्थिति' : 'Track Visit',
+    'certificate-view': isHi ? 'प्रमाणपत्र' : 'Certificate',
+    'inspector-schedule': isHi ? 'आज का मार्ग' : "Today's Route",
+    'field-inspection': isHi ? 'निरीक्षण करें' : 'Conduct Inspection',
+  };
+
   const allNavItemsByRole = {
     'shop-owner': [
-      { id: 'shop-dashboard', label: t('nav.dashboard', 'Dashboard'), icon: 'dashboard' },
-      { id: 'upload-documents', label: t('nav.documents', 'Documents'), icon: 'description' },
-      { id: 'request-verification', label: t('nav.scheduleVisit', 'Schedule Visit'), icon: 'calendar_month' },
-      { id: 'track-status', label: t('nav.trackVisit', 'Track Visit'), icon: 'pending_actions' },
-      { id: 'certificate-view', label: t('nav.certificate', 'Certificate'), icon: 'verified' },
+      { id: 'shop-dashboard', label: navLabels['shop-dashboard'], icon: 'dashboard' },
+      { id: 'upload-documents', label: navLabels['upload-documents'], icon: 'description' },
+      { id: 'request-verification', label: navLabels['request-verification'], icon: 'calendar_month' },
+      { id: 'track-status', label: navLabels['track-status'], icon: 'pending_actions' },
+      { id: 'certificate-view', label: navLabels['certificate-view'], icon: 'verified' },
     ],
     'inspector': [
-      { id: 'inspector-schedule', label: t('nav.todaysRoute', "Today's Route"), icon: 'route' },
-      { id: 'field-inspection', label: t('nav.conductInspection', 'Conduct Inspection'), icon: 'fact_check' },
+      { id: 'inspector-schedule', label: navLabels['inspector-schedule'], icon: 'route' },
+      { id: 'field-inspection', label: navLabels['field-inspection'], icon: 'fact_check' },
     ],
     'admin': [
       { id: 'admin-dashboard', label: 'Admin Overview', icon: 'dashboard' },
@@ -36,10 +52,10 @@ export const Header = () => {
   const navItems = allNavItemsByRole[activeRole] || [];
 
   const roleLabels = {
-    'shop-owner': { title: t('role.shopOwner', 'Shop Owner'), badge: t('role.merchant', 'Merchant'), icon: 'storefront' },
-    'inspector': { title: t('role.fieldInspector', 'Field Inspector'), badge: t('role.inspector', 'Enforcement'), icon: 'badge' },
-    'admin': { title: t('role.administrator', 'Admin'), badge: t('role.admin', 'Admin'), icon: 'shield_person' },
-    'public': { title: t('role.citizen', 'Citizen & Consumer'), badge: t('role.public', 'Public'), icon: 'public' }
+    'shop-owner': { title: isHi ? 'दुकान स्वामी' : 'Shop Owner', badge: isHi ? 'व्यापारी' : 'Merchant', icon: 'storefront' },
+    'inspector': { title: isHi ? 'क्षेत्र निरीक्षक' : 'Field Inspector', badge: isHi ? 'प्रवर्तन' : 'Enforcement', icon: 'badge' },
+    'admin': { title: isHi ? 'प्रशासक' : 'Admin', badge: isHi ? 'व्यवस्थापक' : 'Admin', icon: 'shield_person' },
+    'public': { title: isHi ? 'नागरिक एवं उपभोक्ता' : 'Citizen & Consumer', badge: isHi ? 'सार्वजनिक' : 'Public', icon: 'public' }
   };
 
   const currentRoleInfo = roleLabels[activeRole] || roleLabels['public'];
@@ -77,11 +93,11 @@ export const Header = () => {
             <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
               <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#023625]">MetrX</span>
               <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                {t('brand.official', 'Official')}
+                Official
               </span>
             </div>
             <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium leading-tight mt-0.5 hidden sm:inline">
-              {t('brand.subtitle', 'Legal Metrology Portal')}
+              {isHi ? 'विधिक मापविज्ञान पोर्टल' : 'Legal Metrology Portal'}
             </span>
           </div>
         </div>
@@ -95,11 +111,10 @@ export const Header = () => {
                 <button
                   key={item.id}
                   onClick={() => navigateTo(item.id)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all duration-150 cursor-pointer select-none ${
-                    isActive
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all duration-150 cursor-pointer select-none ${isActive
                       ? 'bg-white text-[#023625] shadow-xs font-bold'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
-                  }`}
+                    }`}
                 >
                   <span className={`material-symbols-outlined text-base ${isActive ? 'text-[#e0702a]' : 'text-gray-400'}`}>
                     {item.icon}
@@ -120,30 +135,29 @@ export const Header = () => {
               className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#E0702A] hover:bg-[#c95f1f] text-white transition-all shadow-xs active:scale-95 font-bold text-[11px] sm:text-xs cursor-pointer whitespace-nowrap"
             >
               <span className="material-symbols-outlined text-sm sm:text-base">login</span>
-              <span>{t('header.login', 'Login to Portal')}</span>
+              <span>{isHi ? 'पोर्टल लॉगिन' : 'Login to Portal'}</span>
             </button>
           ) : (
             /* Authenticated in Role: Show Role Identity & Logout Button */
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* User Identity Pill */}
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50/90 border border-gray-200 text-left shadow-2xs">
-                <div className={`w-2.5 h-2.5 rounded-full ${
-                  activeRole === 'admin' ? 'bg-[#023625]' : activeRole === 'inspector' ? 'bg-emerald-500' : 'bg-amber-500'
-                }`}></div>
+                <div className={`w-2.5 h-2.5 rounded-full ${activeRole === 'admin' ? 'bg-[#023625]' : activeRole === 'inspector' ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}></div>
                 <div className="flex flex-col text-xs leading-none max-w-[120px] lg:max-w-[170px]">
                   <span className="font-bold text-gray-800 truncate">
                     {activeRole === 'admin'
-                      ? 'Admin'
+                      ? (isHi ? 'व्यवस्थापक' : 'Admin')
                       : activeRole === 'inspector'
-                      ? (currentInspector?.name || 'Insp. Deshmukh')
-                      : storeInfo.name}
+                        ? (currentInspector?.name || 'Insp. Deshmukh')
+                        : storeInfo.name}
                   </span>
                   <span className="text-[10px] text-gray-500 truncate mt-0.5">
                     {activeRole === 'admin'
-                      ? t('role.administrator', 'Administrator')
+                      ? (isHi ? 'प्रशासक' : 'Administrator')
                       : activeRole === 'inspector'
-                      ? `Badge #${currentInspector?.badgeNumber || 'LM-402'}`
-                      : 'Merchant • Ward 4'}
+                        ? `Badge #${currentInspector?.badgeNumber || 'LM-402'}`
+                        : (isHi ? 'व्यापारी • वार्ड 4' : 'Merchant • Ward 4')}
                   </span>
                 </div>
               </div>
@@ -152,14 +166,43 @@ export const Header = () => {
               <button
                 onClick={logout}
                 className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 text-[11px] sm:text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
-                title="Log out and return to landing page"
+                title={t('aria.logout', 'Log out and return to landing page')}
+                aria-label={t('aria.logout', 'Log out and return to landing page')}
               >
                 <span className="material-symbols-outlined text-sm">logout</span>
-                <span className="hidden xs:inline">{t('header.logout', 'Logout')}</span>
+                <span className="hidden xs:inline">{isHi ? 'लॉगआउट' : 'Logout'}</span>
               </button>
             </div>
           )}
 
+          {/* Language Toggle */}
+          <div
+            className="flex items-center rounded-lg border border-gray-200 p-0.5 bg-gray-100/90 shrink-0 shadow-2xs"
+            aria-label={t('aria.language', 'Select Language')}
+          >
+            <button
+              onClick={() => {
+                i18n.changeLanguage('en');
+                setLanguage('EN');
+              }}
+              className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
+                !isHi ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => {
+                i18n.changeLanguage('hi');
+                setLanguage('HI');
+              }}
+              className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
+                isHi ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              हिंदी
+            </button>
+          </div>
         </div>
       </div>
 
@@ -172,11 +215,10 @@ export const Header = () => {
               <button
                 key={item.id}
                 onClick={() => navigateTo(item.id)}
-                className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer text-xs ${
-                  isActive
+                className={`px-3 py-1.5 rounded-lg whitespace-nowrap font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer text-xs ${isActive
                     ? 'bg-[#023625] text-white shadow-xs'
                     : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <span className={`material-symbols-outlined text-sm ${isActive ? 'text-[#e0702a]' : 'text-gray-500'}`}>
                   {item.icon}

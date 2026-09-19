@@ -10,7 +10,8 @@ export const TrackStatus = () => {
     verificationStatus,
     documentSubmissions,
     jumpToTourStep,
-    showToast
+    showToast,
+    t
   } = useApp();
 
   const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
@@ -269,7 +270,7 @@ export const TrackStatus = () => {
         {/* Actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-gray-100 text-xs">
           <button
-            onClick={() => showToast('SMS reminder re-sent to registered phone.', 'info')}
+            onClick={() => showToast(t('toast.smsResent', 'SMS reminder re-sent to registered phone.'), 'info')}
             className="text-[#023625] hover:underline flex items-center justify-center sm:justify-start gap-1 py-1 font-semibold"
           >
             <span className="material-symbols-outlined text-sm">sms</span>

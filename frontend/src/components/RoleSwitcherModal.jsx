@@ -8,7 +8,8 @@ export const RoleSwitcherModal = () => {
     isRoleModalOpen,
     setIsRoleModalOpen,
     showToast,
-    storeInfo
+    storeInfo,
+    t
   } = useApp();
 
   // Close on ESC key press
@@ -121,7 +122,7 @@ export const RoleSwitcherModal = () => {
           <button
             onClick={() => setIsRoleModalOpen(false)}
             className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 flex items-center justify-center transition-colors shrink-0"
-            aria-label="Close modal"
+            aria-label={t('aria.closeModal', 'Close modal')}
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>

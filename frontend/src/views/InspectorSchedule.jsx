@@ -12,7 +12,8 @@ export const InspectorSchedule = () => {
     getDocumentSubmission,
     handleInspectorReviewDocuments,
     handleViewVisitCertificate,
-    showToast
+    showToast,
+    t
   } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,7 +177,7 @@ export const InspectorSchedule = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-transparent border-0 text-gray-900 placeholder:text-gray-400 text-xs sm:text-sm focus:ring-0 focus:outline-none"
-              placeholder="Search assigned shop name, license, or address..."
+              placeholder={t('form.inspectorSearchPlaceholder', 'Search assigned shop name, license, or address...')}
               type="text"
             />
           </div>
@@ -210,9 +211,9 @@ export const InspectorSchedule = () => {
               <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
                 <span className="material-symbols-outlined text-3xl">assignment_turned_in</span>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">No Establishments Assigned</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">{t('empty.inspectorAssignedTitle', 'No Establishments Assigned')}</h3>
               <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
-                You have no pending field verification visits assigned to your badge ({inspectorBadge}). New shop verification requests allocated by Department Admin will appear in your route queue.
+                {t('empty.inspectorAssignedDesc', 'You have no pending field verification visits assigned to your badge ({{badge}}). New shop verification requests allocated by Department Admin will appear in your route queue.', { badge: inspectorBadge })}
               </p>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-600">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -221,7 +222,7 @@ export const InspectorSchedule = () => {
             </div>
           ) : filteredVisits.length === 0 ? (
             <div className="bg-white rounded-2xl p-8 text-center border border-gray-200 shadow-xs">
-              <p className="text-sm text-gray-500">No assigned shops match your search query "{searchTerm}".</p>
+              <p className="text-sm text-gray-500">{t('empty.inspectorNoMatches', 'No assigned shops match your search query "{{query}}".', { query: searchTerm })}</p>
             </div>
           ) : (
             filteredVisits.map((visit) => {
@@ -837,7 +838,7 @@ export const InspectorSchedule = () => {
                 onChange={(e) => setInspectorNotes(e.target.value)}
                 rows={2}
                 className="w-full text-xs p-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-700 focus:outline-none"
-                placeholder="Enter officer notes or reasons for approval / discrepancy..."
+                placeholder={t('form.officerNotesPlaceholder', 'Enter officer notes or reasons for approval / discrepancy...')}
               />
             </div>
 
@@ -906,7 +907,8 @@ export const InspectorSchedule = () => {
                   <button
                     onClick={() => window.open(blobUrl, '_blank')}
                     className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Open in new window"
+                    title={t('aria.openNewWindow', 'Open in new window')}
+                    aria-label={t('aria.openNewWindow', 'Open in new window')}
                     type="button"
                   >
                     <span className="material-symbols-outlined text-sm">open_in_new</span>
@@ -916,7 +918,8 @@ export const InspectorSchedule = () => {
                 <button
                   onClick={() => setPreviewDoc(null)}
                   className="w-8 h-8 rounded-full bg-white/15 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
-                  title="Close"
+                  title={t('aria.close', 'Close')}
+                  aria-label={t('aria.close', 'Close')}
                   type="button"
                 >
                   <span className="material-symbols-outlined text-lg">close</span>
