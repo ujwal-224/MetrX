@@ -472,6 +472,41 @@ export const seedDatabase = async () => {
   return { success: true, message: 'Super-Admin account, Demo Verification Rules and Demo Certificates initialized' };
 };
 
+import { exec } from 'child_process';
+import util from 'util';
+const execPromise = util.promisify(exec);
+
+// @desc    Initialize database schema (create tables) & seed initial data
+// @route   GET/POST /api/seed/init-tables
+router.all('/init-tables', async (req, res) => {
+  try {
+    const envUrl = process.env.DATABASE_URL ? process.env.DATABASE_URL.trim().replace(/^["']|["']$/g, '') : '';
+    const { stdout, stderr } = await execPromise('npx prisma db push --accept-data-loss', {
+      env: { ...process.env, DATABASE_URL: envUrl }
+    });
+
+    let seedResult = null;
+    try {
+      seedResult = await seedDatabase();
+    } catch (sErr) {
+      seedResult = { error: sErr.message };
+    }
+
+    return res.json({
+      success: true,
+      message: 'Database schema pushed and tables created successfully!',
+      prismaOutput: stdout || stderr,
+      seedResult
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to push Prisma schema: ' + err.message,
+      error: err.toString()
+    });
+  }
+});
+
 // @desc    Seed demo database data
 // @route   POST /api/seed
 router.post('/', async (req, res) => {
