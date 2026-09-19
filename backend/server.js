@@ -93,7 +93,10 @@ async function startServer() {
     // Ensure database tables exist by pushing Prisma schema
     try {
       console.log('[MetrX Backend] Synchronizing PostgreSQL database schema...');
-      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+      execSync('npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss', {
+        stdio: 'inherit',
+        env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL }
+      });
       console.log('[MetrX Backend] Schema synchronized successfully.');
     } catch (pushErr) {
       console.warn('[Prisma Push Notice]', pushErr.message);
