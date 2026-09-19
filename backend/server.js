@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { execSync } from 'child_process';
 import prisma from './config/prisma.js';
 import { seedDatabase } from './routes/seedRoutes.js';
 
@@ -89,6 +90,15 @@ const PORT = process.env.PORT || 5000;
 // Connect to PostgreSQL and start HTTP server
 async function startServer() {
   try {
+    // Ensure database tables exist by pushing Prisma schema
+    try {
+      console.log('[MetrX Backend] Synchronizing PostgreSQL database schema...');
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+      console.log('[MetrX Backend] Schema synchronized successfully.');
+    } catch (pushErr) {
+      console.warn('[Prisma Push Notice]', pushErr.message);
+    }
+
     await prisma.$connect();
     console.log('[MetrX Backend] Connected to PostgreSQL via Prisma');
 
