@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { API_BASE_URL } from '../services/api';
 
 export const CertificateView = () => {
   const {
@@ -79,7 +80,7 @@ export const CertificateView = () => {
   const handleDownloadPdf = () => {
     const certId = certificateData?.certId;
     if (certId && certId !== 'CERT-IN-PROGRESS' && certId !== 'PENDING') {
-      window.open(`http://127.0.0.1:5000/api/certificates/${encodeURIComponent(certId)}/download-pdf`, '_blank');
+      window.open(`${API_BASE_URL}/certificates/${encodeURIComponent(certId)}/download-pdf`, '_blank');
       showToast(`Downloading official signed Form XVII PDF (${certId})...`, 'info');
     } else {
       showToast(`Generating signed statutory Form XVII PDF...`, 'info');
