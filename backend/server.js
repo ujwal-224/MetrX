@@ -27,6 +27,25 @@ app.use(morgan('dev'));
 // Static uploads directory for documents/photos
 app.use('/uploads', express.static('uploads'));
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    system: 'MetrX Legal Metrology Verification Engine API',
+    version: '1.0.0',
+    documentation: {
+      health: '/api/health',
+      auth: '/api/auth',
+      shops: '/api/shops',
+      instruments: '/api/instruments',
+      verifications: '/api/verifications',
+      certificates: '/api/certificates',
+      rules: '/api/verification-rules',
+      seed: '/api/seed'
+    }
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   try {
