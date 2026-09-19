@@ -11,7 +11,8 @@ export const CertificateView = () => {
     ownerShops,
     activeShopIndex,
     handleSelectOwnerShop,
-    handleViewHistoricalCertificate
+    handleViewHistoricalCertificate,
+    t
   } = useApp();
 
   const [showSpecs, setShowSpecs] = useState(false);
@@ -61,7 +62,7 @@ export const CertificateView = () => {
 
   const handleCopyVerificationLink = () => {
     setCopiedLink(true);
-    showToast('Public verification link copied to clipboard!', 'success');
+    showToast(t('toast.linkCopied', 'Public verification link copied to clipboard!'), 'success');
     setTimeout(() => setCopiedLink(false), 3000);
   };
 
@@ -308,10 +309,10 @@ export const CertificateView = () => {
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black mt-1 tracking-tight">
-                    Verification Suspended • Statutory Violation Detected
+                    {t('alerts.certSuspendedTitle', 'Verification Suspended • Statutory Violation Detected')}
                   </h2>
                   <p className="text-xs sm:text-sm text-rose-100 mt-1 max-w-xl">
-                    Commercial scale at <strong>{activeShop?.name}</strong> has failed Maximum Permissible Error (MPE) tolerance tests or has broken physical wire-seals.
+                    {t('alerts.certSuspendedDesc', 'Commercial scale at {{shop}} has failed Maximum Permissible Error (MPE) tolerance tests or has broken physical wire-seals.', { shop: activeShop?.name })}
                   </p>
                 </div>
               </div>
@@ -326,10 +327,10 @@ export const CertificateView = () => {
                   </span>
                   <div>
                     <h3 className="text-xs font-bold text-rose-950 uppercase tracking-wider">
-                      Audit Discrepancy Breakdown
+                      {t('alerts.auditDiscrepancyTitle', 'Audit Discrepancy Breakdown')}
                     </h3>
                     <p className="text-xs text-rose-900 font-medium mt-1 leading-relaxed">
-                      Physical audit by Legal Metrology Officer revealed a calibration variance of <strong>+4.8%</strong> against Class M1 working standard weights (Legal MPE Tolerance limit: ±0.1%). Official wire seal was reported broken or unverified.
+                      {t('alerts.auditDiscrepancyDesc', 'Physical audit by Legal Metrology Officer revealed a calibration variance exceeding statutory MPE Tolerance limit. Official wire seal was reported broken or unverified.')}
                     </p>
                   </div>
                 </div>
@@ -365,7 +366,7 @@ export const CertificateView = () => {
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200">
                 <p className="text-[11px] text-slate-500 max-w-md">
-                  Using uncertified scales in commercial trade is punishable under law. Please request a re-calibration inspection immediately.
+                  {t('alerts.uncertifiedPenalty', 'Using uncertified scales in commercial trade is punishable under law. Please request a re-calibration inspection immediately.')}
                 </p>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">

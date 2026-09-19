@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 
 export const Sidebar = () => {
-  const { currentView, navigateTo, activeRole, storeInfo, showToast, switchRole } = useApp();
+  const { currentView, navigateTo, activeRole, storeInfo, showToast, switchRole, t } = useApp();
 
   const isShopOwner = activeRole === 'shop-owner';
 
@@ -13,7 +13,8 @@ export const Sidebar = () => {
         <div
           onClick={() => switchRole('public')}
           className="flex items-center gap-unit-3 px-unit-2 cursor-pointer group"
-          title="Go to Public Portal"
+          title={t('aria.goToPortal', 'Go to Public Portal')}
+          aria-label={t('aria.goToPortal', 'Go to Public Portal')}
         >
           <div className="w-10 h-10 rounded-lg bg-surface-container-lowest/10 border border-white/20 flex items-center justify-center text-on-primary group-hover:bg-white/20 transition-colors">
             <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -88,7 +89,7 @@ export const Sidebar = () => {
         )}
 
         {/* Role-tailored, Simple Navigation Menu */}
-        <nav aria-label="Authenticated Navigation" className="flex flex-col gap-1.5">
+        <nav aria-label={t('aria.authNav', 'Authenticated Navigation')} className="flex flex-col gap-1.5">
           {isShopOwner ? (
             <>
               <button
@@ -180,7 +181,7 @@ export const Sidebar = () => {
         </button>
 
         <button
-          onClick={() => showToast('All actions are digitally signed under Legal Metrology Act, 2009', 'info')}
+          onClick={() => showToast(t('common.auditSeal', 'All actions are digitally signed under Legal Metrology Act, 2009'), 'info')}
           className="text-left text-[#c3ecd5] hover:text-white hover:bg-secondary/40 px-3 py-2 rounded-lg flex items-center gap-2.5 transition-colors"
         >
           <span className="material-symbols-outlined text-base">shield</span>

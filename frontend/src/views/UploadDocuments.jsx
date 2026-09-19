@@ -10,7 +10,8 @@ export const UploadDocuments = () => {
     verificationStatus,
     documentSubmissions,
     handleUploadDocuments,
-    showToast
+    showToast,
+    t
   } = useApp();
 
   const currentMerchantId = storeInfo?.id || activeShop?.id || 'merch-1';
@@ -150,12 +151,12 @@ export const UploadDocuments = () => {
         uploaded: true
       }
     });
-    showToast('Attached 5 statutory compliance files for presentation demo', 'success');
+    showToast(t('toast.demoFilesAttached', 'Attached 5 statutory compliance files for presentation demo'), 'success');
   };
 
   const onSubmit = () => {
     if (!isInspectorAssigned) {
-      showToast('Action Blocked: Please wait until Department Admin assigns an Inspector to your store.', 'error');
+      showToast(t('toast.waitInspectorAlloc', 'Action Blocked: Please wait until Department Admin assigns an Inspector to your store.'), 'error');
       return;
     }
     setIsUploading(true);
@@ -212,13 +213,13 @@ export const UploadDocuments = () => {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#023625] block">
-                Stage 1 • Inspector Assignment In Progress
+                {t('alerts.inspectorAssignmentInProgress', 'Stage 1 • Inspector Assignment In Progress')}
               </span>
               <h3 className="text-sm sm:text-base font-bold text-amber-950">
-                Awaiting Enforcement Officer Allocation by Department Admin
+                {t('alerts.awaitingInspector', 'Awaiting Enforcement Officer Allocation by Department Admin')}
               </h3>
               <p className="text-xs text-amber-900 mt-1 leading-relaxed">
-                Your store <strong>{storeInfo.name}</strong> has been registered. The Department Admin / Controller will assign a designated Legal Metrology Officer to your jurisdiction. Once assigned, you can submit the 5 statutory documents for officer review.
+                {t('alerts.awaitingInspectorDesc', 'Your store {{store}} has been registered. The Department Admin / Controller will assign a designated Legal Metrology Officer to your jurisdiction. Once assigned, you can submit the 5 statutory documents for officer review.', { store: storeInfo.name })}
               </p>
             </div>
           </div>
@@ -230,13 +231,13 @@ export const UploadDocuments = () => {
               </div>
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 block">
-                  Inspector Scrutiny Cleared
+                  {t('alerts.docsApprovedBadge', 'Inspector Scrutiny Cleared')}
                 </span>
                 <h3 className="text-sm sm:text-base font-bold text-emerald-950">
-                  All 5 Statutory Documents Verified &amp; Approved
+                  {t('alerts.docsApprovedTitle', 'All 5 Statutory Documents Verified & Approved')}
                 </h3>
                 <p className="text-xs text-emerald-800 mt-0.5">
-                  Verified by <strong>{assignedInspectorName || currentDocData.reviewedBy || 'Assigned Officer'}</strong>. You are now authorized to schedule your verification window.
+                  {t('alerts.docsApprovedDesc', 'Verified by {{reviewer}}. You are now authorized to schedule your verification window.', { reviewer: assignedInspectorName || currentDocData.reviewedBy || 'Assigned Officer' })}
                 </p>
               </div>
             </div>
@@ -244,7 +245,7 @@ export const UploadDocuments = () => {
               onClick={() => navigateTo('request-verification')}
               className="shrink-0 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#E0702A] hover:bg-[#c95f1e] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
             >
-              <span>Schedule Inspection Visit</span>
+              <span>{t('alerts.scheduleVisit', 'Schedule Inspection Visit')}</span>
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </button>
           </div>
@@ -255,13 +256,13 @@ export const UploadDocuments = () => {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-red-800 block">
-                Official Rejection Notice • Legal Metrology Act 2009
+                {t('alerts.fraudNoticeDoc', 'Official Rejection Notice • Legal Metrology Act 2009')}
               </span>
               <h3 className="text-sm sm:text-base font-bold text-red-950">
-                Application Flagged as Fraud / Counterfeit Instrument
+                {t('alerts.fraudTitle', 'Application Flagged as Fraud / Counterfeit Instrument')}
               </h3>
               <p className="text-xs text-red-800 mt-1 leading-relaxed">
-                The Inspector flagged a discrepancy between the uploaded instrument plate and manufacturer serial database. <strong>Visit scheduling is blocked by Department order.</strong> Please visit the Controller's office for inquiry.
+                {t('alerts.fraudDocDesc', 'The Inspector flagged a discrepancy between the uploaded instrument plate and manufacturer serial database. Visit scheduling is blocked by Department order. Please visit the Controller\'s office for inquiry.')}
               </p>
             </div>
           </div>

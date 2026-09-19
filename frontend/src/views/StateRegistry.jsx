@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const StateRegistry = () => {
-  const { registry, navigateTo, activeRole, showToast, handleViewRegistryCertificate } = useApp();
+  const { registry, navigateTo, activeRole, showToast, handleViewRegistryCertificate, t } = useApp();
   const [filterQuery, setFilterQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState('all');
 
@@ -83,7 +83,8 @@ export const StateRegistry = () => {
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
             className="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2 text-xs sm:text-sm text-on-surface focus:outline-none focus:border-primary"
-            placeholder="Search by Establishment, Certificate ID, or Serial..."
+            placeholder={t('form.registrySearchPlaceholder', 'Search by Establishment, Certificate ID, or Serial...')}
+            aria-label={t('aria.search', 'Search Certificate')}
             type="text"
           />
         </div>
@@ -101,7 +102,7 @@ export const StateRegistry = () => {
           </select>
 
           <button
-            onClick={() => showToast('Exporting State Registry CSV...', 'info')}
+            onClick={() => showToast(t('toast.exportRegistryCsv', 'Exporting State Registry CSV...'), 'info')}
             className="px-3 sm:px-4 py-2 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container text-on-surface rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors shrink-0"
           >
             <span className="material-symbols-outlined text-base">file_download</span>
@@ -138,9 +139,9 @@ export const StateRegistry = () => {
                   <td colSpan={8} className="py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <span className="material-symbols-outlined text-4xl text-gray-300">verified_user</span>
-                      <span className="font-semibold text-sm text-gray-700">No Registry Records Found</span>
+                      <span className="font-semibold text-sm text-gray-700">{t('empty.registryTitle', 'No Registry Records Found')}</span>
                       <span className="text-xs text-gray-400">
-                        {filterQuery ? 'Try adjusting your search criteria.' : 'Certificates issued by enforcement officers upon field inspection will be recorded here.'}
+                        {filterQuery ? t('empty.adjustSearch', 'Try adjusting your search criteria.') : t('empty.registryDesc', 'Certificates issued by enforcement officers upon field inspection will be recorded here.')}
                       </span>
                     </div>
                   </td>
@@ -188,7 +189,7 @@ export const StateRegistry = () => {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>

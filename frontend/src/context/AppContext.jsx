@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../services/api';
+import i18n from '../i18n';
 import { translations } from '../data/translations';
+import { api } from '../services/api';
 import {
   initialStoreInfo,
   initialInstruments,
@@ -18,7 +19,13 @@ export const AppProvider = ({ children }) => {
   const [activeRole, setActiveRole] = useState('public');
   const [currentView, setCurrentView] = useState('public-portal');
   const [language, setLanguageState] = useState(() => {
-    return localStorage.getItem('metrx_lang') || 'EN';
+    try {
+      const saved = localStorage.getItem('metrx_lang') || localStorage.getItem('i18nextLng');
+      if (saved && saved.trim().toLowerCase().startsWith('hi')) return 'HI';
+      return 'EN';
+    } catch {
+      return 'EN';
+    }
   });
 
   // Fixed Super-Admin Credentials
@@ -116,19 +123,43 @@ export const AppProvider = ({ children }) => {
   const setLanguage = (lang) => {
     const nextLang = lang === 'HI' ? 'HI' : 'EN';
     setLanguageState(nextLang);
-    localStorage.setItem('metrx_lang', nextLang);
+    try {
+      localStorage.setItem('metrx_lang', nextLang);
+      localStorage.setItem('i18nextLng', nextLang.toLowerCase());
+    } catch {
+      // ignore
+    }
+    if (i18n && typeof i18n.changeLanguage === 'function') {
+      i18n.changeLanguage(nextLang.toLowerCase());
+    }
     showToast(
       nextLang === 'HI' ? 'भाषा बदलकर हिंदी कर दी गई' : 'Language changed to English',
       'info'
     );
   };
 
-  const t = (key, fallback = '') => {
-    const activeDict = translations[language] || translations['EN'] || {};
-    if (activeDict[key] !== undefined) return activeDict[key];
-    const fallbackDict = translations['EN'] || {};
-    if (fallbackDict[key] !== undefined) return fallbackDict[key];
-    return fallback || key;
+  useEffect(() => {
+    const handleLangChange = (lng) => {
+      const next = (lng || '').toLowerCase().startsWith('hi') ? 'HI' : 'EN';
+      setLanguageState(next);
+      try {
+        localStorage.setItem('metrx_lang', next);
+        localStorage.setItem('i18nextLng', next.toLowerCase());
+      } catch {
+        // ignore
+      }
+    };
+    if (i18n && typeof i18n.on === 'function') {
+      i18n.on('languageChanged', handleLangChange);
+      return () => {
+        i18n.off('languageChanged', handleLangChange);
+      };
+    }
+  }, []);
+
+  const t = (key, defaultVal = '') => {
+    if (!key) return defaultVal;
+    return i18n.t(key, { defaultValue: defaultVal || key });
   };
 
   // Sync state from backend PostgreSQL API on mount
@@ -258,7 +289,7 @@ export const AppProvider = ({ children }) => {
           let cachedDocs = {};
           try {
             cachedDocs = JSON.parse(localStorage.getItem('metrx_submissions') || '{}');
-          } catch {}
+          } catch { }
 
           const docsMap = { ...cachedDocs };
           backendShops.forEach((bShop) => {
@@ -279,7 +310,7 @@ export const AppProvider = ({ children }) => {
           setDocumentSubmissions(docsMap);
           try {
             localStorage.setItem('metrx_submissions', JSON.stringify(docsMap));
-          } catch {}
+          } catch { }
 
           // Build State Compliance Registry from real shops
           const regList = formattedShops.map((s, idx) => ({
@@ -359,7 +390,7 @@ export const AppProvider = ({ children }) => {
                 phone: discoveredInsp.phone,
                 inspectorBadgeId: discoveredInsp.badgeNumber,
                 assignedZone: discoveredInsp.zone
-              }).catch(() => {});
+              }).catch(() => { });
             }
           });
 
@@ -383,7 +414,7 @@ export const AppProvider = ({ children }) => {
       showToast(`Logged in as Field Inspector${currentInspector?.name ? ` (${currentInspector.name})` : ''}`, 'success');
     } else if (role === 'admin') {
       setCurrentView('admin-dashboard');
-      showToast('Logged in as Department Admin (Controller of Legal Metrology)', 'success');
+      showToast(t('toast.loginSuccess', 'Logged in as Department Admin (Controller of Legal Metrology)'), 'success');
     } else {
       setCurrentView('public-portal');
     }
@@ -395,11 +426,11 @@ export const AppProvider = ({ children }) => {
     if (email.trim() === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
       setActiveRole('admin');
       setCurrentView('admin-dashboard');
-      showToast('Admin Authentication Successful. Welcome, Controller!', 'success');
+      showToast(t('toast.loginSuccess', 'Admin Authentication Successful. Welcome, Controller!'), 'success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return true;
     } else {
-      showToast('Invalid Admin Credentials. Please use admin123@metrx.com / 12345678', 'error');
+      showToast(t('errors.invalidCredentials', 'Invalid Admin Credentials. Please use admin123@metrx.com / 12345678'), 'error');
       return false;
     }
   };
@@ -440,7 +471,7 @@ export const AppProvider = ({ children }) => {
 
     if (match) {
       if (match.status !== 'Active') {
-        showToast('This inspector account has been suspended by Department Admin.', 'error');
+        showToast(t('errors.actionBlocked', 'This inspector account has been suspended by Department Admin.'), 'error');
         return false;
       }
       setCurrentInspector(match);
@@ -450,7 +481,7 @@ export const AppProvider = ({ children }) => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return true;
     } else {
-      showToast('Access Denied: Inspector account not found. Accounts must be provisioned by Admin.', 'error');
+      showToast(t('errors.invalidCredentials', 'Access Denied: Inspector account not found. Accounts must be provisioned by Admin.'), 'error');
       return false;
     }
   };
@@ -480,7 +511,7 @@ export const AppProvider = ({ children }) => {
     // 1. Gather all visits explicitly scheduled or recorded in visits state for this inspector
     const matchedVisits = visits.filter(
       (v) => matchesOfficer(v.assignedOfficer, v.officerBadge) ||
-             merchants.some((m) => m.name === v.shopName && matchesOfficer(m.assignedInspector, m.assignedInspectorBadge))
+        merchants.some((m) => m.name === v.shopName && matchesOfficer(m.assignedInspector, m.assignedInspectorBadge))
     );
 
     // 2. Gather all merchants assigned to this inspector
@@ -581,8 +612,8 @@ export const AppProvider = ({ children }) => {
     // Find matching shop in ownerShops to activate proper shop context
     const sIndex = ownerShops.findIndex(
       (s) => (visit.shopId && s.id === visit.shopId) ||
-             (visit.merchantId && s.id === visit.merchantId) ||
-             (s.name && visit.shopName && s.name.toLowerCase() === visit.shopName.toLowerCase())
+        (visit.merchantId && s.id === visit.merchantId) ||
+        (s.name && visit.shopName && s.name.toLowerCase() === visit.shopName.toLowerCase())
     );
 
     if (sIndex >= 0) {
@@ -696,7 +727,7 @@ export const AppProvider = ({ children }) => {
         // Filter ONLY shops belonging to this specific merchant
         const myShops = allShops.filter(
           (s) => (s.email && s.email.toLowerCase() === cleanEmail) ||
-                 (s.ownerName && res.data.name && s.ownerName.toLowerCase() === res.data.name.toLowerCase())
+            (s.ownerName && res.data.name && s.ownerName.toLowerCase() === res.data.name.toLowerCase())
         );
 
         setOwnerShops(myShops);
@@ -748,7 +779,7 @@ export const AppProvider = ({ children }) => {
 
       const myShops = allShops.filter(
         (s) => (s.email && s.email.toLowerCase() === cleanEmail) ||
-               (s.ownerName && match.ownerName && s.ownerName.toLowerCase() === match.ownerName.toLowerCase())
+          (s.ownerName && match.ownerName && s.ownerName.toLowerCase() === match.ownerName.toLowerCase())
       );
 
       setOwnerShops(myShops.length > 0 ? myShops : [
@@ -790,7 +821,7 @@ export const AppProvider = ({ children }) => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return true;
     } else {
-      showToast('Invalid merchant credentials. Please check your email or register a new store account.', 'error');
+      showToast(t('errors.invalidCredentials', 'Invalid merchant credentials. Please check your email or register a new store account.'), 'error');
       return false;
     }
   };
@@ -969,7 +1000,7 @@ export const AppProvider = ({ children }) => {
   const handleAssignInspectorToMerchant = async (merchantId, inspectorId) => {
     const selectedInspector = inspectors.find((insp) => insp.id === inspectorId || insp.name === inspectorId);
     if (!selectedInspector) {
-      showToast('Please select a valid active inspector', 'error');
+      showToast(t('errors.required', 'Please select a valid active inspector'), 'error');
       return;
     }
 
@@ -1167,7 +1198,7 @@ export const AppProvider = ({ children }) => {
     setInspectors(updated);
     try {
       localStorage.setItem('metrx_inspectors', JSON.stringify(updated));
-    } catch {}
+    } catch { }
 
     if (target?.email) {
       try {
@@ -1188,7 +1219,7 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem('metrx_user');
     localStorage.removeItem('metrx_token');
     setOwnerShops([]);
-    showToast('Logged out successfully. Returned to Portal.', 'info');
+    showToast(t('toast.logoutSuccess', 'Logged out successfully. Returned to Portal.'), 'info');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1382,7 +1413,7 @@ export const AppProvider = ({ children }) => {
       console.warn('[Backend Upload Documents Warning]', err.message);
     }
 
-    showToast('All 5 statutory documents submitted for Inspector verification!', 'success');
+    showToast(t('toast.docSubmitted', 'All 5 statutory documents submitted for Inspector verification!'), 'success');
   };
 
   const handleInspectorReviewDocuments = async (merchantId, decision, remarks = '') => {
@@ -1446,12 +1477,12 @@ export const AppProvider = ({ children }) => {
     const currentDocState = documentSubmissions[targetId]?.status || currentShop.documentStatus || verificationStatus.documentStatus;
 
     if (currentDocState === 'fraud') {
-      showToast('Action Blocked: Legal Metrology Officer has flagged submitted documentation as Fraudulent. Visit scheduling is prohibited.', 'error');
+      showToast(t('toast.actionBlockedFraud', 'Action Blocked: Legal Metrology Officer has flagged submitted documentation as Fraudulent. Visit scheduling is prohibited.'), 'error');
       return;
     }
 
     if (currentDocState !== 'verified') {
-      showToast('Action Blocked: You must upload the 5 statutory documents and obtain Inspector verification before choosing a visit slot.', 'error');
+      showToast(t('toast.actionBlockedVerify', 'Action Blocked: You must upload the 5 statutory documents and obtain Inspector verification before choosing a visit slot.'), 'error');
       navigateTo('upload-documents');
       return;
     }
@@ -1597,7 +1628,10 @@ export const AppProvider = ({ children }) => {
       applicationRef: bookingReference
     }));
 
-    showToast(`Inspection slot booked for ${dateStr}! Assigned Officer: ${currentShop.assignedInspector || 'Insp. R. Deshmukh'}.`, 'success');
+    showToast(
+      t('toast.visitBooked', `Inspection slot booked for ${dateStr}! Assigned Officer: ${currentShop.assignedInspector || 'Insp. R. Deshmukh'}.`),
+      'success'
+    );
     navigateTo('track-status');
   };
 
@@ -1827,7 +1861,10 @@ export const AppProvider = ({ children }) => {
       console.warn('[Backend Issue Cert Warning]', err.message);
     }
 
-    showToast(`Verification completed! Certificate ${newCertId} issued. Returning to Inspector Route.`, 'success');
+    showToast(
+      t('toast.inspectionComplete', `Verification completed! Certificate ${newCertId} issued. Returning to Inspector Route.`),
+      'success'
+    );
 
     setActiveRole('inspector');
     setCurrentView('inspector-schedule');
@@ -2137,7 +2174,7 @@ export const AppProvider = ({ children }) => {
   const handleSearchCertificate = async (query) => {
     const q = (query || '').trim();
     if (!q) {
-      showToast('Please enter a certificate ID or shop name to search', 'error');
+      showToast(t('toast.searchRequired', 'Please enter a certificate ID or shop name to search'), 'error');
       return;
     }
 
@@ -2146,7 +2183,7 @@ export const AppProvider = ({ children }) => {
       const res = await api.lookupCertificate(q);
       if (res.success && res.data) {
         const cert = res.data;
-        showToast(`Official Certificate Verified on Legal Metrology Ledger: ${cert.certId}`, 'success');
+        showToast(t('toast.recordFound', `Official Certificate Verified on Legal Metrology Ledger: ${cert.certId}`), 'success');
         setCertificateData({
           certId: cert.certId,
           ruleForm: cert.ruleForm || 'Form XVII (Rule 14)',
@@ -2245,6 +2282,7 @@ export const AppProvider = ({ children }) => {
         language,
         setLanguage,
         t,
+        translations,
         storeInfo,
         instruments,
         activeInstrument: instruments[activeInstrumentIndex] || instruments[0],

@@ -17,7 +17,8 @@ export const ShopDashboard = () => {
     handleAddOwnerShop,
     handleViewHistoricalCertificate,
     handleViewActiveCertificate,
-    showToast
+    showToast,
+    t
   } = useApp();
 
   const [showAddShopModal, setShowAddShopModal] = useState(false);
@@ -89,12 +90,12 @@ export const ShopDashboard = () => {
       return;
     }
     if (!isInspectorAssigned) {
-      showToast('Inspector Allocation Pending: Department Admin is assigning an Inspector to your store.', 'info');
+      showToast(t('toast.inspectorPending', 'Inspector Allocation Pending: Department Admin is assigning an Inspector to your store.'), 'info');
       navigateTo('upload-documents');
       return;
     }
     if (isDocFraud) {
-      showToast('Action Blocked: Legal Metrology Officer flagged submitted documents as Fraud.', 'error');
+      showToast(t('toast.actionBlockedFraud', 'Action Blocked: Legal Metrology Officer flagged submitted documents as Fraud.'), 'error');
       return;
     }
     if (isDocVerified) {
@@ -107,7 +108,7 @@ export const ShopDashboard = () => {
   const onAddShopSubmit = (e) => {
     e.preventDefault();
     if (!newShopForm.name.trim() || !newShopForm.address.trim()) {
-      showToast('Please fill in Establishment Name and Address', 'error');
+      showToast(t('toast.fillShopInfo', 'Please fill in Establishment Name and Address'), 'error');
       return;
     }
     handleAddOwnerShop(newShopForm);
@@ -164,8 +165,8 @@ export const ShopDashboard = () => {
             {ownerShops.length === 0 ? (
               <div className="sm:col-span-2 lg:col-span-3 p-6 text-center bg-gray-50 border border-dashed border-gray-300 rounded-xl text-xs text-gray-500">
                 <span className="material-symbols-outlined text-3xl text-gray-400 mb-1 block">storefront</span>
-                <span className="font-semibold text-gray-700 block">No store registered under this account yet</span>
-                <span>Click &quot;+ Register New Shop / Branch&quot; above to register your first commercial establishment.</span>
+                <span className="font-semibold text-gray-700 block">{t('empty.shopNoStoreTitle', 'No store registered under this account yet')}</span>
+                <span>{t('empty.shopNoStoreDesc', 'Click "+ Register New Shop / Branch" above to register your first commercial establishment.')}</span>
               </div>
             ) : (
               ownerShops.map((shop, idx) => {
@@ -739,9 +740,9 @@ export const ShopDashboard = () => {
         ) : (
           <div className="p-6 sm:p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
             <span className="material-symbols-outlined text-3xl text-gray-300 mb-1 block">receipt_long</span>
-            <p className="text-xs font-bold text-gray-700">No Past Certificates on Record for this Branch</p>
+            <p className="text-xs font-bold text-gray-700">{t('empty.shopNoCertsTitle', 'No Past Certificates on Record for this Branch')}</p>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              Once an Inspector conducts the physical weights audit, verified certificates will be archived here.
+              {t('empty.shopNoCertsDesc', 'Once an Inspector conducts the physical weights audit, verified certificates will be archived here.')}
             </p>
           </div>
         )}
@@ -774,7 +775,7 @@ export const ShopDashboard = () => {
                 <input
                   value={newShopForm.name}
                   onChange={(e) => setNewShopForm({ ...newShopForm, name: e.target.value })}
-                  placeholder="e.g. Commercial Branch 2 (West Wing)"
+                  placeholder={t('form.branchNamePlaceholder', 'e.g. Commercial Branch 2 (West Wing)')}
                   className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
                   required
                 />
@@ -813,7 +814,7 @@ export const ShopDashboard = () => {
                 <input
                   value={newShopForm.address}
                   onChange={(e) => setNewShopForm({ ...newShopForm, address: e.target.value })}
-                  placeholder="e.g. Shop #55, Market Road, Bengaluru - 560001"
+                  placeholder={t('form.addressPlaceholder', 'e.g. Shop #55, Market Road, Bengaluru - 560001')}
                   className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
                   required
                 />
@@ -825,7 +826,7 @@ export const ShopDashboard = () => {
                   <input
                     value={newShopForm.tradeLicense}
                     onChange={(e) => setNewShopForm({ ...newShopForm, tradeLicense: e.target.value })}
-                    placeholder="BBMP/TL/2025/..."
+                    placeholder={t('form.tradeLicensePlaceholder', 'BBMP/TL/2025/...')}
                     className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
                   />
                 </div>
@@ -834,7 +835,7 @@ export const ShopDashboard = () => {
                   <input
                     value={newShopForm.scaleModel}
                     onChange={(e) => setNewShopForm({ ...newShopForm, scaleModel: e.target.value })}
-                    placeholder="Contech CA-30"
+                    placeholder={t('form.instrumentPlaceholder', 'Contech CA-30')}
                     className="w-full p-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-[#023625] focus:outline-none"
                   />
                 </div>

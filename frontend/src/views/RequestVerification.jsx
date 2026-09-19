@@ -11,7 +11,8 @@ export const RequestVerification = () => {
     verificationStatus,
     documentSubmissions,
     handleConfirmVerification,
-    showToast
+    showToast,
+    t
   } = useApp();
 
   const [slot, setSlot] = useState(selectedSlot || 'slot_1');
@@ -26,11 +27,11 @@ export const RequestVerification = () => {
 
   const onConfirm = () => {
     if (isFraud) {
-      showToast('Action Blocked: Legal Metrology Officer flagged submitted documents as Fraud.', 'error');
+      showToast(t('toast.actionBlockedFraud', 'Action Blocked: Legal Metrology Officer flagged submitted documents as Fraud.'), 'error');
       return;
     }
     if (!isVerified) {
-      showToast('Action Blocked: You must wait for your assigned Inspector to verify your 5 documents.', 'error');
+      showToast(t('toast.actionBlockedVerify', 'Action Blocked: You must wait for your assigned Inspector to verify your 5 documents.'), 'error');
       navigateTo('upload-documents');
       return;
     }
@@ -76,13 +77,13 @@ export const RequestVerification = () => {
             </div>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-red-800 block">
-                Statutory Enforcement Notice • Scheduling Disabled
+                {t('alerts.fraudNotice', 'Statutory Enforcement Notice • Scheduling Disabled')}
               </span>
               <h2 className="text-base font-bold text-red-950">
-                Application Flagged as Fraud / Counterfeit Scale
+                {t('alerts.fraudTitle', 'Application Flagged as Fraud / Counterfeit Scale')}
               </h2>
               <p className="text-xs text-red-800 mt-1 leading-relaxed">
-                The assigned Inspector has flagged discrepancies in your submitted documentation or scale specification plate. Under Section 30 of the Legal Metrology Act 2009, visit scheduling is prohibited.
+                {t('alerts.fraudDesc', 'The assigned Inspector has flagged discrepancies in your submitted documentation or scale specification plate. Under Section 30 of the Legal Metrology Act 2009, visit scheduling is prohibited.')}
               </p>
             </div>
           </div>
@@ -94,13 +95,13 @@ export const RequestVerification = () => {
               </div>
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
-                  Preliminary Scrutiny Required
+                  {t('alerts.preliminaryScrutiny', 'Preliminary Scrutiny Required')}
                 </span>
                 <h2 className="text-sm sm:text-base font-bold text-amber-950">
-                  Documents Under Inspector Verification
+                  {t('alerts.underVerification', 'Documents Under Inspector Verification')}
                 </h2>
                 <p className="text-xs text-amber-900 mt-0.5">
-                  Your 5 statutory documents have been submitted to <strong>{assignedInspectorName}</strong>. Once the officer marks them <strong>Verified</strong>, appointment confirmation will be unlocked.
+                  {t('alerts.underVerificationDesc', 'Your 5 statutory documents have been submitted to {{inspector}}. Once the officer marks them Verified, appointment confirmation will be unlocked.', { inspector: assignedInspectorName })}
                 </p>
               </div>
             </div>
@@ -109,7 +110,7 @@ export const RequestVerification = () => {
               className="shrink-0 px-4 py-2 rounded-xl border border-amber-400 bg-white hover:bg-amber-100 text-amber-950 font-bold text-xs shadow-xs transition-colors flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-sm">description</span>
-              <span>View 5 Documents</span>
+              <span>{t('alerts.view5Docs', 'View 5 Documents')}</span>
             </button>
           </div>
         ) : (
@@ -338,7 +339,7 @@ export const RequestVerification = () => {
           {/* Primary Submit Button */}
           {isFraud ? (
             <div className="w-full sm:w-auto text-center px-6 py-3 rounded-xl bg-red-100 border border-red-300 text-red-800 text-xs font-bold">
-              Visit Scheduling Blocked: Discrepancy Flagged by Enforcement Officer
+              {t('alerts.fraudButton', 'Visit Scheduling Blocked: Discrepancy Flagged by Enforcement Officer')}
             </div>
           ) : !isVerified ? (
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto justify-center">
@@ -348,7 +349,7 @@ export const RequestVerification = () => {
                 type="button"
               >
                 <span className="material-symbols-outlined text-base">upload_file</span>
-                <span>Upload / View 5 Statutory Documents</span>
+                <span>{t('alerts.upload5Docs', 'Upload / View 5 Statutory Documents')}</span>
               </button>
               <button
                 disabled
@@ -356,7 +357,7 @@ export const RequestVerification = () => {
                 type="button"
               >
                 <span className="material-symbols-outlined text-base">lock</span>
-                <span>Confirm Appointment (Locked)</span>
+                <span>{t('alerts.confirmLocked', 'Confirm Appointment (Locked)')}</span>
               </button>
             </div>
           ) : (

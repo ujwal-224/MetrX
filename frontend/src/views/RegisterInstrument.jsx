@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const RegisterInstrument = () => {
-  const { navigateTo, storeInfo, handleRegisterInstrument, showToast } = useApp();
+  const { navigateTo, storeInfo, handleRegisterInstrument, showToast, t } = useApp();
 
   const [instrumentType, setInstrumentType] = useState('counter_scale');
   const [serialNumber, setSerialNumber] = useState('');
@@ -22,7 +22,7 @@ export const RegisterInstrument = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!serialNumber.trim()) {
-      showToast('Please enter the Serial Number / Model ID from the plate', 'error');
+      showToast(t('errors.required', 'Please enter the Serial Number / Model ID from the plate'), 'error');
       return;
     }
 
@@ -220,7 +220,7 @@ export const RegisterInstrument = () => {
                 <div className="flex flex-col items-center">
                   <img
                     src={photoPreview}
-                    alt="Plate preview"
+                    alt={t('img.plateAlt', 'Plate preview')}
                     className="max-h-40 rounded-lg border border-primary object-contain mb-3"
                   />
                   <span className="text-xs font-semibold text-primary flex items-center gap-1">
@@ -283,7 +283,7 @@ export const RegisterInstrument = () => {
               </label>
               <input
                 className="w-full h-10 px-unit-3 bg-surface-container-lowest text-on-surface font-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-outline/70"
-                placeholder="e.g. Contech CA-30 or Avery 150kg"
+                placeholder={t('form.modelPlaceholder', 'e.g. Contech CA-30 or Avery 150kg')}
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
                 type="text"
@@ -297,7 +297,7 @@ export const RegisterInstrument = () => {
               </label>
               <input
                 className="w-full h-10 px-unit-3 bg-surface-container-lowest text-on-surface font-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-outline/70 font-mono"
-                placeholder="e.g. CON-30KG-2024-X"
+                placeholder={t('form.serialPlaceholder', 'e.g. CON-30KG-2024-X')}
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(e.target.value)}
                 required
@@ -316,7 +316,7 @@ export const RegisterInstrument = () => {
               <div className="relative">
                 <input
                   className="w-full h-10 px-unit-3 bg-surface-container-lowest text-on-surface font-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-outline/70"
-                  placeholder="e.g. 30 kg / 1g precision"
+                  placeholder={t('form.capacityPlaceholder', 'e.g. 30 kg / 1g precision')}
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   type="text"

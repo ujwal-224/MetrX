@@ -9,7 +9,8 @@ export const FieldInspection = () => {
     handleCompleteInspection,
     storeInfo,
     activeInstrument,
-    showToast
+    showToast,
+    t
   } = useApp();
 
   const [notes, setNotes] = useState(
@@ -41,7 +42,7 @@ export const FieldInspection = () => {
     <main className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 min-h-screen">
       {/* Breadcrumb Bar */}
       <div className="max-w-2xl mx-auto mb-3 sm:mb-4">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+        <nav aria-label={t('aria.breadcrumb', 'Breadcrumb navigation')} className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
           <button
             onClick={() => navigateTo('inspector-schedule')}
             className="hover:text-primary flex items-center gap-1 transition-colors font-medium"
@@ -150,7 +151,7 @@ export const FieldInspection = () => {
                 <div className="flex flex-col items-center">
                   <img
                     src={photoEvidence}
-                    alt="Audit photo"
+                    alt={t('img.auditPhoto', 'Audit verification photo')}
                     className="max-h-36 rounded-lg border border-primary object-contain mb-2"
                   />
                   <span className="text-xs font-bold text-primary flex items-center gap-1">
@@ -211,7 +212,7 @@ export const FieldInspection = () => {
 
             <button
               onClick={() => {
-                showToast('Discrepancy notice flagged for merchant rectification.', 'error');
+                showToast(t('toast.discrepancyNotice', 'Discrepancy notice flagged for merchant rectification.'), 'error');
                 navigateTo('inspector-schedule');
               }}
               className="text-error hover:underline text-xs flex items-center gap-1 font-semibold"
