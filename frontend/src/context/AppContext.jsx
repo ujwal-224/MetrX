@@ -5,6 +5,8 @@ import { api } from '../services/api';
 import {
   initialStoreInfo,
   initialInstruments,
+  initialInspectors,
+  initialEstablishments,
   inspectorVisits,
   defaultInspectionChecklist,
   testCalibrationData,
@@ -95,9 +97,14 @@ export const AppProvider = ({ children }) => {
   // All Establishments across platform (For Admin Overview & Registry)
   const [allShops, setAllShops] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('metrx_all_shops') || '[]');
+      const saved = localStorage.getItem('metrx_all_shops');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return initialEstablishments;
     } catch {
-      return [];
+      return initialEstablishments;
     }
   });
 
@@ -110,7 +117,12 @@ export const AppProvider = ({ children }) => {
   // Multi-Shop Establishments Owned by the Logged-In Merchant ONLY
   const [ownerShops, setOwnerShops] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('metrx_owner_shops') || '[]');
+      const saved = localStorage.getItem('metrx_owner_shops');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [];
     } catch {
       return [];
     }
@@ -142,7 +154,12 @@ export const AppProvider = ({ children }) => {
 
   const [instruments, setInstruments] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('metrx_instruments') || '[]');
+      const saved = localStorage.getItem('metrx_instruments');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [];
     } catch {
       return [];
     }
@@ -162,9 +179,14 @@ export const AppProvider = ({ children }) => {
   // Inspector Accounts (Admin-Provisioned Official Officers only)
   const [inspectors, setInspectors] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('metrx_inspectors') || '[]');
+      const saved = localStorage.getItem('metrx_inspectors');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return initialInspectors;
     } catch {
-      return [];
+      return initialInspectors;
     }
   });
 
@@ -181,9 +203,46 @@ export const AppProvider = ({ children }) => {
   // Shop Owner / Merchant Accounts (Self-Created by Shop Owners)
   const [merchants, setMerchants] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('metrx_merchants') || '[]');
+      const saved = localStorage.getItem('metrx_merchants');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return initialEstablishments.map((s) => ({
+        id: s.id,
+        name: s.name,
+        ownerName: s.ownerName,
+        email: s.email,
+        merchantUid: s.merchantUid,
+        tradeLicense: s.tradeLicense,
+        zone: s.zone,
+        address: s.address,
+        phone: s.phone,
+        registeredScales: s.registeredScalesCount || s.instruments?.length || 1,
+        complianceStatus: s.complianceStatus,
+        assignedInspector: s.assignedInspector,
+        assignedInspectorBadge: s.inspectorBadge,
+        certificateId: s.certificateId,
+        createdAt: s.createdAt || 'Jan 2025'
+      }));
     } catch {
-      return [];
+      return initialEstablishments.map((s) => ({
+        id: s.id,
+        name: s.name,
+        ownerName: s.ownerName,
+        email: s.email,
+        merchantUid: s.merchantUid,
+        tradeLicense: s.tradeLicense,
+        zone: s.zone,
+        address: s.address,
+        phone: s.phone,
+        registeredScales: s.registeredScalesCount || s.instruments?.length || 1,
+        complianceStatus: s.complianceStatus,
+        assignedInspector: s.assignedInspector,
+        assignedInspectorBadge: s.inspectorBadge,
+        certificateId: s.certificateId,
+        createdAt: s.createdAt || 'Jan 2025'
+      }));
     }
   });
 
@@ -213,7 +272,30 @@ export const AppProvider = ({ children }) => {
   // Live Inspector Operations on Shop Owners (Real-Time Tracking for Admin)
   const [operations, setOperations] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('metrx_operations') || '[]');
+      const saved = localStorage.getItem('metrx_operations');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return initialEstablishments.map((bShop) => {
+        const isAssigned = bShop.assignedInspector &&
+          bShop.assignedInspector !== 'Pending Admin Allocation' &&
+          bShop.assignedInspector !== 'Unassigned (Action Required)';
+        return {
+          id: `OP-${bShop.id}`,
+          inspectorName: isAssigned ? bShop.assignedInspector : 'Unassigned (Action Required)',
+          badgeNumber: isAssigned ? (bShop.inspectorBadge || 'LM-BLR-402') : 'LM-PENDING',
+          shopName: bShop.name,
+          merchantUid: bShop.merchantUid,
+          zone: bShop.zone?.split(' ')[0] || 'Ward 4',
+          operationType: 'On-Site Stamping & Verification',
+          scaleModel: bShop.instruments?.[0]?.model || 'Electronic Counter Scale',
+          slot: isAssigned ? '11:30 AM – 01:00 PM (Assigned Slot)' : 'Awaiting Inspector Assignment',
+          liveStatus: isAssigned ? (bShop.complianceStatus === 'Certified & Compliant' ? 'Certified • Active Stamping' : 'Inspector Assigned • In Review') : 'New Registration • Pending Allocation',
+          statusType: isAssigned ? 'scheduled' : 'scheduled',
+          remarks: isAssigned ? `Assigned to ${bShop.assignedInspector}` : 'Requires Inspector Assignment by Controller'
+        };
+      });
     } catch {
       return [];
     }
