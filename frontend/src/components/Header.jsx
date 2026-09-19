@@ -13,7 +13,6 @@ export const Header = () => {
     currentInspector,
     language,
     setLanguage,
-    t,
     showToast
   } = useApp();
 

@@ -263,50 +263,6 @@ export const AppProvider = ({ children }) => {
           }));
         }
 
-<<<<<<< ours
-          // Build Document Submissions strictly from real shop submissions while preserving cached fileData
-          let cachedDocs = {};
-          try {
-            cachedDocs = JSON.parse(localStorage.getItem('metrx_submissions') || '{}');
-          } catch { }
-
-          const docsMap = { ...cachedDocs };
-          backendShops.forEach((bShop) => {
-            if (bShop.documentSubmissionData || bShop.documentStatus) {
-              const existingLocal = cachedDocs[bShop.id] || {};
-              docsMap[bShop.id] = {
-                merchantId: bShop.id,
-                shopName: bShop.name,
-                status: bShop.documentStatus || existingLocal.status || 'not_uploaded',
-                submittedAt: bShop.updatedAt ? new Date(bShop.updatedAt).toLocaleDateString('en-GB') : existingLocal.submittedAt || 'Recently',
-                reviewedBy: bShop.reviewedBy || bShop.assignedInspector || existingLocal.reviewedBy || 'Pending Allocation',
-                reviewedAt: bShop.documentStatus === 'verified' ? 'Verified' : existingLocal.reviewedAt || null,
-                remarks: bShop.documentsRemarks || existingLocal.remarks || '',
-                docs: bShop.documentSubmissionData || existingLocal.docs || null
-              };
-            }
-          });
-          setDocumentSubmissions(docsMap);
-          try {
-            localStorage.setItem('metrx_submissions', JSON.stringify(docsMap));
-          } catch { }
-
-          // Build State Compliance Registry from real shops
-          const regList = formattedShops.map((s, idx) => ({
-            id: `REG-${String(idx + 1).padStart(2, '0')}`,
-            shopName: s.name,
-            merchantUid: s.merchantUid,
-            certId: s.documentStatus === 'verified' ? `CERT-KA-2025-${s.merchantUid.replace('#EST-', '')}` : 'PENDING-AUDIT',
-            instrument: s.instruments?.[0]?.name || 'Electronic Counter Scale',
-            serial: s.instruments?.[0]?.serialNumber || '#KA-BLR-PENDING',
-            zone: s.zone,
-            status: s.complianceStatus || 'Pending Verification',
-            expiryDate: 'Within 30 Days',
-            inspector: s.assignedInspector || 'Unassigned',
-            stampSeal: s.instruments?.[0]?.sealNumber || 'SEAL-PENDING'
-          }));
-          setRegistry(regList);
-=======
         // Build Admin Live Field Operations strictly from real registered establishments
         const ops = [];
         formattedShops.forEach((bShop) => {
@@ -383,7 +339,6 @@ export const AppProvider = ({ children }) => {
         } catch (inspErr) {
           console.warn('[Fetch Inspectors Endpoint Notice]', inspErr.message);
         }
->>>>>>> theirs
 
         // Cross-reconcile with cached local inspectors
         try {
@@ -440,53 +395,12 @@ export const AppProvider = ({ children }) => {
           }
         });
 
-<<<<<<< ours
-          // Always extract all assigned inspectors directly from all shops in PostgreSQL
-          const existingNames = new Set(loadedInspectors.map((i) => i.name.trim().toLowerCase()));
-
-          formattedShops.forEach((s) => {
-            if (
-              s.assignedInspector &&
-              s.assignedInspector !== 'Pending Admin Allocation' &&
-              s.assignedInspector !== 'Unassigned (Action Required)' &&
-              !existingNames.has(s.assignedInspector.trim().toLowerCase())
-            ) {
-              existingNames.add(s.assignedInspector.trim().toLowerCase());
-              const cleanName = s.assignedInspector.trim();
-              const cleanId = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '');
-              const discoveredInsp = {
-                id: `insp-${cleanId || Date.now()}`,
-                name: cleanName,
-                badgeNumber: s.inspectorBadge && s.inspectorBadge !== 'LM-PENDING' ? s.inspectorBadge : '5456',
-                email: `${cleanId || 'officer'}@metrx.com`,
-                password: 'password123',
-                zone: s.zone || 'Ward 4 (Commercial Circle)',
-                phone: '+91 98000 11223',
-                status: 'Active',
-                authorizedBy: 'Admin',
-                issuedAt: 'Assigned Field Officer'
-              };
-              loadedInspectors.push(discoveredInsp);
-
-              // Save to PostgreSQL DB in background
-              api.createInspector({
-                name: discoveredInsp.name,
-                email: discoveredInsp.email,
-                password: discoveredInsp.password,
-                phone: discoveredInsp.phone,
-                inspectorBadgeId: discoveredInsp.badgeNumber,
-                assignedZone: discoveredInsp.zone
-              }).catch(() => { });
-            }
-          });
-=======
         setInspectors(loadedInspectors);
       }
     } catch (err) {
       console.warn('[Backend Sync Warning]', err.message);
     }
   };
->>>>>>> theirs
 
   useEffect(() => {
     refreshBackendData();
@@ -1630,15 +1544,11 @@ export const AppProvider = ({ children }) => {
       console.warn('[Backend Upload Documents Warning]', err.message);
     }
 
-<<<<<<< ours
-    showToast(t('toast.docSubmitted', 'All 5 statutory documents submitted for Inspector verification!'), 'success');
-=======
     if (ruleEvaluation.isCompliant) {
       showToast('All 5 statutory criteria matched inspection rules! Forwarded to Inspector for final review.', 'success');
     } else {
       showToast('ALERT: Documents failed inspection rules criteria. Application flagged as FRAUD & blocked.', 'error');
     }
->>>>>>> theirs
   };
 
   const handleInspectorReviewDocuments = async (merchantId, decision, remarks = '') => {
@@ -2546,9 +2456,6 @@ export const AppProvider = ({ children }) => {
       const res = await api.lookupCertificate(q);
       if (res.success && res.data) {
         const cert = res.data;
-<<<<<<< ours
-        showToast(t('toast.recordFound', `Official Certificate Verified on Legal Metrology Ledger: ${cert.certId}`), 'success');
-=======
         showToast(`Official Certificate Verified on Legal Metrology Ledger: ${cert.certId}`, 'success');
         let parsedTests = testCalibrationData;
         if (cert.testObservationsRaw) {
@@ -2558,8 +2465,6 @@ export const AppProvider = ({ children }) => {
         } else if (cert.testObservations?.length) {
           parsedTests = cert.testObservations;
         }
-
->>>>>>> theirs
         setCertificateData({
           certId: cert.certId,
           ruleForm: cert.ruleForm || 'Form XVII (Rule 14)',
