@@ -86,6 +86,23 @@ export const AppProvider = ({ children }) => {
   // Shop Owner / Merchant Accounts (Self-Created by Shop Owners)
   const [merchants, setMerchants] = useState([]);
 
+  // Pending Inspector Allocation Requests from Merchants to Admin
+  const [allocationRequests, setAllocationRequests] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_allocation_requests') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_allocation_requests', JSON.stringify(allocationRequests));
+    } catch (e) {
+      console.warn('[Cache Allocation Requests Error]', e);
+    }
+  }, [allocationRequests]);
+
   // Live Inspector Operations on Shop Owners (Real-Time Tracking for Admin)
   const [operations, setOperations] = useState([]);
 
@@ -171,31 +188,71 @@ export const AppProvider = ({ children }) => {
       if (res.success && res.data) {
         const backendShops = res.data;
 
-        const formattedShops = backendShops.map((bShop) => ({
-          id: bShop.id,
-          name: bShop.name,
-          ownerName: bShop.ownerName,
-          branchType: bShop.branchType || 'Commercial Retail Store',
-          merchantUid: bShop.merchantUid,
-          tradeLicense: bShop.tradeLicense,
-          gstin: bShop.gstin || '',
-          shopActReg: bShop.shopActReg || '',
-          zone: bShop.zone,
-          address: bShop.address,
-          phone: bShop.phone,
-          email: bShop.email || '',
-          assignedInspector: bShop.assignedInspector || 'Pending Admin Allocation',
-          inspectorBadge: bShop.inspectorBadge || 'LM-PENDING',
-          status: bShop.status || 'Active Commercial Establishment',
-          complianceStatus: bShop.complianceStatus || 'Pending Inspector Assignment',
-          documentStatus: bShop.documentStatus || 'not_uploaded',
-          documentsRemarks: bShop.documentsRemarks || '',
-          reviewedBy: bShop.reviewedBy || '',
-          documentSubmissionData: bShop.documentSubmissionData || null,
-          registeredScalesCount: bShop.instruments?.length ?? bShop.registeredScalesCount ?? 0,
-          instruments: bShop.instruments || [],
-          certificationHistory: []
-        }));
+        const formattedShops = backendShops.map((bShop) => {
+          const shopCerts = (bShop.certificates || []).map((c) => {
+            let parsedTests = testCalibrationData;
+            if (c.testObservationsRaw) {
+              try {
+                parsedTests = JSON.parse(c.testObservationsRaw);
+              } catch (e) {}
+            }
+            return {
+              certId: c.certId,
+              ruleForm: c.ruleForm || 'Form XVII (Rule 14)',
+              actYear: c.actYear || 'Legal Metrology Act, 2009',
+              statusBadge: c.statusBadge || 'VERIFIED & COMPLIANT',
+              daysLeft: 365,
+              validUntil: c.validUntil,
+              verifiedDate: c.verifiedDate,
+              inspectorSeal: c.inspectorSeal,
+              inspectorName: c.inspectorName,
+              inspectorBadge: c.inspectorBadge,
+              instrumentModel: c.instrumentModel,
+              serialNumber: c.serialNumber,
+              workingStandardRef: c.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)',
+              remarks: c.remarks || 'Physical verification passed. Holographic seal affixed.',
+              qrCodeUrl: c.qrCodeUrl || '',
+              applicableStandard: c.applicableStandard,
+              ruleName: c.ruleName,
+              verificationMode: c.verificationMode || 'Field / In-Situ',
+              calibrationTests: parsedTests,
+              isHistorical: false,
+              inProgress: false
+            };
+          });
+
+          const isShopCertified =
+            bShop.complianceStatus === 'Certified & Compliant' ||
+            bShop.status === 'Verified & Compliant' ||
+            shopCerts.length > 0;
+
+          return {
+            id: bShop.id,
+            name: bShop.name,
+            ownerName: bShop.ownerName,
+            branchType: bShop.branchType || 'Commercial Retail Store',
+            merchantUid: bShop.merchantUid,
+            tradeLicense: bShop.tradeLicense,
+            gstin: bShop.gstin || '',
+            shopActReg: bShop.shopActReg || '',
+            zone: bShop.zone,
+            address: bShop.address,
+            phone: bShop.phone,
+            email: bShop.email || '',
+            assignedInspector: bShop.assignedInspector || 'Pending Admin Allocation',
+            inspectorBadge: bShop.inspectorBadge || 'LM-PENDING',
+            status: bShop.status || 'Active Commercial Establishment',
+            complianceStatus: isShopCertified ? 'Certified & Compliant' : (bShop.complianceStatus || 'Pending Inspector Assignment'),
+            documentStatus: bShop.documentStatus || 'not_uploaded',
+            documentsRemarks: bShop.documentsRemarks || '',
+            reviewedBy: bShop.reviewedBy || '',
+            documentSubmissionData: bShop.documentSubmissionData || null,
+            registeredScalesCount: bShop.instruments?.length ?? bShop.registeredScalesCount ?? 0,
+            instruments: bShop.instruments || [],
+            certificationHistory: shopCerts,
+            certificateId: shopCerts[0]?.certId || (isShopCertified ? `CERT-KA-2025-${(bShop.merchantUid || '9921').replace('#EST-', '')}` : 'PENDING')
+          };
+        });
 
         setAllShops(formattedShops);
 
@@ -218,6 +275,7 @@ export const AppProvider = ({ children }) => {
             complianceStatus: bShop.complianceStatus || (isAssigned ? 'Inspector Assigned' : 'Pending Inspector Assignment'),
             assignedInspector: isAssigned ? bShop.assignedInspector : null,
             assignedInspectorBadge: isAssigned ? bShop.inspectorBadge : null,
+            certificateId: bShop.certificateId,
             createdAt: bShop.createdAt ? new Date(bShop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently'
           };
         });
@@ -236,6 +294,7 @@ export const AppProvider = ({ children }) => {
         // Active shop profile setup for the authenticated shop owner
         if (userShops.length > 0) {
           const active = userShops[0];
+          const isCertified = active.complianceStatus === 'Certified & Compliant' || (active.certificationHistory && active.certificationHistory.length > 0);
           setStoreInfo({
             id: active.id,
             name: active.name,
@@ -249,17 +308,20 @@ export const AppProvider = ({ children }) => {
             zone: active.zone,
             assignedInspector: active.assignedInspector,
             inspectorBadge: active.inspectorBadge,
-            certificateId: 'PENDING'
+            complianceStatus: active.complianceStatus,
+            certificateId: active.certificationHistory?.[0]?.certId || active.certificateId || 'PENDING'
           });
           setInstruments(active.instruments || []);
 
           setVerificationStatus((prev) => ({
             ...prev,
             documentStatus: active.documentStatus || 'not_uploaded',
-            step: active.complianceStatus?.includes('Scheduled') ? 3 : active.documentStatus === 'verified' ? 2 : 1,
+            step: isCertified ? 5 : active.complianceStatus?.includes('Scheduled') ? 3 : active.documentStatus === 'verified' ? 2 : 1,
+            status: isCertified ? 'certified' : active.complianceStatus?.includes('Scheduled') ? 'scheduled' : prev.status,
             inspectorName: active.assignedInspector || 'Pending Admin Allocation',
             inspectorBadge: active.inspectorBadge || 'LM-PENDING',
-            applicationRef: `METRX-LMIS-${active.merchantUid.replace('#', '')}`
+            applicationRef: `METRX-LMIS-${active.merchantUid.replace('#', '')}`,
+            certificateId: active.certificationHistory?.[0]?.certId || active.certificateId
           }));
         }
 
@@ -816,7 +878,7 @@ export const AppProvider = ({ children }) => {
           (s.ownerName && match.ownerName && s.ownerName.toLowerCase() === match.ownerName.toLowerCase())
       );
 
-      setOwnerShops(myShops.length > 0 ? myShops : [
+      const finalShops = myShops.length > 0 ? myShops : [
         {
           id: match.id,
           name: match.name,
@@ -832,11 +894,30 @@ export const AppProvider = ({ children }) => {
           status: 'Active Commercial Establishment',
           complianceStatus: match.complianceStatus || 'Pending Inspector Assignment',
           documentStatus: 'not_uploaded',
-          registeredScalesCount: 1,
-          instruments: [],
-          certificationHistory: []
+          registeredScalesCount: match.registeredScalesCount || match.instruments?.length || 0,
+          instruments: match.instruments || [],
+          certificationHistory: match.certificationHistory || []
         }
-      ]);
+      ];
+
+      setOwnerShops(finalShops);
+      setActiveShopIndexState(0);
+
+      const firstShop = finalShops[0];
+      setInstruments(firstShop.instruments || []);
+      setActiveInstrumentIndex(0);
+
+      const isFirstCert = Boolean(firstShop.certificationHistory && firstShop.certificationHistory.length > 0);
+      const isFirstSched = firstShop.complianceStatus === 'Scheduled for Verification' || firstShop.complianceStatus?.includes('Scheduled');
+
+      setVerificationStatus({
+        status: isFirstCert ? 'certified' : (isFirstSched ? 'scheduled' : 'pending'),
+        step: isFirstCert ? 5 : (isFirstSched ? 3 : (firstShop.documentStatus === 'verified' ? 3 : 1)),
+        documentStatus: firstShop.documentStatus || 'not_uploaded',
+        inspectorName: firstShop.assignedInspector || null,
+        inspectorBadge: firstShop.inspectorBadge || null,
+        certificateId: firstShop.certificationHistory?.[0]?.certId || null
+      });
 
       setStoreInfo((prev) => ({
         ...prev,
@@ -1022,17 +1103,76 @@ export const AppProvider = ({ children }) => {
       certificateId: 'PENDING'
     });
 
-    setVerificationStatus((prev) => ({
-      ...prev,
+    setInstruments([]);
+    setActiveInstrumentIndex(0);
+    setCertificateData({
+      inProgress: true,
+      shopName: newMerch.name,
+      shopAddress: newMerch.address,
+      merchantUid: finalUid,
+      tradeLicense: newMerch.tradeLicense,
+      zone: newMerch.zone,
+      branchType: 'Commercial Retail Store',
+      assignedInspector: 'Pending Admin Allocation',
+      inspectorBadge: 'LM-PENDING',
+      complianceStatus: 'Pending Inspector Assignment',
+      documentStatus: 'not_uploaded',
+      instrument: null
+    });
+
+    setVerificationStatus({
+      status: 'pending',
       documentStatus: 'not_uploaded',
       step: 1
-    }));
+    });
 
     setActiveRole('shop-owner');
     setCurrentView('shop-dashboard');
     showToast(`Store registered successfully! Merchant UID: ${finalUid}. Visible in Admin Command Center.`, 'success');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return newMerch;
+  };
+
+  // Shop Owner sends formal request to Admin to allocate / assign an inspector
+  const handleRequestInspectorAllocation = async (instrumentData) => {
+    const shop = ownerShops[activeShopIndex] || ownerShops[0] || {};
+    const targetShopId = shop.id || storeInfo.id;
+    const targetShopName = shop.name || storeInfo.name;
+    const targetMerchantUid = shop.merchantUid || storeInfo.merchantUid;
+    const targetScale = instruments[0] || instrumentData || {};
+
+    const newRequest = {
+      id: `REQ-ALLOC-${Date.now()}`,
+      shopId: targetShopId,
+      shopName: targetShopName,
+      merchantUid: targetMerchantUid,
+      ownerName: shop.ownerName || storeInfo.contactPerson || 'Proprietor',
+      phone: shop.phone || storeInfo.phone || '+91 98000 00000',
+      zone: shop.zone || storeInfo.zone || 'Ward 4 (Commercial Circle)',
+      address: shop.address || storeInfo.location || 'Bengaluru',
+      scaleName: targetScale.name || instrumentData?.name || 'Electronic Counter Scale',
+      scaleModel: targetScale.model || instrumentData?.model || 'Commercial Series',
+      scaleSerial: targetScale.serialNumber || instrumentData?.serialNumber || '#KA-BLR-88412',
+      scaleCapacity: targetScale.capacity || instrumentData?.capacity || '30 kg',
+      status: 'pending',
+      requestedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      requestedDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    };
+
+    setAllocationRequests((prev) => [newRequest, ...prev.filter((r) => r.shopId !== targetShopId && r.shopName !== targetShopName)]);
+
+    const updatedCompliance = 'Pending Inspector Assignment (Request Sent to Admin)';
+    setOwnerShops((prev) =>
+      prev.map((s) => s.id === targetShopId || s.name === targetShopName ? { ...s, complianceStatus: updatedCompliance, allocationRequested: true } : s)
+    );
+    setAllShops((prev) =>
+      prev.map((s) => s.id === targetShopId || s.name === targetShopName ? { ...s, complianceStatus: updatedCompliance, allocationRequested: true } : s)
+    );
+    setMerchants((prev) =>
+      prev.map((m) => m.id === targetShopId || m.name === targetShopName ? { ...m, complianceStatus: updatedCompliance, allocationRequested: true } : m)
+    );
+
+    showToast(`Official request dispatched to Controller/Admin! Inspector allocation is queued in Admin Dashboard.`, 'success');
   };
 
   // Admin Assigns / Reassigns Inspector to a Merchant Store
@@ -1052,6 +1192,11 @@ export const AppProvider = ({ children }) => {
     const mUid = targetMerchant ? targetMerchant.merchantUid : '#EST-SHOP';
     const mZone = targetMerchant ? targetMerchant.zone : 'Ward 4';
 
+    // Clear from pending allocation requests
+    setAllocationRequests((prev) =>
+      prev.filter((r) => r.shopId !== mId && r.shopName !== mName && r.merchantUid !== mUid)
+    );
+
     // Sync into merchants ledger
     setMerchants((prev) =>
       prev.map((m) => {
@@ -1060,7 +1205,8 @@ export const AppProvider = ({ children }) => {
             ...m,
             assignedInspector: selectedInspector.name,
             assignedInspectorBadge: selectedInspector.badgeNumber,
-            complianceStatus: 'Inspector Assigned'
+            complianceStatus: 'Inspector Assigned',
+            allocationRequested: false
           };
         }
         return m;
@@ -1303,34 +1449,45 @@ export const AppProvider = ({ children }) => {
     } else if (view === 'certificate-view') {
       if (activeRole === 'shop-owner') {
         const currentShop = ownerShops[activeShopIndex] || ownerShops[0];
-        if (currentShop?.certificationHistory && currentShop.certificationHistory.length > 0) {
-          if (certificateData?.shopName !== currentShop.name || certificateData?.inProgress) {
-            const activeCert = currentShop.certificationHistory[0];
-            setCertificateData({
-              certId: activeCert.certId,
-              ruleForm: activeCert.ruleForm || 'Form XVII (Rule 14)',
-              actYear: activeCert.actYear || 'Act of 2009',
-              statusBadge: activeCert.statusBadge || 'VERIFIED & COMPLIANT',
-              daysLeft: activeCert.daysLeft !== undefined ? activeCert.daysLeft : 365,
-              validUntil: activeCert.validUntil || '12 Jan 2026',
-              verifiedDate: activeCert.verifiedDate || '13 Jan 2025',
-              inspectorSeal: activeCert.inspectorSeal || 'SEAL-LM-BLR-0428',
-              inspectorName: activeCert.inspectorName || currentShop.assignedInspector || 'Insp. R. Deshmukh',
-              inspectorBadge: activeCert.inspectorBadge || currentShop.inspectorBadge || 'LM-BLR-402',
-              instrumentModel: activeCert.instrumentModel || `${currentShop.instruments?.[0]?.name} (${currentShop.instruments?.[0]?.model})`,
-              serialNumber: activeCert.serialNumber || currentShop.instruments?.[0]?.serialNumber || '',
-              shopLocation: `${currentShop.name}, ${currentShop.zone}`,
-              shopName: currentShop.name,
-              shopAddress: currentShop.address,
-              merchantUid: currentShop.merchantUid,
-              tradeLicense: currentShop.tradeLicense,
-              workingStandardRef: activeCert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
-              digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-              calibrationTests: activeCert.calibrationTests || testCalibrationData,
-              isHistorical: false,
-              inProgress: false
-            });
-          }
+        const isShopCertified = Boolean(
+          (currentShop?.certificationHistory && currentShop.certificationHistory.length > 0) ||
+          currentShop?.complianceStatus === 'Certified & Compliant' ||
+          currentShop?.status === 'Verified & Compliant'
+        );
+
+        if (isShopCertified) {
+          const activeCert = currentShop?.certificationHistory?.[0];
+          const certId = activeCert?.certId || currentShop?.certificateId || `CERT-KA-2025-${(currentShop?.merchantUid || '9921').replace('#EST-', '')}`;
+          const inst = currentShop?.instruments?.[0];
+
+          setCertificateData({
+            certId: certId,
+            ruleForm: activeCert?.ruleForm || 'Form XVII (Rule 14)',
+            actYear: activeCert?.actYear || 'Legal Metrology Act, 2009',
+            statusBadge: activeCert?.statusBadge || 'VERIFIED & COMPLIANT',
+            daysLeft: activeCert?.daysLeft !== undefined ? activeCert.daysLeft : 365,
+            validUntil: activeCert?.validUntil || '12 Jan 2026',
+            verifiedDate: activeCert?.verifiedDate || '13 Jan 2025',
+            inspectorSeal: activeCert?.inspectorSeal || 'SEAL-LM-BLR-0428',
+            inspectorName: activeCert?.inspectorName || currentShop?.assignedInspector || 'Insp. R. Deshmukh',
+            inspectorBadge: activeCert?.inspectorBadge || currentShop?.inspectorBadge || 'LM-BLR-402',
+            instrumentModel: activeCert?.instrumentModel || (inst?.name ? `${inst.name} (${inst.model})` : 'Contech CA-30 (Max 30kg, e=1g)'),
+            serialNumber: activeCert?.serialNumber || inst?.serialNumber || '#KA-BLR-88412',
+            shopLocation: `${currentShop?.name || storeInfo.name}, ${currentShop?.zone || storeInfo.zone}`,
+            shopName: currentShop?.name || storeInfo.name,
+            shopAddress: currentShop?.address || storeInfo.location,
+            merchantUid: currentShop?.merchantUid || storeInfo.merchantUid,
+            tradeLicense: currentShop?.tradeLicense || storeInfo.regNumber,
+            workingStandardRef: activeCert?.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)',
+            digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
+            calibrationTests: activeCert?.calibrationTests || testCalibrationData,
+            qrCodeUrl: activeCert?.qrCodeUrl || '',
+            applicableStandard: activeCert?.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule / IS 9281',
+            ruleName: activeCert?.ruleName || 'Electronic Weighing Instrument Verification Scheme',
+            verificationMode: activeCert?.verificationMode || 'Field / In-Situ',
+            isHistorical: false,
+            inProgress: false
+          });
         } else {
           setCertificateData({
             inProgress: true,
@@ -1358,7 +1515,7 @@ export const AppProvider = ({ children }) => {
     );
   };
 
-  const handleRegisterInstrument = async (instrumentData) => {
+  const handleRegisterInstrument = async (instrumentData, options = {}) => {
     const isRepaired = Boolean(instrumentData.isRepairedOrModified);
     const targetShopId = storeInfo.id || ownerShops[activeShopIndex]?.id;
     const newInst = {
@@ -1437,12 +1594,17 @@ export const AppProvider = ({ children }) => {
 
     showToast(
       isRepaired
-        ? `Scale ${newInst.serialNumber} registered! Note: Rule 7 re-verification required. Proceeding to Document Upload.`
-        : `Scale ${newInst.serialNumber} registered! Step 1 Complete. Now upload your statutory documents.`,
+        ? `Scale ${newInst.serialNumber} registered! Note: Rule 7 re-verification required.`
+        : `Scale ${newInst.serialNumber} registered successfully!`,
       'success'
     );
-    navigateTo('upload-documents');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (options.autoNavigate !== false) {
+      navigateTo('upload-documents');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    return newInst;
   };
 
   // Document Submission & Inspector Review Handlers
@@ -1776,7 +1938,7 @@ export const AppProvider = ({ children }) => {
     const targetShopName = storeInfo.name || currentShop.name;
     const targetInst = instruments[activeInstrumentIndex] || instruments[0] || {};
 
-    const issuedCert = inspectionResult?.issuedCertificate;
+    const issuedCert = inspectionResult?.certificate || inspectionResult?.issuedCertificate;
     const validityData = inspectionResult?.validity;
 
     const newCertId = issuedCert?.certId || `CERT-KA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -1822,6 +1984,7 @@ export const AppProvider = ({ children }) => {
       applicableStandard: issuedCert?.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule / IS 9281',
       ruleName: issuedCert?.ruleName || 'Electronic Weighing Instrument Verification Scheme',
       verificationMode: issuedCert?.verificationMode || 'Field / In-Situ',
+      qrCodeUrl: issuedCert?.qrCodeUrl || '',
       currentStatus: 'VALID',
       isExpired: false,
       isExpiringSoon: false,
@@ -2051,6 +2214,9 @@ export const AppProvider = ({ children }) => {
     if (targetShop.instruments && targetShop.instruments.length > 0) {
       setInstruments(targetShop.instruments);
       setActiveInstrumentIndex(0);
+    } else {
+      setInstruments([]);
+      setActiveInstrumentIndex(0);
     }
 
     if (targetShop.certificationHistory && targetShop.certificationHistory.length > 0) {
@@ -2096,12 +2262,17 @@ export const AppProvider = ({ children }) => {
       });
     }
 
-    setVerificationStatus((prev) => ({
-      ...prev,
-      documentStatus: targetShop.documentStatus || 'verified',
-      step: targetShop.certificationHistory && targetShop.certificationHistory.length > 0 ? 5 : (targetShop.documentStatus === 'verified' ? 3 : 2),
-      inspectorName: targetShop.assignedInspector || 'Insp. R. Deshmukh'
-    }));
+    const isTargetCert = Boolean(targetShop.certificationHistory && targetShop.certificationHistory.length > 0);
+    const isTargetSched = targetShop.complianceStatus === 'Scheduled for Verification' || targetShop.complianceStatus?.includes('Scheduled');
+
+    setVerificationStatus({
+      status: isTargetCert ? 'certified' : (isTargetSched ? 'scheduled' : 'pending'),
+      documentStatus: targetShop.documentStatus || 'not_uploaded',
+      step: isTargetCert ? 5 : (isTargetSched ? 3 : (targetShop.documentStatus === 'verified' ? 3 : 1)),
+      inspectorName: targetShop.assignedInspector || null,
+      inspectorBadge: targetShop.inspectorBadge || null,
+      certificateId: targetShop.certificationHistory?.[0]?.certId || null
+    });
 
     showToast(`Switched active establishment to ${targetShop.name}`, 'info');
   };
@@ -2347,29 +2518,42 @@ export const AppProvider = ({ children }) => {
 
   const handleViewActiveCertificate = (shopOverride) => {
     const currentShop = shopOverride || ownerShops[activeShopIndex] || ownerShops[0];
-    if (currentShop?.certificationHistory && currentShop.certificationHistory.length > 0) {
-      const activeCert = currentShop.certificationHistory[0];
+    const isShopCertified = Boolean(
+      (currentShop?.certificationHistory && currentShop.certificationHistory.length > 0) ||
+      currentShop?.complianceStatus === 'Certified & Compliant' ||
+      currentShop?.status === 'Verified & Compliant'
+    );
+
+    if (isShopCertified) {
+      const activeCert = currentShop?.certificationHistory?.[0];
+      const certId = activeCert?.certId || currentShop?.certificateId || `CERT-KA-2025-${(currentShop?.merchantUid || '9921').replace('#EST-', '')}`;
+      const inst = currentShop?.instruments?.[0];
+
       setCertificateData({
-        certId: activeCert.certId,
-        ruleForm: activeCert.ruleForm || 'Form XVII (Rule 14)',
-        actYear: activeCert.actYear || 'Act of 2009',
-        statusBadge: activeCert.statusBadge || 'VERIFIED & COMPLIANT',
-        daysLeft: activeCert.daysLeft !== undefined ? activeCert.daysLeft : 365,
-        validUntil: activeCert.validUntil || '12 Jan 2026',
-        verifiedDate: activeCert.verifiedDate || '13 Jan 2025',
-        inspectorSeal: activeCert.inspectorSeal || 'SEAL-LM-BLR-0428',
-        inspectorName: activeCert.inspectorName || currentShop?.assignedInspector || 'Insp. R. Deshmukh',
-        inspectorBadge: activeCert.inspectorBadge || currentShop?.inspectorBadge || 'LM-BLR-402',
-        instrumentModel: activeCert.instrumentModel || (currentShop?.instruments?.[0]?.name ? `${currentShop.instruments[0].name} (${currentShop.instruments[0].model})` : 'Contech CA-30 (Max 30kg, e=1g)'),
-        serialNumber: activeCert.serialNumber || currentShop?.instruments?.[0]?.serialNumber || '#KA-BLR-88412',
-        shopLocation: `${currentShop.name}, ${currentShop.zone}`,
-        shopName: currentShop.name,
-        shopAddress: currentShop.address,
-        merchantUid: currentShop.merchantUid,
-        tradeLicense: currentShop.tradeLicense,
-        workingStandardRef: activeCert.workingStandardRef || 'STD/KA/2024/0081 (Calibrated at NPL)',
+        certId: certId,
+        ruleForm: activeCert?.ruleForm || 'Form XVII (Rule 14)',
+        actYear: activeCert?.actYear || 'Legal Metrology Act, 2009',
+        statusBadge: activeCert?.statusBadge || 'VERIFIED & COMPLIANT',
+        daysLeft: activeCert?.daysLeft !== undefined ? activeCert.daysLeft : 365,
+        validUntil: activeCert?.validUntil || '12 Jan 2026',
+        verifiedDate: activeCert?.verifiedDate || '13 Jan 2025',
+        inspectorSeal: activeCert?.inspectorSeal || 'SEAL-LM-BLR-0428',
+        inspectorName: activeCert?.inspectorName || currentShop?.assignedInspector || 'Insp. R. Deshmukh',
+        inspectorBadge: activeCert?.inspectorBadge || currentShop?.inspectorBadge || 'LM-BLR-402',
+        instrumentModel: activeCert?.instrumentModel || (inst?.name ? `${inst.name} (${inst.model})` : 'Contech CA-30 (Max 30kg, e=1g)'),
+        serialNumber: activeCert?.serialNumber || inst?.serialNumber || '#KA-BLR-88412',
+        shopLocation: `${currentShop?.name || storeInfo.name}, ${currentShop?.zone || storeInfo.zone}`,
+        shopName: currentShop?.name || storeInfo.name,
+        shopAddress: currentShop?.address || storeInfo.location,
+        merchantUid: currentShop?.merchantUid || storeInfo.merchantUid,
+        tradeLicense: currentShop?.tradeLicense || storeInfo.regNumber,
+        workingStandardRef: activeCert?.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)',
         digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-        calibrationTests: activeCert.calibrationTests || testCalibrationData,
+        calibrationTests: activeCert?.calibrationTests || testCalibrationData,
+        qrCodeUrl: activeCert?.qrCodeUrl || '',
+        applicableStandard: activeCert?.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule / IS 9281',
+        ruleName: activeCert?.ruleName || 'Electronic Weighing Instrument Verification Scheme',
+        verificationMode: activeCert?.verificationMode || 'Field / In-Situ',
         isHistorical: false,
         inProgress: false
       });
@@ -2419,25 +2603,40 @@ export const AppProvider = ({ children }) => {
   };
 
   const handleViewVisitCertificate = (visit) => {
+    const matchingShop = allShops.find(
+      (s) => (visit.shopId && s.id === visit.shopId) ||
+             (visit.merchantId && s.id === visit.merchantId) ||
+             (s.name && visit.shopName && s.name.toLowerCase().trim() === visit.shopName.toLowerCase().trim())
+    );
+    const certFromShop = matchingShop?.certificationHistory?.[0];
+
+    const certId = certFromShop?.certId || visit.certificateId || 'CERT-KA-2025-9921';
+
     setCertificateData({
-      certId: visit.certificateId || 'CERT-KA-2025-9921',
-      ruleForm: 'Form XVII (Rule 14)',
-      actYear: 'Act of 2009',
-      statusBadge: 'VERIFIED & COMPLIANT',
-      daysLeft: 365,
-      validUntil: '16 Jan 2026',
-      verifiedDate: '16 Jan 2025',
-      inspectorSeal: 'SEAL-LM-BLR-2025-0428',
-      inspectorName: visit.assignedOfficer || currentInspector?.name || 'Insp. R. Deshmukh',
-      inspectorBadge: visit.officerBadge || currentInspector?.badge || 'LM-BLR-402',
-      instrumentModel: visit.instrumentName ? `${visit.instrumentName} (${visit.model})` : 'Electronic Counter Scale',
-      serialNumber: visit.serialNumber || '#KA-BLR-88412',
+      certId: certId,
+      ruleForm: certFromShop?.ruleForm || 'Form XVII (Rule 14)',
+      actYear: certFromShop?.actYear || 'Legal Metrology Act, 2009',
+      statusBadge: certFromShop?.statusBadge || 'VERIFIED & COMPLIANT',
+      daysLeft: certFromShop?.daysLeft !== undefined ? certFromShop.daysLeft : 365,
+      validUntil: certFromShop?.validUntil || '16 Jan 2026',
+      verifiedDate: certFromShop?.verifiedDate || '16 Jan 2025',
+      inspectorSeal: certFromShop?.inspectorSeal || 'SEAL-LM-BLR-2025-0428',
+      inspectorName: certFromShop?.inspectorName || visit.assignedOfficer || currentInspector?.name || 'Insp. R. Deshmukh',
+      inspectorBadge: certFromShop?.inspectorBadge || visit.officerBadge || currentInspector?.badge || 'LM-BLR-402',
+      instrumentModel: certFromShop?.instrumentModel || (visit.instrumentName ? `${visit.instrumentName} (${visit.model})` : 'Electronic Counter Scale'),
+      serialNumber: certFromShop?.serialNumber || visit.serialNumber || '#KA-BLR-88412',
       shopLocation: `${visit.shopName}, ${visit.address}`,
       shopName: visit.shopName,
-      merchantUid: visit.merchantUid || '',
-      workingStandardRef: 'STD/KA/2025/0092 (Calibrated at NPL)',
+      shopAddress: visit.address,
+      merchantUid: certFromShop?.merchantUid || visit.merchantUid || matchingShop?.merchantUid || '',
+      tradeLicense: certFromShop?.tradeLicense || matchingShop?.tradeLicense || 'BBMP/TL/2025/9081',
+      workingStandardRef: certFromShop?.workingStandardRef || 'STD/KA/2025/0092 (Calibrated at NPL)',
       digitalSignature: 'Digitally Cryptographed (DSC v4.1 - State Metrology Repository)',
-      calibrationTests: testCalibrationData,
+      calibrationTests: certFromShop?.calibrationTests || testCalibrationData,
+      qrCodeUrl: certFromShop?.qrCodeUrl || '',
+      applicableStandard: certFromShop?.applicableStandard || 'Legal Metrology (General) Rules, 2011 - Seventh Schedule',
+      ruleName: certFromShop?.ruleName || 'Electronic Weighing Instrument Verification Scheme',
+      verificationMode: certFromShop?.verificationMode || 'Field / In-Situ',
       isHistorical: false,
       inProgress: false
     });
@@ -2632,6 +2831,8 @@ export const AppProvider = ({ children }) => {
         certificateData,
         setCertificateData,
         handleRegisterInstrument,
+        allocationRequests,
+        handleRequestInspectorAllocation,
         handleConfirmVerification,
         handleCompleteInspection,
         handleSearchCertificate,

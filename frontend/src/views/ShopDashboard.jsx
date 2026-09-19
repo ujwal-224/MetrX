@@ -57,29 +57,29 @@ export const ShopDashboard = () => {
   };
 
   const currentDocData = documentSubmissions[activeShop.id] || activeShop.documentSubmissionData || {};
-  const currentDocStatus = currentDocData.status || activeShop.documentStatus || verificationStatus.documentStatus || 'not_uploaded';
+  const currentDocStatus = currentDocData.status || activeShop.documentStatus || 'not_uploaded';
   const isDocVerified = currentDocStatus === 'verified';
   const isDocFraud = currentDocStatus === 'fraud';
 
   const shopInstruments = (activeShop?.instruments && activeShop.instruments.length > 0)
     ? activeShop.instruments
-    : (instruments && instruments.length > 0)
-    ? instruments
     : [];
   const hasRegisteredScales = Boolean(shopInstruments && shopInstruments.length > 0 && shopInstruments[0]?.serialNumber);
 
-  const isCertified =
-    activeShop.complianceStatus === 'Certified & Compliant' ||
-    activeShop.status === 'Verified & Compliant' ||
+  const isCertified = Boolean(
     (activeShop.certificationHistory && activeShop.certificationHistory.length > 0) ||
-    verificationStatus.status === 'certified';
+    activeShop.complianceStatus === 'Certified & Compliant' ||
+    activeShop.status === 'Verified & Compliant'
+  );
 
-  const isVisitScheduled =
-    activeShop.complianceStatus === 'Scheduled for Verification' ||
-    activeShop.complianceStatus?.includes('Scheduled') ||
-    verificationStatus.status === 'scheduled';
+  const isVisitScheduled = Boolean(
+    !isCertified && (
+      activeShop.complianceStatus === 'Scheduled for Verification' ||
+      activeShop.complianceStatus?.includes('Scheduled')
+    )
+  );
 
-  const daysLeft = isCertified ? (activeInstrument?.daysRemaining || 365) : (activeInstrument?.daysRemaining ?? 28);
+  const daysLeft = isCertified ? (activeShop?.certificationHistory?.[0]?.daysLeft || 365) : (hasRegisteredScales ? 28 : 0);
   const circumference = 590.6;
   const strokeOffset = Math.max(0, circumference - (circumference * (daysLeft / 365)));
 
@@ -89,6 +89,11 @@ export const ShopDashboard = () => {
     assignedInspectorName !== 'Unassigned (Action Required)' &&
     assignedInspectorName !== 'PENDING' &&
     assignedInspectorName !== '';
+
+  const isAllocationPending = !isInspectorAssigned && (
+    activeShop.allocationRequested ||
+    activeShop.complianceStatus?.includes('Request Sent')
+  );
 
   const handleBookVisitClick = () => {
     if (isCertified) {
@@ -347,6 +352,36 @@ export const ShopDashboard = () => {
           >
             <span className="material-symbols-outlined text-base">route</span>
             <span>Track Inspection Visit</span>
+          </button>
+        </div>
+      )}
+
+      {/* CONDITIONAL BANNER 3: Inspector Allocation Request Sent to Admin */}
+      {isAllocationPending && (
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl p-4 sm:p-5 border-2 border-emerald-300 text-emerald-950 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#023625] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <span className="material-symbols-outlined text-2xl">forward_to_inbox</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-extrabold tracking-wider text-[#023625] block">
+                Official Request Queued • Department Administration
+              </span>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900">
+                Inspector Allocation Request Sent to Admin
+              </h2>
+              <p className="text-xs text-gray-700 mt-0.5 max-w-2xl">
+                Your request has been dispatched to the Controller / Department Admin. You may proceed to <strong>Upload Statutory Documents (Step 2)</strong> while officer allocation is in progress.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigateTo('upload-documents')}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shrink-0 cursor-pointer"
+            type="button"
+          >
+            <span>Upload Documents (Step 2)</span>
+            <span className="material-symbols-outlined text-base">arrow_forward</span>
           </button>
         </div>
       )}

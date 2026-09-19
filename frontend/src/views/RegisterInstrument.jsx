@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const RegisterInstrument = () => {
-  const { navigateTo, storeInfo, handleRegisterInstrument, showToast, t } = useApp();
+  const { navigateTo, storeInfo, handleRegisterInstrument, handleRequestInspectorAllocation, showToast, t } = useApp();
 
   const [instrumentType, setInstrumentType] = useState('counter_scale');
   const [serialNumber, setSerialNumber] = useState('');
@@ -13,6 +13,11 @@ export const RegisterInstrument = () => {
   const [repairDetails, setRepairDetails] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
 
+  // Success Modal & Request Inspector State
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [savedScale, setSavedScale] = useState(null);
+  const [requestSent, setRequestSent] = useState(false);
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -22,7 +27,7 @@ export const RegisterInstrument = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!serialNumber.trim()) {
       showToast(t('errors.required', 'Please enter the Serial Number / Model ID from the plate'), 'error');
@@ -33,7 +38,7 @@ export const RegisterInstrument = () => {
     if (instrumentType === 'platform_machine') typeTitle = 'Platform Weighing Machine';
     if (instrumentType === 'beam_scale') typeTitle = 'Beam Scale / Conical Weights';
 
-    handleRegisterInstrument({
+    const payload = {
       name: typeTitle,
       type: instrumentType,
       model: modelName.trim() || (instrumentType === 'counter_scale' ? 'Digital Scale series' : 'Commercial Series'),
@@ -43,7 +48,17 @@ export const RegisterInstrument = () => {
       isRepairedOrModified,
       repairDetails: isRepairedOrModified ? repairDetails.trim() : null,
       photoUrl: photoPreview
-    });
+    };
+
+    const newInst = await handleRegisterInstrument(payload, { autoNavigate: false });
+    setSavedScale(newInst || payload);
+    setRequestSent(false);
+    setShowRequestModal(true);
+  };
+
+  const handleSendAdminRequest = async () => {
+    await handleRequestInspectorAllocation(savedScale);
+    setRequestSent(true);
   };
 
   return (
@@ -545,6 +560,147 @@ export const RegisterInstrument = () => {
           <span>Department of Consumer Affairs • Legal Metrology Digital Administration</span>
         </div>
       </div>
+
+      {/* POPUP MODAL: Scale Added & Request Inspector Allocation from Admin */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-[#023625] text-white p-5 sm:p-6 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 shrink-0 text-emerald-300">
+                  <span className="material-symbols-outlined text-2xl">check_circle</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-300 block">
+                    Commercial Scale Registered
+                  </span>
+                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                    Scale Added Successfully!
+                  </h2>
+                  <p className="text-xs text-white/80 mt-0.5">
+                    {storeInfo.name} ({storeInfo.merchantUid || storeInfo.regNumber})
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowRequestModal(false);
+                  navigateTo('upload-documents');
+                }}
+                className="text-white/60 hover:text-white rounded-lg p-1 hover:bg-white/10 transition-colors cursor-pointer"
+                title="Close and proceed"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs">
+              {/* Registered Scale Card */}
+              {savedScale && (
+                <div className="p-4 rounded-2xl bg-[#F6F2E9] border border-[#DADDD3] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-[#023625] uppercase tracking-wide">
+                      Instrument Specifications
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-[#DADDD3] text-gray-700 font-bold">
+                      {savedScale.serialNumber}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-gray-700 pt-1">
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Scale Type</span>
+                      <strong className="text-gray-900 block truncate">{savedScale.name}</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Model / Make</span>
+                      <strong className="text-gray-900 block truncate">{savedScale.model}</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Max Capacity</span>
+                      <strong className="text-gray-900 block">{savedScale.capacity}</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-500 block">Verification Mode</span>
+                      <strong className="text-[#023625] block">{savedScale.verificationMode || 'Field / In-Situ'}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Inspector Request Section */}
+              {!requestSent ? (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <span className="material-symbols-outlined text-xl text-amber-700 shrink-0 mt-0.5">
+                      person_add
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-amber-950 uppercase tracking-wide">
+                        Statutory Inspector Assignment Required
+                      </h4>
+                      <p className="text-[11px] text-amber-900 mt-1 leading-relaxed">
+                        To initiate official verification and stamping of this scale, send a formal request to the <strong>Department Admin (Controller)</strong> to assign a Legal Metrology Inspector to your shop.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSendAdminRequest}
+                    type="button"
+                    className="w-full py-3 px-4 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-lg">send</span>
+                    <span>Send Request to Admin to Assign Inspector</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 space-y-2 animate-fade-in">
+                  <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
+                    <span className="material-symbols-outlined text-emerald-600 text-lg">verified</span>
+                    <span>Official Allocation Request Dispatched to Admin!</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900 leading-relaxed">
+                    Your request has been queued in the <strong>Admin Dashboard</strong>. The Department Controller will allocate an accredited Legal Metrology Officer to your shop.
+                  </p>
+                </div>
+              )}
+
+              {/* Next Steps Guidance */}
+              <div className="pt-2 border-t border-gray-100 flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+                  Next Step in Certification:
+                </span>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRequestModal(false);
+                      navigateTo('upload-documents');
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#023625] hover:bg-[#1a4b38] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  >
+                    <span>Proceed to Step 2: Upload Documents</span>
+                    <span className="material-symbols-outlined text-base">arrow_forward</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRequestModal(false);
+                      navigateTo('shop-dashboard');
+                    }}
+                    className="py-2.5 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base">storefront</span>
+                    <span>Shop Dashboard</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

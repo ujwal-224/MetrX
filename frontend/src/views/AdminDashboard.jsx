@@ -7,6 +7,7 @@ export const AdminDashboard = () => {
     inspectors,
     merchants,
     operations,
+    allocationRequests,
     handleCreateInspector,
     handleToggleInspectorStatus,
     handleDeleteInspector,
@@ -180,6 +181,103 @@ export const AdminDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* INCOMING INSPECTOR ALLOCATION REQUESTS FROM SHOP OWNERS */}
+      {allocationRequests && allocationRequests.length > 0 && (
+        <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50/90 to-orange-50/90 border-2 border-amber-300 shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-200 pb-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                <span className="material-symbols-outlined text-xl">person_add</span>
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                    Incoming Inspector Allocation Requests
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full bg-[#E0702A] text-white text-[11px] font-extrabold animate-pulse">
+                    {allocationRequests.length} Pending
+                  </span>
+                </div>
+                <p className="text-xs text-amber-900 mt-0.5">
+                  Shop owners have registered scales and sent formal requests for Inspector Assignment:
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono font-bold text-amber-800 bg-white/80 border border-amber-300 px-3 py-1 rounded-full self-start sm:self-auto">
+              Controller Action Required
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {allocationRequests.map((req) => (
+              <div
+                key={req.id}
+                className="bg-white rounded-xl border border-amber-200 p-4 shadow-xs flex flex-col justify-between gap-3 hover:border-amber-400 transition-all"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <div>
+                      <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base text-[#023625]">storefront</span>
+                        <span>{req.shopName}</span>
+                      </h4>
+                      <span className="text-[11px] font-mono text-gray-500">
+                        {req.merchantUid} • {req.zone}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md">
+                      {req.requestedAt}
+                    </span>
+                  </div>
+
+                  <div className="mt-2.5 p-2.5 rounded-lg bg-[#FAF8F4] border border-[#DADDD3] text-xs text-gray-700 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-[11px]">Registered Scale:</span>
+                      <strong className="text-gray-900">{req.scaleName}</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-[11px]">Model &amp; Serial:</span>
+                      <span className="font-mono text-gray-800">{req.scaleModel} ({req.scaleSerial})</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500 text-[11px]">Capacity / Contact:</span>
+                      <span>{req.scaleCapacity} • {req.ownerName} ({req.phone})</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assignment Dropdown Control */}
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-[#023625] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">badge</span>
+                    <span>Assign Officer:</span>
+                  </span>
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleAssignInspectorToMerchant(req.shopId || req.shopName, e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="bg-[#023625] text-white hover:bg-[#1a4b38] font-bold text-xs py-1.5 px-3 rounded-lg border border-[#023625] shadow-xs cursor-pointer outline-none transition-all"
+                  >
+                    <option value="" disabled className="bg-white text-gray-800">
+                      Select Inspector to Assign...
+                    </option>
+                    {inspectors.map((insp) => (
+                      <option key={insp.id} value={insp.id} className="bg-white text-gray-900">
+                        {insp.name} ({insp.badgeNumber}) — {insp.zone}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-1.5 sm:gap-2 border-b border-[#DADDD3] mb-5 sm:mb-6 overflow-x-auto no-scrollbar pb-1 touch-pan-x">

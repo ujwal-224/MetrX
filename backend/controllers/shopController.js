@@ -13,7 +13,10 @@ export const getShops = async (req, res) => {
     const shops = await prisma.shop.findMany({
       where,
       include: {
-        instruments: true
+        instruments: true,
+        certificates: {
+          orderBy: { createdAt: 'desc' }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
