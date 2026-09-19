@@ -18,8 +18,37 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   // Navigation & Role State
   // Roles: 'shop-owner' | 'inspector' | 'admin' | 'public'
-  const [activeRole, setActiveRole] = useState('public');
-  const [currentView, setCurrentView] = useState('public-portal');
+  const [activeRole, setActiveRoleState] = useState(() => {
+    try {
+      return localStorage.getItem('metrx_role') || 'public';
+    } catch {
+      return 'public';
+    }
+  });
+  const [currentView, setCurrentViewState] = useState(() => {
+    try {
+      return localStorage.getItem('metrx_view') || 'public-portal';
+    } catch {
+      return 'public-portal';
+    }
+  });
+
+  const setActiveRole = (role) => {
+    setActiveRoleState(role);
+    try {
+      if (role) localStorage.setItem('metrx_role', role);
+      else localStorage.removeItem('metrx_role');
+    } catch (e) {}
+  };
+
+  const setCurrentView = (view) => {
+    setCurrentViewState(view);
+    try {
+      if (view) localStorage.setItem('metrx_view', view);
+      else localStorage.removeItem('metrx_view');
+    } catch (e) {}
+  };
+
   const [language, setLanguageState] = useState(() => {
     try {
       const saved = localStorage.getItem('metrx_lang') || localStorage.getItem('i18nextLng');
@@ -37,7 +66,21 @@ export const AppProvider = ({ children }) => {
   };
 
   // Current Logged In Inspector State
-  const [currentInspector, setCurrentInspector] = useState(null);
+  const [currentInspector, setCurrentInspector] = useState(() => {
+    try {
+      const saved = localStorage.getItem('metrx_inspector');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (currentInspector) localStorage.setItem('metrx_inspector', JSON.stringify(currentInspector));
+      else localStorage.removeItem('metrx_inspector');
+    } catch (e) {}
+  }, [currentInspector]);
 
   // Current Logged In Merchant / Shop Owner
   const [currentMerchant, setCurrentMerchant] = useState(() => {
@@ -50,14 +93,53 @@ export const AppProvider = ({ children }) => {
   });
 
   // All Establishments across platform (For Admin Overview & Registry)
-  const [allShops, setAllShops] = useState([]);
+  const [allShops, setAllShops] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_all_shops') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_all_shops', JSON.stringify(allShops));
+    } catch (e) {}
+  }, [allShops]);
 
   // Multi-Shop Establishments Owned by the Logged-In Merchant ONLY
-  const [ownerShops, setOwnerShops] = useState([]);
+  const [ownerShops, setOwnerShops] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('metrx_owner_shops') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('metrx_owner_shops', JSON.stringify(ownerShops));
+    } catch (e) {}
+  }, [ownerShops]);
+
   const [activeShopIndex, setActiveShopIndexState] = useState(0);
 
   // Domain Data State
-  const [storeInfo, setStoreInfo] = useState(initialStoreInfo);
+  const [storeInfo, setStoreInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('metrx_store_info');
+      return saved ? JSON.parse(saved) : initialStoreInfo;
+    } catch {
+      return initialStoreInfo;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (storeInfo) localStorage.setItem('metrx_store_info', JSON.stringify(storeInfo));
+    } catch (e) {}
+  }, [storeInfo]);
+
   const [instruments, setInstruments] = useState([]);
   const [activeInstrumentIndex, setActiveInstrumentIndex] = useState(0);
   const [visits, setVisits] = useState([]);
